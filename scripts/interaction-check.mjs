@@ -1,0 +1,310 @@
+#!/usr/bin/env node
+// Exercise the gallery's shared palette steps, optional AppShell drawer,
+// toast pause/dismiss, useConfirm and sidebar reveal in Chromium. Start the
+// gallery first; an optional output directory retains shots.
+// Usage: node scripts/interaction-check.mjs [baseUrl] [outDir]
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { chromium, expect } from "@playwright/test";
+
+const base = process.argv[2] ?? "http://127.0.0.1:5190/";
+const out = process.argv[3];
+if (out) mkdirSync(out, { recursive: true });
+const results = [];
+const browser = await chromium.launch();
+let page;
+let current = "startup";
+const record = (description) => {
+  results.push({ check: `${current}: ${description}`, passed: true });
+  console.log(`ok  ${current}: ${description}`);
+};
+const shot = async (name) => {
+  if (out) await page.screenshot({ path: join(out, `${name}.png`) });
+};
+const storageKey = "workbench-gallery:drawer-width";
+const storedWidth = () =>
+  page.evaluate((key) => localStorage.getItem(key), storageKey);
+
+try {
+  for (const theme of ["light", "dark"]) {
+    current = theme;
+    // Isolated preferences make both theme runs deterministic, including reset.
+    const context = await browser.newContext({
+      viewport: { width: 1920, height: 1080 },
+    });
+    page = await context.newPage();
+    const errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(new URL(`?theme=${theme}#/`, base).href);
+    await page.evaluate(() => document.fonts.ready);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    record("requested theme applied");
+
+    // Keep app-owned navigation state visible while exercising the kit's
+    // combobox, rich rendering and input focus across multiple steps.
+    await page.locator(".wb-top-search").click();
+    const palette = page.getByRole("dialog", { name: "Command palette" });
+    const query = palette.getByRole("combobox");
+    await query.fill("Browse examples");
+    await query.press("Enter");
+    await expect(query).toHaveValue("");
+    await expect(query).toBeFocused();
+    await expect(query).toHaveAttribute("placeholder", "Choose a collection…");
+    await palette.getByRole("option", { name: /^Layouts/ }).click();
+    await expect(query).toHaveAttribute("placeholder", "Choose an example…");
+    await expect(query).toBeFocused();
+    await query.fill("Resizable");
+    const example = palette.getByRole("option", {
+      name: "Layouts / Resizable detail drawer",
+      exact: true,
+    });
+    await expect(example.locator("strong mark")).toHaveText("Resizable");
+    await expect(query).toHaveAttribute(
+      "aria-activedescendant",
+      await example.getAttribute("id"),
+    );
+    await shot(`${theme}-palette-step`);
+    record("two-level drill-down, rich matching and active option");
+
+    await query.press("Backspace");
+    await expect(query).toHaveValue("Resizabl");
+    await expect(query).toHaveAttribute("placeholder", "Choose an example…");
+    await query.fill("");
+    await query.press("Backspace");
+    await expect(query).toHaveAttribute("placeholder", "Choose a collection…");
+    await palette.getByRole("option", { name: /^Layouts/ }).click();
+    await palette.getByRole("button", { name: "Back", exact: true }).click();
+    await expect(query).toHaveAttribute("placeholder", "Choose a collection…");
+    await expect(query).toBeFocused();
+    await query.press("Backspace");
+    await expect(
+      palette.getByRole("button", { name: "Back", exact: true }),
+    ).toHaveCount(0);
+    record(
+      "Backspace edits nonempty queries; empty-query/back-button navigation restores input focus",
+    );
+
+    await query.fill("Browse examples");
+    await query.press("Enter");
+    await palette.getByRole("option", { name: /^Layouts/ }).click();
+    await query.fill("Resizable");
+    await query.press("Enter");
+    await expect(palette).toHaveCount(0);
+    await expect(page).toHaveURL(/#\/\?item=ev-4819&resize=1$/);
+    const handle = page.getByRole("separator", { name: "Details panel width" });
+    const drawer = page.locator(".wb-app-drawer > .wb-drawer");
+    const width = (expected) =>
+      expect(handle).toHaveAttribute("aria-valuenow", String(expected));
+    await expect(drawer).toBeVisible();
+    await width(540);
+    record(
+      "selected example closes the palette and opens the resizable drawer",
+    );
+
+    await handle.focus();
+    await handle.press("ArrowLeft");
+    await width(550);
+    await handle.press("Shift+ArrowLeft");
+    await width(590);
+    await expect.poll(storedWidth).toBe("590");
+    record(
+      "left-edge keyboard resize uses 10px and Shift 40px, persisting preference",
+    );
+
+    let box = await handle.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 - 60, box.y + box.height / 2, {
+      steps: 6,
+    });
+    await page.mouse.up();
+    await width(650);
+    await expect.poll(storedWidth).toBe("650");
+    await page.reload();
+    await width(650);
+    record("pointer resize persists across a full reload");
+
+    box = await handle.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 - 80, box.y + box.height / 2, {
+      steps: 6,
+    });
+    await width(730);
+    await page.keyboard.press("Escape");
+    await page.mouse.up();
+    await width(650);
+    await expect(drawer).toBeVisible();
+    await expect.poll(storedWidth).toBe("650");
+    record(
+      "Escape cancels an in-progress drag without dismissing the drawer or saving it",
+    );
+
+    await handle.press("Home");
+    await width(380);
+    await handle.press("End");
+    await width(900);
+    await expect.poll(storedWidth).toBe("900");
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await expect
+      .poll(async () => Number(await handle.getAttribute("aria-valuenow")))
+      .toBeLessThan(900);
+    const mainWidth = () =>
+      page
+        .locator(".wb-main")
+        .evaluate((node) => node.getBoundingClientRect().width);
+    await expect.poll(mainWidth).toBeGreaterThanOrEqual(360);
+    await expect.poll(storedWidth).toBe("900");
+    const fitted = Number(await handle.getAttribute("aria-valuenow"));
+    await handle.press("End");
+    await width(fitted);
+    await expect.poll(storedWidth).toBe("900");
+    await shot(`${theme}-drawer-1024`);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await width(900);
+    record(
+      "Home/End bounds, 1024px main minimum, and wider preference survive viewport fitting",
+    );
+
+    await handle.dblclick();
+    await width(540);
+    await expect.poll(storedWidth).toBeNull();
+    await page.reload();
+    await width(540);
+    await shot(`${theme}-drawer-reset`);
+    record("double-click reset clears stored preference and survives reload");
+
+    await handle.focus();
+    await handle.press("Escape");
+    await expect(drawer).toHaveCount(0);
+    await expect(
+      page.locator('[data-wb-row="ev-4819"] .wb-row-link'),
+    ).toBeFocused();
+    record("closing from the resize separator returns focus to the event row");
+
+    await page.locator(".wb-top-search").click();
+    await expect(query).toHaveValue("");
+    await expect(query).toHaveAttribute(
+      "placeholder",
+      "Search events, people, views, actions…",
+    );
+    await expect(
+      palette.getByRole("button", { name: "Back", exact: true }),
+    ).toHaveCount(0);
+    await query.press("Escape");
+    await expect(palette).toHaveCount(0);
+    expect(errors).toEqual([]);
+    record("reopening returns to the root; no browser exceptions");
+
+    // Toasts: the pointer or focus pauses the timer; Esc dismisses a
+    // focused toast and returns focus; the toast never takes focus.
+    await page.goto(new URL(`?theme=${theme}#/components`, base).href);
+    await page.evaluate(() => document.fonts.ready);
+    const toastEl = page.locator(".wb-toast");
+    const plainToast = page.getByRole("button", { name: "Toast", exact: true });
+    await plainToast.click();
+    await expect(toastEl).toHaveText("Token revoked");
+    await expect(plainToast).toBeFocused();
+    await toastEl.hover();
+    await page.waitForTimeout(3200);
+    await expect(toastEl).toBeVisible();
+    await shot(`${theme}-toast-hover-paused`);
+    await page.mouse.move(8, 400);
+    await page.waitForTimeout(700);
+    await expect(toastEl).toBeVisible();
+    await expect(toastEl).toHaveCount(0, { timeout: 2000 });
+    record("hovering pauses a 2.2s toast; it resumes and leaves afterwards");
+
+    const actionToast = page.getByRole("button", { name: "Toast with action" });
+    await actionToast.click();
+    const undo = page.getByRole("button", { name: "Undo", exact: true });
+    await undo.focus();
+    await page.waitForTimeout(7000);
+    await expect(toastEl).toHaveText(/Rule deleted/);
+    await shot(`${theme}-toast-focus-paused`);
+    await undo.press("Escape");
+    await expect(toastEl).toHaveCount(0);
+    await expect(actionToast).toBeFocused();
+    record(
+      "focus inside pauses a 6s toast; Esc dismisses it and focus returns",
+    );
+
+    // useConfirm: pending while the action runs, then resolves true.
+    const ask = page.getByRole("button", { name: "useConfirm (async)" });
+    await ask.click();
+    const confirmDialog = page.getByRole("alertdialog", {
+      name: "Remove octo/atlas?",
+    });
+    await expect(confirmDialog).toBeVisible();
+    await expect(
+      confirmDialog.getByRole("button", { name: "Cancel" }),
+    ).toBeFocused();
+    await confirmDialog.getByRole("button", { name: "Remove" }).click();
+    await expect(
+      confirmDialog.getByRole("button", { name: "Remove" }),
+    ).toHaveAttribute("aria-busy", "true");
+    await shot(`${theme}-confirm-pending`);
+    await page.keyboard.press("Escape");
+    await expect(confirmDialog).toBeVisible();
+    await expect(confirmDialog).toHaveCount(0, { timeout: 3000 });
+    await expect(toastEl).toHaveText("Removed octo/atlas");
+    await expect(ask).toBeFocused();
+    await ask.click();
+    await page.keyboard.press("Escape");
+    await expect(confirmDialog).toHaveCount(0);
+    await expect(toastEl).toHaveText("Kept octo/atlas");
+    record(
+      "useConfirm stays pending (not dismissible), resolves true after the action, false on Esc",
+    );
+
+    // showSidebar: "s" reveals a collapsed sidebar and focuses its search;
+    // it never toggles a shown one closed. The filter button's dot.
+    await page.goto(new URL(`?theme=${theme}#/rules`, base).href);
+    const sources = page.getByRole("complementary", { name: "Rule sources" });
+    const sourceSearch = page.getByRole("searchbox", {
+      name: "Filter sources…",
+    });
+    await page.getByRole("button", { name: "Hide sidebar" }).click();
+    await expect(sources).toBeHidden();
+    await page.keyboard.press("s");
+    await expect(sources).toBeVisible();
+    await expect(sourceSearch).toBeFocused();
+    await expect(sourceSearch).toHaveValue("");
+    await sourceSearch.press("Escape");
+    await expect(sourceSearch).not.toBeFocused();
+    await page.keyboard.press("s");
+    await expect(sources).toBeVisible();
+    await expect(sourceSearch).toBeFocused();
+    record(
+      "s reveals the collapsed sidebar and focuses its search; idempotent",
+    );
+
+    const usage = page.getByRole("button", { name: "Usage: Any" });
+    await expect(usage.locator(".wb-btn-indicator")).toHaveCount(0);
+    await usage.click();
+    await page.getByRole("menuitemradio", { name: "Unused" }).click();
+    const narrowed = page.getByRole("button", { name: "Usage: Unused" });
+    await expect(narrowed.locator(".wb-btn-indicator")).toBeVisible();
+    await expect(narrowed).toBeFocused();
+    await shot(`${theme}-sidebar-indicator`);
+    record("the narrowing filter shows the indicator dot; the label names it");
+    expect(errors).toEqual([]);
+    await context.close();
+  }
+} catch (error) {
+  results.push({ check: current, passed: false, error: String(error) });
+  console.error(error);
+  try {
+    await shot(`${current}-failure`);
+  } catch {
+    /* Keep the original failure. */
+  }
+  process.exitCode = 1;
+} finally {
+  if (out)
+    writeFileSync(
+      join(out, "results.json"),
+      `${JSON.stringify(results, null, 2)}\n`,
+    );
+  await browser.close();
+}

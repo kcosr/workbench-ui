@@ -1,0 +1,5 @@
+node_modules
+dist
+gallery/dist
+src/fonts
+package-lock.json
