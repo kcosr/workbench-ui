@@ -138,6 +138,40 @@ applyStoredTheme("my-app:theme");
 
 CSS Modules classes are unlayered too, so they override kit classes.
 
+### Standalone media frame
+
+Applications that already own their layout and theme can adopt `MediaFrame`
+alone. Import its module and stylesheet directly; this does not require the
+kit's base rules, fonts, tokens, or shell. The frame also fits narrow content
+columns without adding an application-level mobile layout.
+
+```tsx
+import { MediaFrame } from "./workbench/components/MediaFrame";
+import "./workbench/styles/media-frame.css";
+
+<MediaFrame
+  title="Example diagram"
+  metadata="Revision 2"
+  actions={<button onClick={expand}>Expand</button>}
+>
+  <Diagram />
+</MediaFrame>;
+```
+
+The header is optional and omitted when `title`, `metadata`, and `actions`
+are absent. A visible title labels the group, and metadata supplies its
+accessible description. Native div attributes allow app-owned labels and
+events. `className` and `bodyClassName` target the frame and contained body.
+The body scrolls overflowing content; rendering, sizing, zoom, expansion,
+and interaction remain with the application. The frame never executes media.
+
+Style it with `--wb-media-border`, `--wb-media-radius`,
+`--wb-media-background`, `--wb-media-header-background`, `--wb-media-color`,
+`--wb-media-muted`, `--wb-media-font-size`, `--wb-media-header-padding`, and
+`--wb-media-body-padding`. Colour and radius properties use the matching
+kit token when available and neutral defaults otherwise. Import only the
+standalone stylesheet when the application supplies its own theme.
+
 ### Tailwind v4
 
 Declare the layer order first so the kit sits above Tailwind's base but below

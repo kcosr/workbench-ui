@@ -229,6 +229,8 @@ export {
   Tile,
 } from "./components/Pages";
 export type { TileDelta } from "./components/Pages";
+export { MediaFrame } from "./components/MediaFrame";
+export type { MediaFrameProps } from "./components/MediaFrame";
 
 // icons, time
 export { Icon, iconNames } from "./components/Icon";

@@ -80,6 +80,13 @@
 }
 
 /* catalog */
+.gal-media-example {
+  display: grid;
+  min-height: 120px;
+  place-items: center;
+  padding: 16px;
+  color: var(--wb-muted);
+}
 .gal-overlays {
   display: flex;
   flex-direction: column;

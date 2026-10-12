@@ -24,6 +24,7 @@ import {
   LinkTabs,
   ListRow,
   Main,
+  MediaFrame,
   Menu,
   Meter,
   Modal,
@@ -742,6 +743,18 @@ function SmallPatterns() {
             </div>
           ))}
         </div>
+      </Section>
+      <Section title="Media frames">
+        <MediaFrame
+          title="Example diagram"
+          metadata="Revision 2 · 640 × 240"
+          actions={<Button size="sm">Expand</Button>}
+        >
+          <div className="gal-media-example">App-owned diagram or preview</div>
+        </MediaFrame>
+        <MediaFrame>
+          <div className="gal-media-example">Media without a header</div>
+        </MediaFrame>
       </Section>
       <Section title="Card header (one row)">
         <Card
