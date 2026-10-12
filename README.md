@@ -1461,6 +1461,7 @@ level. Closing and reopening starts at the root.
 
 ## License
 
-MIT; see [LICENSE](LICENSE). The bundled Inter and JetBrains Mono fonts are
+MIT; see [LICENSE](LICENSE), also included as `src/LICENSE` in vendored copies.
+The bundled Inter and JetBrains Mono fonts are
 under the SIL Open Font License 1.1: `src/fonts/LICENSE-Inter.txt` and
 `src/fonts/LICENSE-JetBrainsMono.txt`, which vendoring copies with the fonts.

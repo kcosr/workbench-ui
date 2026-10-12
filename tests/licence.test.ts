@@ -15,4 +15,10 @@ describe("licence", () => {
     const readme = readFileSync(resolve(root, "README.md"), "utf8");
     expect(readme).toContain("## License");
   });
+
+  it("includes the MIT license in the vendored source snapshot", () => {
+    expect(readFileSync(resolve(root, "src/LICENSE"), "utf8")).toBe(
+      readFileSync(resolve(root, "LICENSE"), "utf8"),
+    );
+  });
 });
