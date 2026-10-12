@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { act, render, screen, within } from "@testing-library/react";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { MediaFrame, MediaZoomControls } from "../src";
@@ -15,6 +17,31 @@ const props = () => ({
   onFit: vi.fn(),
   onActualSize: vi.fn(),
 });
+
+/** Models a host dialog which handles Escape in document capture, before React. */
+function CaptureDialog({
+  onClose,
+  children,
+}: {
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(true);
+  useEffect(() => {
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      onClose();
+      setOpen(false);
+    };
+    document.addEventListener("keydown", dismiss, true);
+    return () => document.removeEventListener("keydown", dismiss, true);
+  }, [onClose]);
+  return open ? (
+    <div role="dialog" aria-label="Preview viewer">
+      {children}
+    </div>
+  ) : null;
+}
 
 describe("MediaZoomControls", () => {
   it("renders a named floating control group without adding a frame header", () => {
@@ -125,6 +152,84 @@ describe("MediaZoomControls", () => {
     await user.click(percentage);
     act(() => screen.getByRole("button", { name: "Outside" }).focus());
     expect(screen.queryByRole("group", { name: "Zoom presets" })).toBeNull();
+  });
+
+  it("closes presets before a host dialog's document-capture Escape handler, then lets the next Escape close the dialog", async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <CaptureDialog onClose={onClose}>
+        <MediaZoomControls {...props()} onZoomToPercent={vi.fn()} />
+      </CaptureDialog>,
+    );
+    const percentage = screen.getByRole("button", {
+      name: "Zoom percentage: 75%",
+    });
+    await user.click(percentage);
+    await user.click(
+      screen.getByRole("button", { name: "75%", pressed: true }),
+    );
+    await user.click(percentage);
+    await user.tab();
+    await user.keyboard("{Escape}");
+    expect(
+      screen.getByRole("dialog", { name: "Preview viewer" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Zoom presets" })).toBeNull();
+    expect(percentage).toHaveFocus();
+    expect(onClose).not.toHaveBeenCalled();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Preview viewer" })).toBeNull();
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("scopes Escape to the focused instance after another instance closes on outside interaction", async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <CaptureDialog onClose={onClose}>
+        <MediaZoomControls
+          {...props()}
+          label="First preview"
+          onZoomToPercent={vi.fn()}
+        />
+        <MediaZoomControls
+          {...props()}
+          label="Second preview"
+          onZoomToPercent={vi.fn()}
+        />
+      </CaptureDialog>,
+    );
+    const first = within(
+      screen.getByRole("group", { name: "First preview" }),
+    ).getByRole("button", { name: "Zoom percentage: 75%" });
+    const second = within(
+      screen.getByRole("group", { name: "Second preview" }),
+    ).getByRole("button", { name: "Zoom percentage: 75%" });
+    await user.click(first);
+    expect(first).toHaveAttribute("aria-expanded", "true");
+    await user.click(second);
+    expect(first).toHaveAttribute("aria-expanded", "false");
+    expect(second).toHaveAttribute("aria-expanded", "true");
+    await user.keyboard("{Escape}");
+    expect(second).toHaveFocus();
+    expect(second).toHaveAttribute("aria-expanded", "false");
+    expect(onClose).not.toHaveBeenCalled();
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("leaves composing Escape to the input method", async () => {
+    const user = userEvent.setup();
+    render(<MediaZoomControls {...props()} onZoomToPercent={vi.fn()} />);
+    const percentage = screen.getByRole("button", {
+      name: "Zoom percentage: 75%",
+    });
+    await user.click(percentage);
+    expect(
+      fireEvent.keyDown(percentage, { key: "Escape", isComposing: true }),
+    ).toBe(true);
+    expect(percentage).toHaveAttribute("aria-expanded", "true");
   });
 
   it("keeps floating layout and all visible theming in the standalone media stylesheet", () => {

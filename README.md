@@ -197,6 +197,8 @@ import { MediaZoomControls } from "./workbench/components/MediaZoomControls";
 Omit `onZoomToPercent` for a passive percentage display. When supplied, the
 percentage opens a preset popover; the caller applies its own zoom limits.
 Escape, outside pointer interaction, or leaving the controls closes it.
+Escape from the open presets returns focus to the percentage without dismissing
+an enclosing dialog; the next Escape is left to the enclosing viewer.
 `className` customizes the strip. The viewer supplies a positioned ancestor
 and enough space for the controls and optional popover.
 
