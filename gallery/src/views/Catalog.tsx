@@ -24,6 +24,8 @@ import {
   LinkTabs,
   ListRow,
   Main,
+  MediaFrame,
+  MediaZoomControls,
   Menu,
   Meter,
   Modal,
@@ -671,6 +673,7 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
 function SmallPatterns() {
   const [emails, setEmails] = useState<string[]>(["alice@example.com"]);
   const [branchQ, setBranchQ] = useState("");
+  const [mediaZoom, setMediaZoom] = useState(100);
   return (
     <>
       <Section title="Icon button indicator">
@@ -742,6 +745,31 @@ function SmallPatterns() {
             </div>
           ))}
         </div>
+      </Section>
+      <Section title="Media frames">
+        <MediaFrame
+          title="Example diagram"
+          metadata="Revision 2 · 640 × 240"
+          actions={<Button size="sm">Expand</Button>}
+        >
+          <div className="gal-media-example">App-owned diagram or preview</div>
+        </MediaFrame>
+        <MediaFrame>
+          <div className="gal-media-example gal-media-zoom-example">
+            Media without a header
+            <MediaZoomControls
+              label="Example media zoom"
+              zoomPercent={mediaZoom}
+              canZoomOut={mediaZoom > 25}
+              canZoomIn={mediaZoom < 200}
+              onZoomOut={() => setMediaZoom(Math.max(25, mediaZoom - 25))}
+              onZoomIn={() => setMediaZoom(Math.min(200, mediaZoom + 25))}
+              onFit={() => setMediaZoom(75)}
+              onActualSize={() => setMediaZoom(100)}
+              onZoomToPercent={setMediaZoom}
+            />
+          </div>
+        </MediaFrame>
       </Section>
       <Section title="Card header (one row)">
         <Card

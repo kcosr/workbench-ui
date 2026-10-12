@@ -138,6 +138,77 @@ applyStoredTheme("my-app:theme");
 
 CSS Modules classes are unlayered too, so they override kit classes.
 
+### Standalone media frame
+
+Applications that already own their layout and theme can adopt `MediaFrame`
+alone. Import its module and stylesheet directly; this does not require the
+kit's base rules, fonts, tokens, or shell. The frame also fits narrow content
+columns without adding an application-level mobile layout.
+
+```tsx
+import { MediaFrame } from "./workbench/components/MediaFrame";
+import "./workbench/styles/media-frame.css";
+
+<MediaFrame
+  title="Example diagram"
+  metadata="Revision 2"
+  actions={<button onClick={expand}>Expand</button>}
+>
+  <Diagram />
+</MediaFrame>;
+```
+
+The header is optional and omitted when `title`, `metadata`, and `actions`
+are absent. A visible title labels the group, and metadata supplies its
+accessible description. Native div attributes allow app-owned labels and
+events. `className` and `bodyClassName` target the frame and contained body.
+The body scrolls overflowing content; rendering, sizing, zoom, expansion,
+and interaction remain with the application. The frame never executes media.
+
+Style it with `--wb-media-border`, `--wb-media-radius`,
+`--wb-media-background`, `--wb-media-header-background`, `--wb-media-color`,
+`--wb-media-muted`, `--wb-media-font-size`, `--wb-media-header-padding`, and
+`--wb-media-body-padding`. Colour and radius properties use the matching
+kit token when available and neutral defaults otherwise. Import only the
+standalone stylesheet when the application supplies its own theme.
+
+`MediaZoomControls` uses the same standalone stylesheet. Place it inside a
+positioned viewer to get a compact, floating bottom-center strip: minus,
+percentage, plus, Fit, and 1:1. It adds no full-width header and owns no zoom
+state. `onFit` and `onActualSize` remain separate actions even when both result
+in 100% for a particular document.
+
+```tsx
+import { MediaZoomControls } from "./workbench/components/MediaZoomControls";
+
+<MediaZoomControls
+  label="Diagram zoom"
+  zoomPercent={zoom * 100}
+  canZoomOut={zoom > minZoom}
+  canZoomIn={zoom < maxZoom}
+  onZoomOut={zoomOut}
+  onZoomIn={zoomIn}
+  onFit={fitToView}
+  onActualSize={() => setZoom(1)}
+  onZoomToPercent={(percent) => setZoom(percent / 100)}
+/>;
+```
+
+Omit `onZoomToPercent` for a passive percentage display. When supplied, the
+percentage opens a preset popover; the caller applies its own zoom limits.
+Escape, outside pointer interaction, or leaving the controls closes it.
+Escape from the open presets returns focus to the percentage without dismissing
+an enclosing dialog; the next Escape is left to the enclosing viewer.
+`className` customizes the strip. The viewer supplies a positioned ancestor
+and enough space for the controls and optional popover.
+
+The strip inherits `--wb-media-color`, `--wb-media-muted`, `--wb-media-border`,
+and `--wb-media-font-size`. Additional controls-specific properties are
+`--wb-media-controls-background`, `--wb-media-controls-hover-background`,
+`--wb-media-controls-shadow`, `--wb-media-controls-radius`,
+`--wb-media-controls-offset`, `--wb-media-controls-z-index`, and
+`--wb-media-focus`. These use kit tokens or neutral defaults when unset.
+
 ### Tailwind v4
 
 Declare the layer order first so the kit sits above Tailwind's base but below
@@ -1427,6 +1498,7 @@ level. Closing and reopening starts at the root.
 
 ## License
 
-MIT; see [LICENSE](LICENSE). The bundled Inter and JetBrains Mono fonts are
+MIT; see [LICENSE](LICENSE), also included as `src/LICENSE` in vendored copies.
+The bundled Inter and JetBrains Mono fonts are
 under the SIL Open Font License 1.1: `src/fonts/LICENSE-Inter.txt` and
 `src/fonts/LICENSE-JetBrainsMono.txt`, which vendoring copies with the fonts.
