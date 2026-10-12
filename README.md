@@ -172,6 +172,41 @@ Style it with `--wb-media-border`, `--wb-media-radius`,
 kit token when available and neutral defaults otherwise. Import only the
 standalone stylesheet when the application supplies its own theme.
 
+`MediaZoomControls` uses the same standalone stylesheet. Place it inside a
+positioned viewer to get a compact, floating bottom-center strip: minus,
+percentage, plus, Fit, and 1:1. It adds no full-width header and owns no zoom
+state. `onFit` and `onActualSize` remain separate actions even when both result
+in 100% for a particular document.
+
+```tsx
+import { MediaZoomControls } from "./workbench/components/MediaZoomControls";
+
+<MediaZoomControls
+  label="Diagram zoom"
+  zoomPercent={zoom * 100}
+  canZoomOut={zoom > minZoom}
+  canZoomIn={zoom < maxZoom}
+  onZoomOut={zoomOut}
+  onZoomIn={zoomIn}
+  onFit={fitToView}
+  onActualSize={() => setZoom(1)}
+  onZoomToPercent={(percent) => setZoom(percent / 100)}
+/>;
+```
+
+Omit `onZoomToPercent` for a passive percentage display. When supplied, the
+percentage opens a preset popover; the caller applies its own zoom limits.
+Escape, outside pointer interaction, or leaving the controls closes it.
+`className` customizes the strip. The viewer supplies a positioned ancestor
+and enough space for the controls and optional popover.
+
+The strip inherits `--wb-media-color`, `--wb-media-muted`, `--wb-media-border`,
+and `--wb-media-font-size`. Additional controls-specific properties are
+`--wb-media-controls-background`, `--wb-media-controls-hover-background`,
+`--wb-media-controls-shadow`, `--wb-media-controls-radius`,
+`--wb-media-controls-offset`, `--wb-media-controls-z-index`, and
+`--wb-media-focus`. These use kit tokens or neutral defaults when unset.
+
 ### Tailwind v4
 
 Declare the layer order first so the kit sits above Tailwind's base but below

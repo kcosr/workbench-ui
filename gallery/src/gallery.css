@@ -87,6 +87,11 @@
   padding: 16px;
   color: var(--wb-muted);
 }
+.gal-media-zoom-example {
+  position: relative;
+  min-height: 200px;
+  padding-bottom: 4rem;
+}
 .gal-overlays {
   display: flex;
   flex-direction: column;
