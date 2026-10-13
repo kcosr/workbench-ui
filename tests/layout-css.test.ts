@@ -130,6 +130,32 @@ describe("range slider layout", () => {
     expect(rule(forms, ".wb-range-slider-value").color).toBeUndefined();
   });
 
+  it("keeps custom range parts visible in forced colors with separate engine rules", () => {
+    const media = forms.indexOf("@media (forced-colors: active)");
+    const forced = forms.slice(forms.indexOf("{", media) + 1);
+    expect(rule(forced, ".wb-range-slider-track::before").background).toBe(
+      "CanvasText",
+    );
+    expect(rule(forced, ".wb-range-slider-selection").background).toBe(
+      "Highlight",
+    );
+    for (const engine of ["-webkit-slider-thumb", "-moz-range-thumb"]) {
+      const thumb = rule(
+        forced,
+        `.wb-range-slider input[type="range"]::${engine}`,
+      );
+      expect(thumb["forced-color-adjust"]).toBe("none");
+      expect(thumb["box-sizing"]).toBe("border-box");
+      expect(thumb.border).toBe("2px solid ButtonText");
+      const disabled = rule(
+        forced,
+        `.wb-range-slider input[type="range"]:disabled::${engine}`,
+      );
+      expect(disabled.background).toBe("GrayText");
+      expect(disabled["border-color"]).toBe("GrayText");
+    }
+  });
+
   it("documents the complete range markup for CSS consumers", () => {
     expect(readme).toContain(
       "`wb-range-slider` (+ `-controls`, `-endpoint`, `-label`, `-value`, `-track`,",

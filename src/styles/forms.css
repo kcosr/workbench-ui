@@ -202,6 +202,49 @@
     color: var(--wb-muted);
   }
 
+  @media (forced-colors: active) {
+    .wb-range-slider-track::before {
+      forced-color-adjust: none;
+      background: CanvasText;
+      border: 1px solid CanvasText;
+    }
+    .wb-range-slider-selection {
+      forced-color-adjust: none;
+      background: Highlight;
+      border: 1px solid Highlight;
+    }
+    /* Keep vendor pseudo-elements separate: unsupported selectors invalidate
+       the entire selector list in the other engine. */
+    .wb-range-slider input[type="range"]::-webkit-slider-thumb {
+      box-sizing: border-box;
+      forced-color-adjust: none;
+      background: ButtonText;
+      border: 2px solid ButtonText;
+    }
+    .wb-range-slider input[type="range"]::-moz-range-thumb {
+      box-sizing: border-box;
+      forced-color-adjust: none;
+      background: ButtonText;
+      border: 2px solid ButtonText;
+    }
+    .wb-range-slider:disabled .wb-range-slider-track::before,
+    .wb-range-slider:disabled .wb-range-slider-selection {
+      background: GrayText;
+      border-color: GrayText;
+    }
+    .wb-range-slider input[type="range"]:disabled::-webkit-slider-thumb {
+      background: GrayText;
+      border-color: GrayText;
+    }
+    .wb-range-slider input[type="range"]:disabled::-moz-range-thumb {
+      background: GrayText;
+      border-color: GrayText;
+    }
+    .wb-range-slider:disabled :is(legend, .wb-range-slider-label) {
+      color: GrayText;
+    }
+  }
+
   /* ---------- text inputs */
   .wb-input {
     width: 100%;

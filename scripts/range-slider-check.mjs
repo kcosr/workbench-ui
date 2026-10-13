@@ -10,6 +10,98 @@ const out = process.argv[3];
 if (out) mkdirSync(out, { recursive: true });
 const browser = await chromium.launch();
 const results = [];
+
+// Browser-native PNG decoding samples the actual painting, including vendor
+// thumb pseudo-elements whose computed styles Chromium does not expose.
+async function forcedRangePaint(track, disabled) {
+  const geometry = await track.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const input = element.querySelector("input");
+    const inputRect = input.getBoundingClientRect();
+    const selected = element
+      .querySelector(".wb-range-slider-selection")
+      .getBoundingClientRect();
+    const thumb = parseFloat(
+      getComputedStyle(input).getPropertyValue("--wb-range-thumb-size"),
+    );
+    const minimum = Number(input.min);
+    const maximum = Number(input.max);
+    const fraction =
+      minimum === maximum
+        ? 0.5
+        : (input.valueAsNumber - minimum) / (maximum - minimum);
+    const swatch = document.createElement("span");
+    swatch.style.forcedColorAdjust = "none";
+    element.append(swatch);
+    const colors = {};
+    for (const name of [
+      "Canvas",
+      "CanvasText",
+      "Highlight",
+      "ButtonText",
+      "GrayText",
+    ]) {
+      swatch.style.color = name;
+      colors[name] = getComputedStyle(swatch).color;
+    }
+    swatch.remove();
+    return {
+      rail: (thumb / 2 + selected.left - rect.left) / 2,
+      selection: selected.left - rect.left + selected.width / 2,
+      thumb:
+        inputRect.left -
+        rect.left +
+        thumb / 2 +
+        (inputRect.width - thumb) * fraction,
+      y: rect.height / 2,
+      colors,
+    };
+  });
+  const png = (await track.screenshot()).toString("base64");
+  const painted = await track.page().evaluate(
+    async ({ png, geometry }) => {
+      const bitmap = await createImageBitmap(
+        new Blob([Uint8Array.from(atob(png), (char) => char.charCodeAt(0))], {
+          type: "image/png",
+        }),
+      );
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const context = canvas.getContext("2d");
+      context.drawImage(bitmap, 0, 0);
+      const sample = (x) => [
+        ...context.getImageData(Math.round(x), Math.round(geometry.y), 1, 1)
+          .data,
+      ];
+      const result = {
+        rail: sample(geometry.rail),
+        selection: sample(geometry.selection),
+        thumb: sample(geometry.thumb),
+        expected: {},
+      };
+      for (const [name, color] of Object.entries(geometry.colors)) {
+        context.fillStyle = color;
+        context.fillRect(0, 0, 1, 1);
+        result.expected[name] = [...context.getImageData(0, 0, 1, 1).data];
+      }
+      bitmap.close();
+      return result;
+    },
+    { png, geometry },
+  );
+  for (const [part, system] of [
+    ["rail", "CanvasText"],
+    ["selection", "Highlight"],
+    ["thumb", "ButtonText"],
+  ]) {
+    expect(
+      painted[part],
+      `${disabled ? "disabled " : ""}${part} system color`,
+    ).toEqual(painted.expected[disabled ? "GrayText" : system]);
+    expect(painted[part], `${part} must contrast with Canvas`).not.toEqual(
+      painted.expected.Canvas,
+    );
+  }
+}
 try {
   for (const width of [1440, 1024]) {
     const page = await browser.newPage({ viewport: { width, height: 1000 } });
@@ -151,9 +243,31 @@ try {
           path: join(out, `range-${theme}-${width}.png`),
         });
       }
-      results.push({ theme, width, passed: true });
+      await page.emulateMedia({ forcedColors: "active" });
+      await lower.press("ArrowRight");
+      await upper.press("ArrowLeft");
+      await expect(lower).toHaveValue("1");
+      await expect(upper).toHaveValue("5");
+      for (const track of await group.locator(".wb-range-slider-track").all()) {
+        await forcedRangePaint(track, false);
+      }
+      for (const track of await disabled
+        .locator(".wb-range-slider-track")
+        .all()) {
+        await forcedRangePaint(track, true);
+      }
+      if (out) {
+        await group.screenshot({
+          path: join(out, `range-forced-${theme}-${width}.png`),
+        });
+        await disabled.screenshot({
+          path: join(out, `range-forced-disabled-${theme}-${width}.png`),
+        });
+      }
+      await page.emulateMedia({ forcedColors: "none" });
+      results.push({ theme, width, forcedColors: true, passed: true });
       console.log(
-        `ok native keyboard, focus, stable thumb/pointer scale, disabled, controlled reset, and form layout: ${theme} ${width}`,
+        `ok native keyboard, focus, stable thumb/pointer scale, disabled, controlled reset, form layout, and forced-colors painted parts: ${theme} ${width}`,
       );
     }
     expect(errors).toEqual([]);
