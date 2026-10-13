@@ -518,6 +518,8 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-checkbox`, `wb-check` (+ `-text`, `-desc`), `wb-switch` (`--sm`:
   26×16 for dense rows and table cells),
   `wb-switch-label`, `wb-form-stack`, `wb-form-row` (see below),
+  `wb-range-slider` (+ `-controls`, `-endpoint`, `-label`, `-value`, `-track`,
+  `-selection`; legend uses `wb-field-label`),
   `wb-filter`, `wb-filter-input`, `wb-filter-clear`,
   `wb-combo`, `wb-combo-input`, `wb-combo-toggle`, `wb-listbox`,
   `wb-listbox-note`, `wb-option` (`is-active`; `aria-selected`) and its
@@ -1066,7 +1068,11 @@ its compact layout.
   visible legend names the group; each visible endpoint label names its own
   control. `formatValue` supplies visible values and `aria-valuetext`, including
   units or named boundaries. Endpoints cannot cross: each slider's native
-  bounds leave at least one step between them. Tab moves between endpoints;
+  bounds leave at least one step between them. Both rails retain the full
+  value scale and show the selected interval; moving one endpoint does not
+  move the other thumb. The native input's geometry accounts for thumb width,
+  including intervals with only one available value. It shares the kit's
+  field spacing and form-row sizing. Tab moves between endpoints;
   arrows, Home, End, and platform range keys retain native browser behavior.
   Values and bounds must be finite, on the `min`/`step` grid, with positive
   `step` and `min <= lower < upper <= max`, separated by at least one step.

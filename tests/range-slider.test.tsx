@@ -136,6 +136,28 @@ describe("RangeSlider", () => {
     expect(onChange).toHaveBeenCalledWith([0.1, 0.3]);
   });
 
+  it.each([
+    [0.2, 0.3],
+    [1.1, 1.2],
+  ])("accepts a one-step decimal interval %s–%s", (min, max) => {
+    render(
+      <RangeSlider
+        label="Ratio"
+        min={min}
+        max={max}
+        step={0.1}
+        value={[min, max]}
+        onChange={() => {}}
+      />,
+    );
+    const lower = screen.getByRole("slider", { name: "Minimum" });
+    const upper = screen.getByRole("slider", { name: "Maximum" });
+    expect(lower).toHaveValue(String(min));
+    expect(lower).toHaveAttribute("max", String(min));
+    expect(upper).toHaveValue(String(max));
+    expect(upper).toHaveAttribute("min", String(max));
+  });
+
   it("keeps separate tab stops and skips disabled endpoints", async () => {
     const user = userEvent.setup();
     const { rerender } = render(

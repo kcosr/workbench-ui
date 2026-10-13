@@ -95,6 +95,49 @@ describe("form layout", () => {
   });
 });
 
+describe("range slider layout", () => {
+  it("shares field row sizing and top alignment", () => {
+    const slider = rule(forms, ".wb-form-row > .wb-range-slider");
+    expect(slider.flex).toBe(rule(forms, ".wb-form-row > .wb-field").flex);
+    expect(slider["align-self"]).toBe("flex-start");
+    expect(forms.indexOf(".wb-form-row > .wb-range-slider")).toBeGreaterThan(
+      forms.indexOf(".wb-form-row > :not(.wb-field)"),
+    );
+  });
+
+  it("spaces adjacent fields and ranges while respecting stack/row gaps", () => {
+    const adjacency =
+      ".wb-field + .wb-range-slider,\n  .wb-range-slider + .wb-field,\n  .wb-range-slider + .wb-range-slider";
+    expect(rule(forms, adjacency)["margin-top"]).toBe(
+      rule(forms, ".wb-field + .wb-field")["margin-top"],
+    );
+    const reset =
+      ".wb-form-stack > .wb-range-slider,\n  .wb-form-row > .wb-range-slider";
+    expect(rule(forms, reset)["margin-top"]).toBe("0");
+    expect(forms.indexOf(reset)).toBeGreaterThan(forms.indexOf(adjacency));
+  });
+
+  it("mutes the whole disabled group with the form-control cursor", () => {
+    expect(
+      rule(forms, '.wb-range-slider input[type="range"]:disabled').cursor,
+    ).toBe("not-allowed");
+    expect(
+      rule(
+        forms,
+        ".wb-range-slider:disabled :is(legend, .wb-range-slider-label)",
+      ).color,
+    ).toBe("var(--wb-muted)");
+    expect(rule(forms, ".wb-range-slider-value").color).toBeUndefined();
+  });
+
+  it("documents the complete range markup for CSS consumers", () => {
+    expect(readme).toContain(
+      "`wb-range-slider` (+ `-controls`, `-endpoint`, `-label`, `-value`, `-track`,",
+    );
+    expect(readme).toContain("`-selection`; legend uses `wb-field-label`)");
+  });
+});
+
 describe("small switch", () => {
   // the knob starts `inset` from the left and travels to `inset` from the right
   function geometry(base: string) {

@@ -399,6 +399,18 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
         <Button size="sm" onClick={() => setRange([0, 6])}>
           Reset capacity range
         </Button>
+        <div className="wb-form-row" data-gal="range-row">
+          <Field label="Range kind">
+            <Select options={[{ value: "capacity", label: "Capacity" }]} />
+          </Field>
+          <RangeSlider
+            label="Capacity window"
+            min={0}
+            max={6}
+            value={range}
+            onChange={setRange}
+          />
+        </div>
         <RangeSlider
           label="Fixed capacity"
           min={0}
