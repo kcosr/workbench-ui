@@ -152,6 +152,8 @@ export type {
   SwitchProps,
   TextareaProps,
 } from "./components/Form";
+export { RangeSlider } from "./components/RangeSlider";
+export type { RangeSliderProps } from "./components/RangeSlider";
 export { FilterInput } from "./components/FilterInput";
 export type { FilterInputProps } from "./components/FilterInput";
 export { Combobox } from "./components/Combobox";

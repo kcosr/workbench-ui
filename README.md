@@ -1061,6 +1061,20 @@ its compact layout.
 
 ### Forms
 
+- `RangeSlider({ label, value: [lower, upper], onChange, min, max, step? = 1, minLabel? = "Minimum", maxLabel? = "Maximum", formatValue? = String, disabled?, className? })`
+  is a controlled range with two separately labelled native sliders. Its
+  visible legend names the group; each visible endpoint label names its own
+  control. `formatValue` supplies visible values and `aria-valuetext`, including
+  units or named boundaries. Endpoints cannot cross: each slider's native
+  bounds leave at least one step between them. Tab moves between endpoints;
+  arrows, Home, End, and platform range keys retain native browser behavior.
+  Values and bounds must be finite, on the `min`/`step` grid, with positive
+  `step` and `min <= lower < upper <= max`, separated by at least one step.
+  Invalid bounds or ordering throw `RangeError`. Use integer indices for named
+  bands, mapping the endpoints to labels in `formatValue`; the component does
+  not assign inclusive/exclusive semantics. It has no internal value state.
+  `#/components` demonstrates editable and disabled ranges in both themes.
+
 - `Field({ label, hint?, error?, optional?, id? })` wires `id`,
   `aria-describedby` and `aria-invalid` into the control inside.
 - `Input({ inputSize?, mono?, numeric? })`, `Textarea({ mono? })`,
@@ -1396,6 +1410,7 @@ npm run typecheck      # whole repo, then src/ alone without ambient types
 npm test               # vitest + Testing Library + jsdom
 npm run build:gallery  # static gallery in gallery/dist
 npm run format:check   # Prettier defaults
+node scripts/range-slider-check.mjs http://127.0.0.1:5190/ <dir> # native range keyboard and pointer checks
 node scripts/shots.mjs http://127.0.0.1:5190/ <dir>   # Playwright screenshots
 node scripts/layout-check.mjs          # Chromium checks: table widths, toolbar split
 node scripts/interaction-check.mjs http://127.0.0.1:5190/ <dir> # drawer resize/persistence and palette steps, both themes

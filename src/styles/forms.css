@@ -81,6 +81,53 @@
     margin-top: 0;
   }
 
+  /* ---------- paired range inputs */
+  .wb-range-slider {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .wb-range-slider > legend {
+    padding: 0;
+    margin-bottom: 8px;
+  }
+  .wb-range-slider-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    gap: 12px 20px;
+  }
+  .wb-range-slider-endpoint {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 4px;
+  }
+  .wb-range-slider-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 12px;
+    color: var(--wb-fg-2);
+    font-size: var(--wb-fs-12);
+    overflow-wrap: anywhere;
+  }
+  .wb-range-slider input[type="range"] {
+    width: 100%;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    accent-color: var(--wb-accent);
+    cursor: pointer;
+  }
+  .wb-range-slider input[type="range"]:disabled {
+    cursor: default;
+  }
+  .wb-range-slider:disabled .wb-range-slider-label {
+    color: var(--wb-muted);
+  }
+
   /* ---------- text inputs */
   .wb-input {
     width: 100%;

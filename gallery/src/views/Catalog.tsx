@@ -29,6 +29,7 @@ import {
   Modal,
   Popover,
   ProgressBar,
+  RangeSlider,
   Rows,
   Seg,
   SegLinks,
@@ -119,6 +120,7 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
   const [tab, setTab] = useState("overview");
   const [detached, setDetached] = useState("summary");
   const [q, setQ] = useState("");
+  const [range, setRange] = useState<[number, number]>([1, 5]);
   const [one, setOne] = useState<string | null>("github");
   const [many, setMany] = useState<string[]>(["jira", "slack"]);
   const [filter, setFilter] = useState<string | null>(null);
@@ -380,6 +382,31 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
           <Switch label="Enabled" defaultChecked />
           <Switch label="Off" />
         </div>
+      </Section>
+      <Section title="Range sliders">
+        <RangeSlider
+          label="Capacity band"
+          min={0}
+          max={6}
+          value={range}
+          onChange={setRange}
+          minLabel="Lower boundary"
+          maxLabel="Upper boundary"
+          formatValue={(value) =>
+            value === 6 ? "No upper limit" : `${value * 50} units`
+          }
+        />
+        <Button size="sm" onClick={() => setRange([0, 6])}>
+          Reset capacity range
+        </Button>
+        <RangeSlider
+          label="Fixed capacity"
+          min={0}
+          max={6}
+          value={[2, 4]}
+          onChange={() => {}}
+          disabled
+        />
       </Section>
       <Section title="Form layout, small switch, text links">
         <fieldset className="wb-form-stack" data-gal="form-stack">
