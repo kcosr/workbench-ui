@@ -53,6 +53,7 @@ async function forcedRangePaint(track, disabled) {
         rect.left +
         thumb / 2 +
         (inputRect.width - thumb) * fraction,
+      width: rect.width,
       y: rect.height / 2,
       colors,
     };
@@ -68,14 +69,21 @@ async function forcedRangePaint(track, disabled) {
       const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
       const context = canvas.getContext("2d");
       context.drawImage(bitmap, 0, 0);
-      const sample = (x) => [
-        ...context.getImageData(Math.round(x), Math.round(geometry.y), 1, 1)
-          .data,
+      const sample = (x, y = geometry.y) => [
+        ...context.getImageData(Math.round(x), Math.round(y), 1, 1).data,
       ];
+      const offThumb =
+        geometry.thumb + 20 < geometry.width
+          ? geometry.thumb + 20
+          : geometry.thumb - 20;
       const result = {
         rail: sample(geometry.rail),
         selection: sample(geometry.selection),
-        thumb: sample(geometry.thumb),
+        // Six pixels above the rail is inside the 16px thumb circle, but
+        // outside both the rail and selection. The centre row cannot prove
+        // thumb visibility when their system colors coincide.
+        thumb: sample(geometry.thumb, geometry.y - 6),
+        offThumb: sample(offThumb, geometry.y - 6),
         expected: {},
       };
       for (const [name, color] of Object.entries(geometry.colors)) {
@@ -87,6 +95,9 @@ async function forcedRangePaint(track, disabled) {
       return result;
     },
     { png, geometry },
+  );
+  expect(painted.offThumb, "off-thumb pixel must be Canvas").toEqual(
+    painted.expected.Canvas,
   );
   for (const [part, system] of [
     ["rail", "CanvasText"],
@@ -264,10 +275,44 @@ try {
           path: join(out, `range-forced-disabled-${theme}-${width}.png`),
         });
       }
+      // Mutation probe: every enabled/disabled thumb must be detected when
+      // hidden, even where rail and thumb normally share one system color.
+      const hiddenThumbs = await page.addStyleTag({
+        content: `
+        @media (forced-colors: active) {
+          .wb-range-slider input[type="range"]::-webkit-slider-thumb {
+            background: transparent !important;
+            border-color: transparent !important;
+          }
+        }
+      `,
+      });
+      try {
+        for (const [target, isDisabled] of [
+          [group, false],
+          [disabled, true],
+        ]) {
+          for (const track of await target
+            .locator(".wb-range-slider-track")
+            .all()) {
+            await expect(forcedRangePaint(track, isDisabled)).rejects.toThrow(
+              /thumb system color/,
+            );
+          }
+        }
+      } finally {
+        await hiddenThumbs.evaluate((element) => element.remove());
+      }
       await page.emulateMedia({ forcedColors: "none" });
-      results.push({ theme, width, forcedColors: true, passed: true });
+      results.push({
+        theme,
+        width,
+        forcedColors: true,
+        hiddenThumbsRejected: 4,
+        passed: true,
+      });
       console.log(
-        `ok native keyboard, focus, stable thumb/pointer scale, disabled, controlled reset, form layout, and forced-colors painted parts: ${theme} ${width}`,
+        `ok native keyboard, focus, stable thumb/pointer scale, disabled, controlled reset, form layout, forced-colors painted parts, and hidden-thumb mutation: ${theme} ${width}`,
       );
     }
     expect(errors).toEqual([]);
