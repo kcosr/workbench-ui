@@ -261,6 +261,59 @@ describe("CopyBlock: copying", () => {
     rerender(<CopyBlock text="second" label="Copy value" />);
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
+
+  describe("a write still pending when the text changes", () => {
+    function setup() {
+      vi.useFakeTimers();
+      const pending: Array<{ resolve: () => void; reject: () => void }> = [];
+      stubClipboard(
+        () =>
+          new Promise<void>((resolve, reject) =>
+            pending.push({
+              resolve,
+              reject: () => reject(new Error("denied")),
+            }),
+          ),
+      );
+      const ui = (text: string) => (
+        <>
+          <button>Elsewhere</button>
+          <CopyBlock text={text} label="Copy value" />
+        </>
+      );
+      const { container, rerender } = render(ui("first"));
+      fireEvent.click(screen.getByRole("button", { name: "Copy value" }));
+      rerender(ui("second"));
+      const elsewhere = screen.getByRole("button", { name: "Elsewhere" });
+      act(() => elsewhere.focus());
+      const block = container.querySelector(".wb-copy");
+      // Settling must not schedule a revert timer (jsdom's focus may own one).
+      const timers = vi.getTimerCount();
+      return { pending, elsewhere, block, timers };
+    }
+
+    it("a late rejection leaves focus, selection and status alone", async () => {
+      const { pending, elsewhere, block, timers } = setup();
+      await act(async () => pending[0]?.reject());
+      expect(elsewhere).toHaveFocus();
+      expect(selectedText()).toBe("");
+      expect(screen.getByRole("status")).toBeEmptyDOMElement();
+      expect(block).not.toHaveClass("is-manual");
+      expect(vi.getTimerCount()).toBe(timers);
+    });
+
+    it("a late success does not report the new text as copied", async () => {
+      const { pending, elsewhere, block, timers } = setup();
+      await act(async () => pending[0]?.resolve());
+      expect(screen.getByRole("status")).toBeEmptyDOMElement();
+      expect(block).not.toHaveClass("is-copied");
+      expect(
+        shownIcon(screen.getByRole("button", { name: "Copy value" })),
+      ).toBe(iconMarkup("copy"));
+      expect(elsewhere).toHaveFocus();
+      expect(vi.getTimerCount()).toBe(timers);
+    });
+  });
 });
 
 describe("CopyBlock: cleanup", () => {
