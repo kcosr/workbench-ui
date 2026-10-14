@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Exercise the gallery's shared palette steps, optional AppShell drawer,
-// toast pause/dismiss, useConfirm and sidebar reveal in Chromium. Start the
-// gallery first; an optional output directory retains shots.
+// toast pause/dismiss, useConfirm, copy blocks (scrolling, wrapped and
+// fallback) and sidebar reveal in Chromium. Start the gallery first; an
+// optional output directory retains shots.
 // Usage: node scripts/interaction-check.mjs [baseUrl] [outDir]
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -31,6 +32,8 @@ try {
     // Isolated preferences make both theme runs deterministic, including reset.
     const context = await browser.newContext({
       viewport: { width: 1920, height: 1080 },
+      // Copy blocks write to the real clipboard; the check reads it back.
+      permissions: ["clipboard-read", "clipboard-write"],
     });
     page = await context.newPage();
     const errors = [];
@@ -255,6 +258,136 @@ try {
     await expect(toastEl).toHaveText("Kept octo/atlas");
     record(
       "useConfirm stays pending (not dismissible), resolves true after the action, false on Esc",
+    );
+
+    // CopyBlock: the clipboard receives the exact text and "Copied" reverts;
+    // one long line scrolls rather than wrapping; Ctrl/⌘ A selects only the
+    // focused block; a rejected write selects the text for a keyboard copy.
+    const column = page.locator(`.gal-col[data-theme="${theme}"]`);
+    const copyBlock = (label) =>
+      column.locator(".wb-copy", {
+        has: page.getByRole("button", { name: label, exact: true }),
+      });
+    const clipboard = () => page.evaluate(() => navigator.clipboard.readText());
+    const selection = () =>
+      page.evaluate(() => document.getSelection()?.toString() ?? "");
+    const urlBlock = copyBlock("Copy server URL");
+    await urlBlock.scrollIntoViewIfNeeded();
+    await urlBlock.getByRole("button").click();
+    await expect(urlBlock.getByRole("status")).toHaveText("Copied");
+    await expect(urlBlock).toHaveClass(/\bis-copied\b/);
+    expect(await clipboard()).toBe("https://server.example.com/v1");
+    await shot(`${theme}-copy-block-copied`);
+    await expect(urlBlock.getByRole("status")).toHaveText("", {
+      timeout: 3000,
+    });
+    await expect(urlBlock).not.toHaveClass(/\bis-copied\b/);
+    record("copy block writes the clipboard, shows Copied, then reverts");
+
+    const commandBlock = copyBlock("Copy command");
+    const commandText = commandBlock.locator("code.wb-copy-text");
+    const line = await commandText.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const tops = new Set(
+        [...range.getClientRects()].map((r) => Math.round(r.top)),
+      );
+      return {
+        lines: tops.size,
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+        font: getComputedStyle(el).fontFamily,
+      };
+    });
+    expect(line.lines).toBe(1);
+    expect(line.scrollWidth).toBeGreaterThan(line.clientWidth);
+    expect(line.font).toContain("JetBrains Mono");
+    const blockBox = await commandBlock.boundingBox();
+    const columnBox = await column.boundingBox();
+    expect(blockBox.x + blockBox.width).toBeLessThanOrEqual(
+      columnBox.x + columnBox.width,
+    );
+    await commandText.focus();
+    await page.keyboard.press("ControlOrMeta+A");
+    expect(await selection()).toBe(await commandText.textContent());
+    record("a long line scrolls in one line; Ctrl/⌘ A selects only it");
+
+    // wrap: the same long command wraps inside the block with no horizontal
+    // overflow, the button stays beside its first line, and both the button
+    // and a keyboard copy of the selection give the exact text.
+    const lineBoxes = (locator) =>
+      locator.evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const rects = [...range.getClientRects()].sort((a, b) => a.top - b.top);
+        return {
+          lines: new Set(rects.map((r) => Math.round(r.top))).size,
+          firstLineMid: (rects[0].top + rects[0].bottom) / 2,
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+        };
+      });
+    const wrappedBlock = copyBlock("Copy wrapped command");
+    const wrappedText = wrappedBlock.locator("code.wb-copy-text");
+    const wrappedValue = await wrappedText.textContent();
+    expect(wrappedValue).toBe(await commandText.textContent());
+    const wrapped = await lineBoxes(wrappedText);
+    expect(wrapped.lines).toBeGreaterThan(1);
+    expect(wrapped.scrollWidth).toBeLessThanOrEqual(wrapped.clientWidth);
+    const wrapButton = await wrappedBlock.getByRole("button").boundingBox();
+    expect(
+      Math.abs(wrapButton.y + wrapButton.height / 2 - wrapped.firstLineMid),
+    ).toBeLessThanOrEqual(3);
+    await wrappedBlock.getByRole("button").click();
+    await expect(wrappedBlock.getByRole("status")).toHaveText("Copied");
+    expect(await clipboard()).toBe(wrappedValue);
+    await page.evaluate(() => navigator.clipboard.writeText("placeholder"));
+    await wrappedText.focus();
+    await page.keyboard.press("ControlOrMeta+A");
+    expect(await selection()).toBe(wrappedValue);
+    await page.keyboard.press("ControlOrMeta+C");
+    expect(await clipboard()).toBe(wrappedValue);
+    await shot(`${theme}-copy-block-wrapped`);
+
+    const envBlock = copyBlock("Copy environment file");
+    const envText = envBlock.locator("pre.wb-copy-text");
+    const envValue = await envText.textContent();
+    expect(envValue.split("\n")).toHaveLength(3);
+    const env = await lineBoxes(envText);
+    expect(env.lines).toBeGreaterThan(3);
+    expect(env.scrollWidth).toBeLessThanOrEqual(env.clientWidth);
+    await envBlock.getByRole("button").click();
+    await expect(envBlock.getByRole("status")).toHaveText("Copied");
+    expect(await clipboard()).toBe(envValue);
+    record(
+      "wrap: long lines wrap without horizontal overflow, the button stays on line one, copies are exact",
+    );
+
+    await page.evaluate(() => {
+      navigator.clipboard.writeText = () =>
+        Promise.reject(
+          new DOMException("Write permission denied.", "NotAllowedError"),
+        );
+    });
+    const configBlock = copyBlock("Copy config file");
+    const configText = configBlock.locator("pre.wb-copy-text");
+    const config = await configText.textContent();
+    expect(config.split("\n")).toHaveLength(4);
+    await configBlock.getByRole("button").click();
+    await expect(configBlock.getByRole("status")).toHaveText(
+      /^Press (Ctrl\+C|⌘C) to copy$/,
+    );
+    await expect(configText).toBeFocused();
+    expect(await selection()).toBe(config);
+    await shot(`${theme}-copy-block-manual`);
+    await page.keyboard.press("ControlOrMeta+C");
+    expect(await clipboard()).toBe(config);
+    await page.evaluate(() => delete navigator.clipboard.writeText);
+    await expect(configBlock.getByRole("status")).toHaveText("", {
+      timeout: 5000,
+    });
+    record(
+      "a rejected write selects the text, the keyboard copies it, the hint reverts",
     );
 
     // showSidebar: "s" reveals a collapsed sidebar and focuses its search;
