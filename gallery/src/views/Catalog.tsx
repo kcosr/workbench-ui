@@ -12,6 +12,7 @@ import {
   ChipToggle,
   Combobox,
   ConfirmDialog,
+  CopyBlock,
   EmptyState,
   ErrorState,
   Field,
@@ -669,7 +670,16 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
   );
 }
 
-/** Small patterns: indicator dot, token entry, small switch, status links, names, one-row card header. */
+const EXAMPLE_COMMAND =
+  'curl --fail --silent --show-error --header "Authorization: Bearer $API_KEY" "https://server.example.com/v1/items?limit=100&include=owner,labels,history"';
+const EXAMPLE_CONFIG = [
+  "[server]",
+  'url = "https://server.example.com/v1"',
+  'api_key_env = "API_KEY"',
+  "timeout_seconds = 30",
+].join("\n");
+
+/** Small patterns: indicator dot, token entry, small switch, status links, names, copy blocks, one-row card header. */
 function SmallPatterns() {
   const [emails, setEmails] = useState<string[]>(["alice@example.com"]);
   const [branchQ, setBranchQ] = useState("");
@@ -745,6 +755,14 @@ function SmallPatterns() {
             </div>
           ))}
         </div>
+      </Section>
+      <Section title="Copy blocks">
+        <CopyBlock
+          text="https://server.example.com/v1"
+          label="Copy server URL"
+        />
+        <CopyBlock text={EXAMPLE_COMMAND} label="Copy command" />
+        <CopyBlock multiline text={EXAMPLE_CONFIG} label="Copy config file" />
       </Section>
       <Section title="Media frames">
         <MediaFrame

@@ -612,7 +612,9 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-settings-sec` with `-head`, `-titles`, `-title`, `-desc`, `-body`;
   `wb-settings-row` (`--top`), `wb-settings-label`, `wb-settings-help`,
   `wb-settings-control` (`--stack`), `wb-settings-actions`; `wb-code`
-  (`--nowrap`), `wb-code-key`, `wb-disclosure`, `wb-label-caps`.
+  (`--nowrap`), `wb-code-key`, `wb-copy` (`--multiline`; `is-copied`,
+  `is-manual`) with `-text`, `-actions`, `-status`, `-btn`; `wb-disclosure`,
+  `wb-label-caps`.
 - **Tones:** `wb-tone-neutral | info | success | warning | danger | muted`
   set `--wb-tone`, `--wb-tone-text`, `--wb-tone-weak`, `--wb-tone-border` on
   the element; badges, pills, dots, banners, meters, row icons, empty-state
@@ -1354,6 +1356,26 @@ Every list: `SkeletonRows` while loading, `EmptyState` when empty (with a
   and subtitle), `Tile({ label, value, unit?, delta?: { value, direction?, good?, vs? }, spark? })`
   (inside `.wb-tiles`: 4 across, 2 when main <860px, 1 when <560px).
 - `Disclosure({ summary, defaultOpen? })` — e.g. raw JSON in a drawer.
+- `CopyBlock({ text, label, multiline?, className? })` — monospace text with
+  a copy button, for a command, a server URL, an API key or a config file.
+  `text` is exactly what is shown and copied. One line by default: it scrolls
+  horizontally instead of wrapping or truncating, so a long command stays
+  whole. `multiline` renders a `<pre>` that keeps line breaks and scrolls on
+  its own (320px tall at most). `label` is the button's accessible name and
+  tooltip ("Copy server URL"); it never changes. The button writes
+  `navigator.clipboard.writeText(text)`; on success its icon turns into a
+  check with "Copied" beside it for 2s. If the Clipboard API is missing (an
+  insecure origin) or the write is rejected, nothing throws: the block focuses
+  and selects its text and shows "Press Ctrl+C to copy" (⌘C on macOS) for 4s.
+  These states are announced through a polite live region. The text is
+  focusable, so arrows scroll it, and Ctrl/⌘ A selects only this block. The
+  component only displays what it is given; deciding whether a value may be
+  shown is the application's job.
+
+```tsx
+<CopyBlock text={serverUrl} label="Copy server URL" />
+<CopyBlock multiline text={configFile} label="Copy config file" />
+```
 
 ### Helpers
 
@@ -1404,6 +1426,7 @@ Every list: `SkeletonRows` while loading, `EmptyState` when empty (with a
 | ←/→, Home/End         | tabs, sidebar separator  | switch tab / resize the sidebar                            |
 | ↑/↓, Enter, Backspace | combobox, menu, palette  | move, choose, remove last chip                             |
 | Home/End, PgUp/PgDn   | open combobox list       | first/last option, ±10                                     |
+| Ctrl/⌘ A              | focused copy-block text  | select only that block's text                              |
 
 One document-level Escape handler closes the top-most registered layer
 (`useLayer`). Layers nested in the React tree always sit above their
@@ -1469,7 +1492,7 @@ npm run build:gallery  # static gallery in gallery/dist
 npm run format:check   # Prettier defaults
 node scripts/shots.mjs http://127.0.0.1:5190/ <dir>   # Playwright screenshots
 node scripts/layout-check.mjs          # Chromium checks: table widths, toolbar split
-node scripts/interaction-check.mjs http://127.0.0.1:5190/ <dir> # drawer resize/persistence and palette steps, both themes
+node scripts/interaction-check.mjs http://127.0.0.1:5190/ <dir> # drawer resize/persistence, palette steps and copy blocks, both themes
 ```
 
 `scripts/layout-check.mjs` measures the gallery's hidden layout lab
@@ -1478,8 +1501,10 @@ and crowded toolbars at main 552/1012/1400px) and the toolbar
 split next to a drawer; run it (dev server up) after touching table or
 toolbar CSS. `scripts/interaction-check.mjs` exercises the gallery in light and
 dark Chromium: pointer/keyboard drawer resizing, cancel/reset/persistence,
-viewport fitting at 1024px, and the palette drill-down/back/navigation flow.
-Its optional output directory retains screenshots and a JSON result summary.
+viewport fitting at 1024px, the palette drill-down/back/navigation flow, and
+copy blocks against the real clipboard (copy and revert, one scrolling line,
+Ctrl/⌘ A, and the selection fallback after a rejected write). Its optional
+output directory retains screenshots and a JSON result summary.
 
 Gallery URLs accept `?theme=light|dark` (before the `#`), and the sample app
 reads `#/?item=ev-4819` (drawer), `?modal=new`, `?palette=1`,
