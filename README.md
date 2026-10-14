@@ -612,7 +612,7 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-settings-sec` with `-head`, `-titles`, `-title`, `-desc`, `-body`;
   `wb-settings-row` (`--top`), `wb-settings-label`, `wb-settings-help`,
   `wb-settings-control` (`--stack`), `wb-settings-actions`; `wb-code`
-  (`--nowrap`), `wb-code-key`, `wb-copy` (`--multiline`; `is-copied`,
+  (`--nowrap`), `wb-code-key`, `wb-copy` (`--multiline`, `--wrap`; `is-copied`,
   `is-manual`) with `-text`, `-actions`, `-status`, `-btn`; `wb-disclosure`,
   `wb-label-caps`.
 - **Tones:** `wb-tone-neutral | info | success | warning | danger | muted`
@@ -1356,12 +1356,19 @@ Every list: `SkeletonRows` while loading, `EmptyState` when empty (with a
   and subtitle), `Tile({ label, value, unit?, delta?: { value, direction?, good?, vs? }, spark? })`
   (inside `.wb-tiles`: 4 across, 2 when main <860px, 1 when <560px).
 - `Disclosure({ summary, defaultOpen? })` — e.g. raw JSON in a drawer.
-- `CopyBlock({ text, label, multiline?, className? })` — monospace text with
-  a copy button, for a command, a server URL, an API key or a config file.
-  `text` is exactly what is shown and copied. One line by default: it scrolls
-  horizontally instead of wrapping or truncating, so a long command stays
-  whole. `multiline` renders a `<pre>` that keeps line breaks and scrolls on
-  its own (320px tall at most). `label` is the button's accessible name and
+- `CopyBlock({ text, label, multiline?, wrap?, className? })` — monospace
+  text with a copy button, for a command, a server URL, an API key or a config
+  file. `text` is exactly what is shown and copied. One line by default: it
+  scrolls horizontally instead of wrapping or truncating, so a long command
+  stays whole. `multiline` renders a `<pre>` that keeps line breaks and
+  scrolls on its own (320px tall at most). `wrap` wraps long lines inside the
+  block instead (at spaces, or anywhere when a word does not fit), so the
+  whole value stays visible; use it where a long value may be cut off with no
+  cue, as overlay scrollbars show none until scrolled. It applies to
+  multiline blocks too: line breaks in `text` are kept, long lines wrap, and
+  only vertical scrolling remains. The button stays beside the first line.
+  Wrapping is visual only: the button and a selection copy `text` without
+  added line breaks. `label` is the button's accessible name and
   tooltip ("Copy server URL"); it never changes. The button writes
   `navigator.clipboard.writeText(text)`; on success its icon turns into a
   check with "Copied" beside it for 2s. If the Clipboard API is missing (an
@@ -1374,6 +1381,7 @@ Every list: `SkeletonRows` while loading, `EmptyState` when empty (with a
 
 ```tsx
 <CopyBlock text={serverUrl} label="Copy server URL" />
+<CopyBlock wrap text={installCommand} label="Copy install command" />
 <CopyBlock multiline text={configFile} label="Copy config file" />
 ```
 
@@ -1503,7 +1511,8 @@ toolbar CSS. `scripts/interaction-check.mjs` exercises the gallery in light and
 dark Chromium: pointer/keyboard drawer resizing, cancel/reset/persistence,
 viewport fitting at 1024px, the palette drill-down/back/navigation flow, and
 copy blocks against the real clipboard (copy and revert, one scrolling line,
-Ctrl/⌘ A, and the selection fallback after a rejected write). Its optional
+wrapped lines without horizontal overflow, Ctrl/⌘ A, and the selection
+fallback after a rejected write). Its optional
 output directory retains screenshots and a JSON result summary.
 
 Gallery URLs accept `?theme=light|dark` (before the `#`), and the sample app

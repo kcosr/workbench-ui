@@ -678,6 +678,11 @@ const EXAMPLE_CONFIG = [
   'api_key_env = "API_KEY"',
   "timeout_seconds = 30",
 ].join("\n");
+const EXAMPLE_ENV = [
+  "# Paste into the shell profile",
+  'export SERVER_URL="https://server.example.com/v1"',
+  'export SERVER_HEADERS="Authorization=Bearer $API_KEY,Accept=application/json,X-Request-Source=command-line-example,X-Request-Tags=nightly,batch,retry-on-timeout"',
+].join("\n");
 
 /** Small patterns: indicator dot, token entry, small switch, status links, names, copy blocks, one-row card header. */
 function SmallPatterns() {
@@ -763,6 +768,13 @@ function SmallPatterns() {
         />
         <CopyBlock text={EXAMPLE_COMMAND} label="Copy command" />
         <CopyBlock multiline text={EXAMPLE_CONFIG} label="Copy config file" />
+        <CopyBlock wrap text={EXAMPLE_COMMAND} label="Copy wrapped command" />
+        <CopyBlock
+          multiline
+          wrap
+          text={EXAMPLE_ENV}
+          label="Copy environment file"
+        />
       </Section>
       <Section title="Media frames">
         <MediaFrame

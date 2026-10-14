@@ -9,6 +9,8 @@ const URL_TEXT = "https://server.example.com/v1";
 const CONFIG =
   '[server]\nurl = "https://server.example.com/v1"\n  timeout_seconds = 30\n';
 const MANUAL_HINT = "Press Ctrl+C to copy";
+const LONG_COMMAND =
+  'curl --fail --header "Authorization: Bearer $API_KEY" "https://server.example.com/v1/items?limit=100&include=owner,labels,history"';
 
 /** jsdom has no Clipboard API; tests install one where they need it. */
 function stubClipboard(writeText: (text: string) => Promise<void>) {
@@ -66,6 +68,27 @@ describe("CopyBlock: rendering", () => {
     expect(container.querySelector("code")).toBeNull();
   });
 
+  it("wraps only when asked, in single-line and multiline blocks", () => {
+    const { container, rerender } = render(
+      <CopyBlock text={LONG_COMMAND} label="Copy command" />,
+    );
+    const root = container.firstElementChild;
+    expect(root).not.toHaveClass("wb-copy--wrap");
+    rerender(<CopyBlock wrap text={LONG_COMMAND} label="Copy command" />);
+    expect(root).toHaveClass("wb-copy", "wb-copy--wrap");
+    expect(root).not.toHaveClass("wb-copy--multiline");
+    expect(container.querySelector("code.wb-copy-text")?.textContent).toBe(
+      LONG_COMMAND,
+    );
+    rerender(
+      <CopyBlock multiline wrap text={CONFIG} label="Copy config file" />,
+    );
+    expect(root).toHaveClass("wb-copy--multiline", "wb-copy--wrap");
+    expect(container.querySelector("pre.wb-copy-text")?.textContent).toBe(
+      CONFIG,
+    );
+  });
+
   it("names the button with the label and keeps an empty polite live region", () => {
     render(<CopyBlock text={URL_TEXT} label="Copy server URL" />);
     const button = screen.getByRole("button", { name: "Copy server URL" });
@@ -110,6 +133,13 @@ describe("CopyBlock: styles", () => {
     expect(pre.overflow).toBe("auto");
     expect(pre["max-height"]).toBeDefined();
   });
+
+  it("wrap breaks long lines anywhere, keeps line breaks and the button on the first line", () => {
+    const wrapped = rule(".wb-copy--wrap .wb-copy-text");
+    expect(wrapped["white-space"]).toBe("pre-wrap");
+    expect(wrapped["overflow-wrap"]).toBe("anywhere");
+    expect(rule(".wb-copy--wrap")["align-items"]).toBe("flex-start");
+  });
 });
 
 describe("CopyBlock: copying", () => {
@@ -141,6 +171,22 @@ describe("CopyBlock: copying", () => {
     expect(container.firstElementChild).not.toHaveClass("is-copied");
     expect(shownIcon(button)).toBe(iconMarkup("copy"));
     expect(screen.getByRole("status")).toBe(status);
+  });
+
+  it("copies wrapped text exactly, with no line breaks added", async () => {
+    const writeText = vi.fn((_text: string) => Promise.resolve());
+    stubClipboard(writeText);
+    const { container } = render(
+      <CopyBlock wrap text={LONG_COMMAND} label="Copy command" />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Copy command" }));
+    await flush();
+    expect(writeText).toHaveBeenCalledExactlyOnceWith(LONG_COMMAND);
+    expect(screen.getByRole("status")).toHaveTextContent("Copied");
+    const code = container.querySelector("code");
+    if (!code) throw new Error("no code element");
+    expect(fireEvent.keyDown(code, { key: "a", ctrlKey: true })).toBe(false);
+    expect(selectedText()).toBe(LONG_COMMAND);
   });
 
   it("copying again restarts the two seconds", async () => {
