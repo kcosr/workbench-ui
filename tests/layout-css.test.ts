@@ -148,3 +148,20 @@ describe("disabled wb-link", () => {
     expect(disabled.cursor).toBe("default");
   });
 });
+
+describe("draft bar tones", () => {
+  const states = read("states.css");
+
+  it("warns by default and stays neutral while nothing needs attention", () => {
+    expect(rule(states, ".wb-draftbar").background).toBe(
+      "var(--wb-warning-weak)",
+    );
+    const neutral = rule(states, ".wb-draftbar--neutral");
+    expect(neutral["border-top-color"]).toBe("var(--wb-border)");
+    expect(neutral.background).toBe("var(--wb-surface)");
+    expect(rule(states, ".wb-draftbar--neutral > .wb-icon").color).toBe(
+      "var(--wb-muted)",
+    );
+    expect(readme).toContain("`wb-draftbar` (`--neutral`)");
+  });
+});
