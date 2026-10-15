@@ -589,6 +589,8 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-checkbox`, `wb-check` (+ `-text`, `-desc`), `wb-switch` (`--sm`:
   26×16 for dense rows and table cells),
   `wb-switch-label`, `wb-form-stack`, `wb-form-row` (see below),
+  `wb-range-slider` (+ `-controls`, `-endpoint`, `-label`, `-value`, `-track`,
+  `-selection`; legend uses `wb-field-label`),
   `wb-filter`, `wb-filter-input`, `wb-filter-clear`,
   `wb-combo`, `wb-combo-input`, `wb-combo-toggle`, `wb-listbox`,
   `wb-listbox-note`, `wb-option` (`is-active`; `aria-selected`) and its
@@ -1135,6 +1137,24 @@ its compact layout.
 
 ### Forms
 
+- `RangeSlider({ label, value: [lower, upper], onChange, min, max, step? = 1, minLabel? = "Minimum", maxLabel? = "Maximum", formatValue? = String, disabled?, className? })`
+  is a controlled range with two separately labelled native sliders. Its
+  visible legend names the group; each visible endpoint label names its own
+  control. `formatValue` supplies visible values and `aria-valuetext`, including
+  units or named boundaries. Endpoints cannot cross: each slider's native
+  bounds leave at least one step between them. Both rails retain the full
+  value scale and show the selected interval; moving one endpoint does not
+  move the other thumb. The native input's geometry accounts for thumb width,
+  including intervals with only one available value. It shares the kit's
+  field spacing and form-row sizing. Tab moves between endpoints;
+  arrows, Home, End, and platform range keys retain native browser behavior.
+  Values and bounds must be finite, on the `min`/`step` grid, with positive
+  `step` and `min <= lower < upper <= max`, separated by at least one step.
+  Invalid bounds or ordering throw `RangeError`. Use integer indices for named
+  bands, mapping the endpoints to labels in `formatValue`; the component does
+  not assign inclusive/exclusive semantics. It has no internal value state.
+  `#/components` demonstrates editable and disabled ranges in both themes.
+
 - `Field({ label, hint?, error?, optional?, id? })` wires `id`,
   `aria-describedby` and `aria-invalid` into the control inside.
 - `Input({ inputSize?, mono?, numeric? })`, `Textarea({ mono? })`,
@@ -1502,6 +1522,7 @@ npm run typecheck      # whole repo, then src/ alone without ambient types
 npm test               # vitest + Testing Library + jsdom
 npm run build:gallery  # static gallery in gallery/dist
 npm run format:check   # Prettier defaults
+node scripts/range-slider-check.mjs http://127.0.0.1:5190/ <dir> # native range keyboard and pointer checks
 node scripts/shots.mjs http://127.0.0.1:5190/ <dir>   # Playwright screenshots
 node scripts/layout-check.mjs          # Chromium checks: table widths, toolbar split
 node scripts/interaction-check.mjs http://127.0.0.1:5190/ <dir> # drawer resize/persistence, palette steps and copy blocks, both themes
