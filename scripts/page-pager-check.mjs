@@ -16,6 +16,7 @@ try {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(new URL("#/components", base).href);
+    await page.clock.install();
     for (const theme of ["light", "dark"]) {
       const pager = page.getByRole("navigation", {
         name: `${theme} example pagination`,
@@ -42,9 +43,35 @@ try {
       });
       for (const control of await loading.getByRole("link").all()) {
         await expect(control).toHaveAttribute("aria-disabled", "true");
-        await expect(control).not.toHaveAttribute("href");
+        await expect(control).toHaveAttribute("tabindex", "-1");
       }
-      for (const target of [pager, loading]) {
+      const linkPager = page.getByRole("navigation", {
+        name: `${theme} link pagination`,
+      });
+      const linkNext = linkPager.getByRole("link", { name: "Next" });
+      const originalNext = await linkNext.elementHandle();
+      for (const range of ["51–100 of 150 records", "101–150 of 150 records"]) {
+        await linkNext.press("Enter");
+        await expect(linkPager.getByText("Loading…")).toBeVisible();
+        await expect(linkNext).toBeFocused();
+        await expect(linkNext).toHaveAttribute("aria-disabled", "true");
+        await linkNext.press("Enter");
+        await page.clock.runFor(500);
+        await expect(linkPager.getByRole("status")).toHaveText(range);
+        await expect(linkNext).toBeFocused();
+        expect(
+          await linkNext.evaluate(
+            (element, original) => element === original,
+            originalNext,
+          ),
+        ).toBe(true);
+      }
+      await expect(linkNext).toHaveAttribute("aria-disabled", "true");
+      await linkNext.press("Enter");
+      await expect(linkPager.getByRole("status")).toHaveText(
+        "101–150 of 150 records",
+      );
+      for (const target of [pager, loading, linkPager]) {
         const fits = await target.evaluate((element) => {
           const outer = element.getBoundingClientRect();
           return [
@@ -64,7 +91,7 @@ try {
         });
       results.push({ theme, width, passed: true });
       console.log(
-        `ok bounds, keyboard, loading links and wrapping: ${theme} ${width}`,
+        `ok bounds, keyboard, router-link focus through loading/last page, disabled links and wrapping: ${theme} ${width}`,
       );
     }
     expect(errors).toEqual([]);

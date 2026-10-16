@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   AppShell,
@@ -22,6 +22,7 @@ import {
   Input,
   Kbd,
   KeyValue,
+  LinkProvider,
   LinkTabs,
   ListRow,
   Main,
@@ -59,7 +60,7 @@ import {
   useConfirm,
   useToast,
 } from "../../../src";
-import type { Tone } from "../../../src";
+import type { LinkProps, Tone } from "../../../src";
 
 const TONES: Tone[] = [
   "neutral",
@@ -115,6 +116,67 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       <h2 className="wb-label-caps">{title}</h2>
       <div className="gal-sec-body">{children}</div>
     </section>
+  );
+}
+
+const PagerNavigation = createContext<(page: number) => void>(() => {});
+
+function GalleryPageLink({ onClick, ...props }: LinkProps) {
+  const navigate = useContext(PagerNavigation);
+  return (
+    <a
+      {...props}
+      onClick={(event) => {
+        onClick?.(event);
+        if (
+          event.defaultPrevented ||
+          event.button !== 0 ||
+          event.ctrlKey ||
+          event.metaKey ||
+          event.shiftKey ||
+          event.altKey
+        )
+          return;
+        event.preventDefault();
+        navigate(Number(props.href.split("example-page=")[1]));
+      }}
+    />
+  );
+}
+
+/** A small router fixture with a delayed response for keyboard focus checks. */
+function LinkPagerExample({ theme }: { theme: string }) {
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const pending = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(pending.current), []);
+  return (
+    <PagerNavigation
+      value={(next) => {
+        setLoading(true);
+        pending.current = setTimeout(() => {
+          setPage(next);
+          setLoading(false);
+        }, 500);
+      }}
+    >
+      <LinkProvider component={GalleryPageLink}>
+        <PagePager
+          label={`${theme} link pagination`}
+          start={page * 50 + 1}
+          shown={50}
+          total={150}
+          noun="record"
+          previousHref={
+            page > 0 ? `#/components?example-page=${page - 1}` : undefined
+          }
+          nextHref={
+            page < 2 ? `#/components?example-page=${page + 1}` : undefined
+          }
+          loading={loading}
+        />
+      </LinkProvider>
+    </PagerNavigation>
   );
 }
 
@@ -180,6 +242,7 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
           nextHref="#/components?page=3"
           loading
         />
+        <LinkPagerExample theme={theme} />
       </Section>
       <Section title="Segmented control, chips">
         <Seg

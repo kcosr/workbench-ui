@@ -799,7 +799,10 @@ where it makes sense.
   inferred from the counts unless `hasPrevious`/`hasNext` are supplied.
   `loading` announces "Loading…" and blocks both controls while keeping the
   current range; `updating` announces background work without blocking
-  navigation. `disabled` blocks navigation without a loading status. Give
+  navigation. `disabled` blocks navigation without a loading status. Router
+  links remain mounted to preserve focus through loading and page bounds;
+  disabled links leave the Tab order and block mouse, keyboard, context-menu
+  and drag activation. Give
   `label` a distinct navigation landmark name when several pagers appear
   together. Filtering, sorting and resetting to the first page stay in the app.
 

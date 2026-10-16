@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode, SyntheticEvent } from "react";
 import { cx } from "../lib/cx";
 import { formatNumber } from "../lib/time";
 import { Button } from "./Button";
+import type { IconName } from "./Icon";
 import { Spinner } from "./Spinner";
 
 export interface ListPagerProps {
@@ -70,6 +71,49 @@ export interface PagePagerProps {
   className?: string | undefined;
 }
 
+/** Keep the router link mounted when paging temporarily blocks navigation. */
+function PageLink({
+  href,
+  disabled,
+  icon,
+  iconRight,
+  children,
+}: {
+  href: string | undefined;
+  disabled: boolean;
+  icon?: IconName;
+  iconRight?: IconName;
+  children: ReactNode;
+}) {
+  const blockWhenDisabled = (event: SyntheticEvent) => {
+    if (disabled) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+  return (
+    <Button
+      size="sm"
+      icon={icon}
+      iconRight={iconRight}
+      href={href ?? ""}
+      role="link"
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
+      onClickCapture={blockWhenDisabled}
+      onAuxClickCapture={blockWhenDisabled}
+      onContextMenuCapture={blockWhenDisabled}
+      onDragStartCapture={blockWhenDisabled}
+      onKeyDownCapture={(event: KeyboardEvent<HTMLAnchorElement>) => {
+        if (event.key === "Enter" || event.key === " ")
+          blockWhenDisabled(event);
+      }}
+    >
+      {children}
+    </Button>
+  );
+}
+
 /** Bounded page navigation: a result range and Previous/Next links or buttons. */
 export function PagePager({
   start,
@@ -93,10 +137,14 @@ export function PagePager({
     shown > 0
       ? `${formatNumber(start)}–${formatNumber(start + shown - 1)}`
       : "0";
+  const links = previousHref !== undefined || nextHref !== undefined;
   const previousDisabled =
-    disabled || loading || !hasPrevious || (!previousHref && !onPrevious);
+    disabled ||
+    loading ||
+    !hasPrevious ||
+    (links ? !previousHref : !onPrevious);
   const nextDisabled =
-    disabled || loading || !hasNext || (!nextHref && !onNext);
+    disabled || loading || !hasNext || (links ? !nextHref : !onNext);
   return (
     <nav className={cx("wb-page-pager", className)} aria-label={label}>
       <span className="wb-page-pager-count" role="status">
@@ -109,15 +157,14 @@ export function PagePager({
         </span>
       ) : null}
       <div className="wb-page-pager-actions">
-        {previousHref !== undefined ? (
-          <Button
-            size="sm"
+        {links ? (
+          <PageLink
             icon="chevron-left"
             href={previousHref}
             disabled={previousDisabled}
           >
             Previous
-          </Button>
+          </PageLink>
         ) : (
           <Button
             size="sm"
@@ -128,15 +175,14 @@ export function PagePager({
             Previous
           </Button>
         )}
-        {nextHref !== undefined ? (
-          <Button
-            size="sm"
+        {links ? (
+          <PageLink
             iconRight="chevron-right"
             href={nextHref}
             disabled={nextDisabled}
           >
             Next
-          </Button>
+          </PageLink>
         ) : (
           <Button
             size="sm"

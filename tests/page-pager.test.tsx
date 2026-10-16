@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { LinkProvider, PagePager } from "../src";
@@ -52,7 +52,7 @@ describe("PagePager", () => {
     );
   });
 
-  it("uses router links and removes unavailable destinations from navigation", async () => {
+  it("uses router links and blocks unavailable destinations", async () => {
     const user = userEvent.setup();
     const navigation = vi.fn();
     function RouterLink(props: LinkProps) {
@@ -81,8 +81,8 @@ describe("PagePager", () => {
     const previous = screen.getByRole("link", { name: "Previous" });
     const next = screen.getByRole("link", { name: "Next" });
     expect(previous).toHaveAttribute("aria-disabled", "true");
-    expect(previous).not.toHaveAttribute("href");
-    expect(previous).not.toHaveAttribute("data-router-link");
+    expect(previous).toHaveAttribute("tabindex", "-1");
+    expect(previous).toHaveAttribute("data-router-link", "true");
     expect(next).toHaveAttribute("href", "/records?page=2");
     expect(next).toHaveAttribute("data-router-link", "true");
     await user.click(previous);
@@ -132,8 +132,9 @@ describe("PagePager", () => {
   });
 
   it.each(["loading", "disabled"] as const)(
-    "removes both link destinations while %s",
-    (state) => {
+    "blocks mouse, keyboard and alternate link activation while %s",
+    async (state) => {
+      const user = userEvent.setup();
       render(
         <PagePager
           start={51}
@@ -145,11 +146,121 @@ describe("PagePager", () => {
         />,
       );
       for (const link of screen.getAllByRole("link")) {
-        expect(link).not.toHaveAttribute("href");
         expect(link).toHaveAttribute("aria-disabled", "true");
+        expect(link).toHaveAttribute("tabindex", "-1");
+        expect(fireEvent.click(link)).toBe(false);
+        expect(fireEvent.click(link, { ctrlKey: true })).toBe(false);
+        expect(
+          fireEvent(
+            link,
+            new MouseEvent("auxclick", {
+              bubbles: true,
+              cancelable: true,
+              button: 1,
+            }),
+          ),
+        ).toBe(false);
+        expect(fireEvent.contextMenu(link)).toBe(false);
+        expect(fireEvent.dragStart(link)).toBe(false);
+        expect(fireEvent.keyDown(link, { key: "Enter" })).toBe(false);
+        expect(fireEvent.keyDown(link, { key: " " })).toBe(false);
       }
+      await user.tab();
+      expect(document.activeElement).toBe(document.body);
     },
   );
+
+  it("preserves the same focused router link from Enter through loading and the last page", async () => {
+    const user = userEvent.setup();
+    const navigation = vi.fn();
+    let finish: () => void = () => {};
+    let begin: () => void = () => {};
+    function RouterLink(props: LinkProps) {
+      return (
+        <a
+          {...props}
+          onClick={(event) => {
+            event.preventDefault();
+            navigation(props.href);
+            begin();
+          }}
+        />
+      );
+    }
+    function Example() {
+      const [page, setPage] = useState(0);
+      const [loading, setLoading] = useState(false);
+      begin = () => setLoading(true);
+      finish = () => {
+        setPage((current) => current + 1);
+        setLoading(false);
+      };
+      return (
+        <LinkProvider component={RouterLink}>
+          <PagePager
+            start={page * 50 + 1}
+            shown={50}
+            total={150}
+            previousHref={page > 0 ? `/records?page=${page}` : undefined}
+            nextHref={page < 2 ? `/records?page=${page + 2}` : undefined}
+            loading={loading}
+          />
+        </LinkProvider>
+      );
+    }
+    render(<Example />);
+    const next = screen.getByRole("link", { name: "Next" });
+    next.focus();
+    await user.keyboard("{Enter}");
+    expect(navigation).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Loading…")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Next" })).toBe(next);
+    expect(next).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(navigation).toHaveBeenCalledTimes(1);
+    act(() => finish());
+    expect(next).toHaveFocus();
+    expect(next).toHaveAttribute("href", "/records?page=3");
+    expect(screen.getByRole("status")).toHaveTextContent("51–100 of 150 items");
+    await user.keyboard("{Enter}");
+    expect(navigation).toHaveBeenCalledTimes(2);
+    act(() => finish());
+    expect(screen.getByRole("link", { name: "Next" })).toBe(next);
+    expect(next).toHaveFocus();
+    expect(next).toHaveAttribute("aria-disabled", "true");
+    await user.keyboard("{Enter}");
+    expect(navigation).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "101–150 of 150 items",
+    );
+  });
+
+  it("leaves enabled modifier clicks, middle clicks and context menus native", () => {
+    render(
+      <PagePager
+        start={51}
+        shown={50}
+        total={230}
+        previousHref="#previous"
+        nextHref="#next"
+      />,
+    );
+    const next = screen.getByRole("link", { name: "Next" });
+    expect(fireEvent.click(next, { ctrlKey: true })).toBe(true);
+    expect(fireEvent.click(next, { metaKey: true })).toBe(true);
+    expect(
+      fireEvent(
+        next,
+        new MouseEvent("auxclick", {
+          bubbles: true,
+          cancelable: true,
+          button: 1,
+        }),
+      ),
+    ).toBe(true);
+    expect(fireEvent.contextMenu(next)).toBe(true);
+    expect(fireEvent.dragStart(next)).toBe(true);
+  });
 
   it("handles empty and singular results and irregular nouns", () => {
     const { rerender } = render(
