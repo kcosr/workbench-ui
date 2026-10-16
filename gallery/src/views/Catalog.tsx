@@ -30,6 +30,7 @@ import {
   Menu,
   Meter,
   Modal,
+  PagePager,
   Popover,
   ProgressBar,
   RangeSlider,
@@ -124,6 +125,7 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
   const [detached, setDetached] = useState("summary");
   const [q, setQ] = useState("");
   const [range, setRange] = useState<[number, number]>([1, 5]);
+  const [page, setPage] = useState(0);
   const [one, setOne] = useState<string | null>("github");
   const [many, setMany] = useState<string[]>(["jira", "slack"]);
   const [filter, setFilter] = useState<string | null>(null);
@@ -158,6 +160,26 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
           <IconButton icon="more" label="More" variant="default" />
           <IconButton icon="x" label="Close" size="sm" />
         </div>
+      </Section>
+      <Section title="Page navigation">
+        <PagePager
+          label={`${theme} example pagination`}
+          start={page * 50 + 1}
+          shown={Math.min(50, 230 - page * 50)}
+          total={230}
+          noun="record"
+          onPrevious={() => setPage((current) => current - 1)}
+          onNext={() => setPage((current) => current + 1)}
+        />
+        <PagePager
+          label={`${theme} loading pagination`}
+          start={51}
+          shown={50}
+          total={230}
+          previousHref="#/components?page=1"
+          nextHref="#/components?page=3"
+          loading
+        />
       </Section>
       <Section title="Segmented control, chips">
         <Seg

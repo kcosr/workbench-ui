@@ -83,8 +83,8 @@ export type {
   SortDir,
   SortState,
 } from "./components/Table";
-export { ListPager } from "./components/Pager";
-export type { ListPagerProps } from "./components/Pager";
+export { ListPager, PagePager } from "./components/Pager";
+export type { ListPagerProps, PagePagerProps } from "./components/Pager";
 export { Sparkline } from "./components/Sparkline";
 export type { SparklineProps } from "./components/Sparkline";
 export { QualifiedName, TruncateStart } from "./components/Text";
