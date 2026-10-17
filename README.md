@@ -564,6 +564,7 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `is-cursor`, `is-active` / `is-selected` / `aria-current`, `is-clickable`,
   `is-dim`, `is-new`; `wb-row-actions` inside cells reveal on row
   hover/focus. `wb-list-pager` (+ `-count`, `-status`, `-error`),
+  `wb-page-pager` (+ `-count`, `-status`, `-actions`),
   `wb-spark` (+ `-bar` `is-last`/`is-zero`, `-line`, `-area`, `-dot`).
 - **Drawer:** `wb-drawer` (`--wide`), `wb-drawer-body`, `wb-drawer-head`,
   `wb-drawer-top`, `wb-drawer-kicker`, `wb-drawer-close`, `wb-drawer-title`,
@@ -788,6 +789,35 @@ where it makes sense.
   word or `[one, many]`. `disabled` keeps Load more (and Retry) visible but
   unusable, e.g. while a filter change loads a new result set
   (`disabled={isFetching && !isFetchingNextPage}`).
+- `PagePager({ start, shown, total, noun?, label?, previousHref?, nextHref?, onPrevious?, onNext?, hasPrevious?, hasNext?, loading?, updating?, disabled? })`
+  — bounded page navigation: "51–100 of 230 records" and Previous/Next
+  controls. `start` is the one-based position in the matching results, or
+  zero for an empty page; `shown` is the current page size. Empty pages read
+  "0 of 0 records". `noun` accepts a word or `[one, many]`.
+  Supply hrefs for real navigation through `LinkProvider`, or callbacks for
+  local state. Unavailable controls stay visible and disabled. Bounds are
+  inferred from the counts unless `hasPrevious`/`hasNext` are supplied.
+  `loading` announces "Loading…" and blocks both controls while keeping the
+  current range; `updating` announces background work without blocking
+  navigation. `disabled` blocks navigation without a loading status. Router
+  links remain mounted to preserve focus through loading and page bounds;
+  disabled links leave the Tab order and block mouse, keyboard, context-menu
+  and drag activation. Give
+  `label` a distinct navigation landmark name when several pagers appear
+  together. Filtering, sorting and resetting to the first page stay in the app.
+
+```tsx
+<PagePager
+  label="Records pagination"
+  start={offset + 1}
+  shown={records.length}
+  total={total}
+  noun="record"
+  previousHref={previousUrl}
+  nextHref={nextUrl}
+  loading={isFetching}
+/>
+```
 
 #### Tables
 
@@ -1523,6 +1553,7 @@ npm test               # vitest + Testing Library + jsdom
 npm run build:gallery  # static gallery in gallery/dist
 npm run format:check   # Prettier defaults
 node scripts/range-slider-check.mjs http://127.0.0.1:5190/ <dir> # native range keyboard and pointer checks
+node scripts/page-pager-check.mjs http://127.0.0.1:5190/ <dir> # bounded paging, keyboard, loading links and mobile wrapping
 node scripts/shots.mjs http://127.0.0.1:5190/ <dir>   # Playwright screenshots
 node scripts/layout-check.mjs          # Chromium checks: table widths, toolbar split
 node scripts/interaction-check.mjs http://127.0.0.1:5190/ <dir> # drawer resize/persistence, palette steps and copy blocks, both themes
