@@ -50,7 +50,7 @@
     cursor: progress;
   }
   .wb-btn--primary {
-    background: var(--wb-accent);
+    background: var(--wb-accent-solid);
     border-color: transparent;
     color: var(--wb-on-accent);
   }
@@ -62,7 +62,7 @@
   .wb-btn--primary:hover,
   .wb-btn--primary:disabled:hover,
   .wb-btn--primary[aria-disabled="true"]:hover {
-    background: var(--wb-accent);
+    background: var(--wb-accent-solid);
   }
   .wb-btn--primary:not(:disabled, [aria-disabled="true"]):hover {
     filter: brightness(1.06);

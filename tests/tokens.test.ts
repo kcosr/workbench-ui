@@ -106,7 +106,7 @@ describe.each([
     },
   );
 
-  it.each(["success", "warning", "danger", "neutral"])(
+  it.each(["success", "warning", "danger", "info", "neutral"])(
     "white text on solid %s meets 4.5:1",
     (tone) => {
       expect(
@@ -114,6 +114,16 @@ describe.each([
       ).toBeGreaterThanOrEqual(4.5);
     },
   );
+
+  it("primary text meets AA on the solid accent at rest and on hover", () => {
+    const text = parse(vars["wb-on-accent"] ?? "", vars);
+    const solid = parse(vars["wb-accent-solid"] ?? "", vars);
+    const hover = solid.map((value, index) =>
+      index < 3 ? Math.min(255, value * 1.06) : value,
+    ) as RGBA;
+    expect(contrast(text, solid)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(text, hover)).toBeGreaterThanOrEqual(4.5);
+  });
 
   it.each(["wb-muted", "wb-fg-2"])(
     "%s text meets AA on page, surface, surface-2 and selected (accent-weak) backgrounds",
@@ -161,6 +171,7 @@ const PALETTE: Record<"light" | "dark", Record<string, string>> = {
     "wb-fg-2": "#52514e",
     "wb-muted": "#6a6964",
     "wb-accent": "#2a78d6",
+    "wb-accent-solid": "#2469bd",
     "wb-accent-weak": "rgba(42, 120, 214, 0.09)",
     "wb-accent-text": "#1c5cab",
     "wb-on-accent": "#fff",
@@ -211,6 +222,7 @@ const PALETTE: Record<"light" | "dark", Record<string, string>> = {
     "wb-fg-2": "#c3c2b7",
     "wb-muted": "#97958f",
     "wb-accent": "#3987e5",
+    "wb-accent-solid": "#2469bd",
     "wb-accent-weak": "rgba(57, 135, 229, 0.15)",
     "wb-accent-text": "#86b6ef",
     "wb-on-accent": "#fff",
@@ -255,7 +267,13 @@ const PALETTE: Record<"light" | "dark", Record<string, string>> = {
 // Tokens whose value is fixed by a contrast requirement, and that the README
 // and the tokens.css header state by value: muted text on the pane
 // backgrounds, white text on the solid tone fills.
-const CONTRAST_SET = ["wb-muted", "wb-success", "wb-danger", "wb-warning"];
+const CONTRAST_SET = [
+  "wb-muted",
+  "wb-success",
+  "wb-danger",
+  "wb-warning",
+  "wb-accent-solid",
+];
 
 const readme = readFileSync(resolve(__dirname, "..", "README.md"), "utf8");
 const contrastNotes = readme.slice(
