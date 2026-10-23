@@ -36,12 +36,15 @@ describe("ExpandableTextarea", () => {
     const inline = screen.getByRole("textbox", { name: "Instructions" });
     const expand = screen.getByRole("button", { name: "Expand Instructions" });
     expect(inline).toHaveAttribute("rows", "13");
+    (inline as HTMLTextAreaElement).setSelectionRange(2, 7);
     await user.click(expand);
     const dialog = screen.getByRole("dialog", { name: "Instructions" });
     const enlarged = within(dialog).getByRole("textbox", {
       name: "Instructions",
     });
     expect(enlarged).toHaveFocus();
+    expect((enlarged as HTMLTextAreaElement).selectionStart).toBe(2);
+    expect((enlarged as HTMLTextAreaElement).selectionEnd).toBe(7);
     expect(enlarged).toHaveAttribute("aria-invalid", "true");
     expect(enlarged).toHaveAccessibleDescription(
       "Required guidance is missing. Describe the task.",
@@ -49,10 +52,13 @@ describe("ExpandableTextarea", () => {
     expect(enlarged.id).not.toBe(inline.id);
     await user.clear(enlarged);
     await user.type(enlarged, "Updated instructions");
+    (enlarged as HTMLTextAreaElement).setSelectionRange(3, 10);
     expect(inline).toHaveValue("Updated instructions");
     await user.click(within(dialog).getByRole("button", { name: "Done" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(expand).toHaveFocus();
+    expect((inline as HTMLTextAreaElement).selectionStart).toBe(3);
+    expect((inline as HTMLTextAreaElement).selectionEnd).toBe(10);
     expect(onSubmit).not.toHaveBeenCalled();
     await user.click(expand);
     expect(within(screen.getByRole("dialog")).getByRole("textbox")).toHaveValue(

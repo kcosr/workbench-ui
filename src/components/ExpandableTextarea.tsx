@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Button } from "./Button";
 import { Field, Textarea } from "./Form";
@@ -29,19 +29,50 @@ export function ExpandableTextarea({
   ...props
 }: ExpandableTextareaProps) {
   const [expanded, setExpanded] = useState(false);
+  const inline = useRef<HTMLTextAreaElement | null>(null);
   const editor = useRef<HTMLTextAreaElement | null>(null);
-  const close = () => setExpanded(false);
+  const selection = useRef<{
+    start: number;
+    end: number;
+    direction: "forward" | "backward" | "none";
+    scroll: number;
+  } | null>(null);
+  const remember = (control: HTMLTextAreaElement | null) => {
+    if (control)
+      selection.current = {
+        start: control.selectionStart,
+        end: control.selectionEnd,
+        direction: control.selectionDirection,
+        scroll: control.scrollTop,
+      };
+  };
+  const open = () => {
+    remember(inline.current);
+    setExpanded(true);
+  };
+  const close = () => {
+    remember(editor.current);
+    setExpanded(false);
+  };
+  useLayoutEffect(() => {
+    const control = expanded ? editor.current : inline.current;
+    const saved = selection.current;
+    if (control && saved) {
+      control.setSelectionRange(saved.start, saved.end, saved.direction);
+      control.scrollTop = saved.scroll;
+    }
+  }, [expanded]);
   return (
     <>
       <div className="wb-expandable-textarea" inert={expanded}>
-        <Textarea {...props} />
+        <Textarea {...props} ref={inline} />
         <div className="wb-expandable-textarea-actions">
           <Button
             size="sm"
             aria-label={`Expand ${label}`}
             aria-haspopup="dialog"
             disabled={props.disabled}
-            onClick={() => setExpanded(true)}
+            onClick={open}
           >
             Expand
           </Button>
