@@ -153,6 +153,8 @@ export type {
   TextareaProps,
 } from "./components/Form";
 export { RangeSlider } from "./components/RangeSlider";
+export { ExpandableTextarea } from "./components/ExpandableTextarea";
+export type { ExpandableTextareaProps } from "./components/ExpandableTextarea";
 export type { RangeSliderProps } from "./components/RangeSlider";
 export { FilterInput } from "./components/FilterInput";
 export type { FilterInputProps } from "./components/FilterInput";

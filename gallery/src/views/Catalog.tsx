@@ -14,6 +14,7 @@ import {
   ConfirmDialog,
   CopyBlock,
   EmptyState,
+  ExpandableTextarea,
   ErrorState,
   Field,
   FilterInput,
@@ -181,6 +182,9 @@ function LinkPagerExample({ theme }: { theme: string }) {
 }
 
 function Themed({ theme }: { theme: "light" | "dark" }) {
+  const [notes, setNotes] = useState(
+    "Longer notes can be edited in a spacious dialog.",
+  );
   const [seg, setSeg] = useState("active");
   const [chip, setChip] = useState(true);
   const [tab, setTab] = useState("overview");
@@ -463,6 +467,16 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
         </Field>
         <Field label="Notes">
           <Textarea rows={2} placeholder="Optional notes" />
+        </Field>
+        <Field label="Long notes" hint="Expand for more room.">
+          <ExpandableTextarea
+            label="Long notes"
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            rows={4}
+            expandedHint="Expand for more room."
+            footerNote="Edits stay in the surrounding form."
+          />
         </Field>
         <div className="wb-inline">
           <Checkbox label="Remember me" defaultChecked />

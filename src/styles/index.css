@@ -10,6 +10,7 @@
 @import "./base.css";
 @import "./controls.css";
 @import "./forms.css";
+@import "./expandable-textarea.css";
 @import "./shell.css";
 @import "./list.css";
 @import "./table.css";
