@@ -1196,6 +1196,12 @@ its compact layout.
 - `FilterInput({ value, onChange, placeholder, label?, hotkey? = "/", debounceMs? })`
   — search icon, `/` hint that focuses it from anywhere (give secondary
   filters `hotkey={null}`), × clears, Esc clears (then blurs when empty).
+- `ExpandableTextarea({ label, value, onChange, expandedHint?, error?, footerNote?, ...textareaProps })`
+  adds an Expand button to a native textarea. Both views edit the same controlled
+  value; Done and Escape return focus to Expand without saving or reverting.
+  The expanded dialog fills most of the desktop viewport and the full viewport
+  below 640px. Repeat field help and validation with `expandedHint` and `error`;
+  use `footerNote` to explain how the surrounding form saves changes.
 - `Combobox` — single: `{ value: string | null, onChange }`; multiple:
   `{ multiple: true, value: string[], onChange }`. Plus `options?`,
   `loadOptions?(query, signal)` (async, debounced, aborted), `minQuery?`,
