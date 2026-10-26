@@ -325,7 +325,7 @@ What quiet changes, with no change to component APIs:
   and a word; `Banner` and the table error row are a 2px left rule in the
   tone colour with no fill or icon; `danger` buttons are bordered buttons
   with red text; `Seg` is a bordered group with a grey pressed segment;
-  tables have hairline, single-line 42px rows (32px compact); `EmptyState`
+  tables have hairlines and 42px rows (32px compact); `EmptyState`
   icons have no tile; letter avatars are grey (the highlighted one ink);
   inline `code` has no chip; `wb-link` is underlined with a hairline;
   `KeyValue`'s label column is 96px; radii are 3–8px. `Status`,
@@ -640,7 +640,8 @@ targetId>` outside AppShell.
 Surface, border, text, accent, scrim, tone and chart colours, in two themes.
 Light on `:root` and `[data-theme="light"]`, dark on `[data-theme="dark"]`.
 The contrast requirements that fix the muted text and solid tone values follow
-the table.
+the table. The [quiet style](#styles) sets its own values for the same
+tokens.
 
 | Token                                     | Light                         | Dark                          | Use                                        |
 | ----------------------------------------- | ----------------------------- | ----------------------------- | ------------------------------------------ |

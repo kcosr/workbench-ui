@@ -7,12 +7,13 @@
  * so the default style is untouched.
  *
  * Contrast is part of the palette; these values meet WCAG AA (4.5:1):
- *   --wb-muted    #726f68 light, #8a8780 dark (the design's ink-3, #8b8880
- *                 and #78756e, gives only 3.2-3.5 and 3.7-4.0:1): small muted
- *                 text on page, side, surface, hover and the status tints
- *                 over the page.
- *                 On selected (surface-3) backgrounds, where it would fall to
- *                 4.1:1, the selected element points --wb-muted at --wb-fg-2.
+ *   --wb-muted         #726f68 light, #8a8780 dark (the design's ink-3,
+ *                      #8b8880 and #78756e, gives only 3.2-3.5 and
+ *                      3.7-4.0:1): small muted text on page, side, surface,
+ *                      hover and the status tints over the page. On
+ *                      selected (surface-3) backgrounds, where it would fall
+ *                      to 4.1:1, selected elements point --wb-muted at
+ *                      --wb-fg-2.
  *   --wb-warning       #8a6009 light (#97690a gives 3.9-4.4:1 on side, hover
  *                      and selected backgrounds) and
  *   --wb-success-text  #2b7540 light (#2e7a43 gives 4.3:1 on selected):
