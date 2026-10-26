@@ -282,6 +282,7 @@ export function Avatar({
       className={cx(
         "wb-avatar",
         size !== "sm" && `wb-avatar--${size}`,
+        highlight && "wb-avatar--highlight",
         className,
       )}
       style={style}

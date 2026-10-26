@@ -273,6 +273,8 @@ export {
   useTheme,
 } from "./lib/theme";
 export type { Theme, ThemeMode, ThemeState } from "./lib/theme";
+export { appliedStyle, applyStyle, STYLE_ATTRIBUTE } from "./lib/style";
+export type { StyleName } from "./lib/style";
 export {
   formatDate,
   formatDateTime,

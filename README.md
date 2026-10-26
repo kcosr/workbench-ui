@@ -31,16 +31,17 @@ every component in light and dark (`#/components`). Copy patterns from it.
 1. [Vendoring](#vendoring)
 2. [CSS integration and cascade layers](#css-integration-and-cascade-layers)
 3. [Theme bootstrap](#theme-bootstrap)
-4. [Links and routers](#links-and-routers)
-5. [Composing the shell](#composing-the-shell)
-6. [Tokens](#tokens)
-7. [Class inventory](#class-inventory)
-8. [Components](#components)
-9. [Keyboard and focus](#keyboard-and-focus)
-10. [Conventions](#conventions)
-11. [CSP notes](#csp-notes)
-12. [Developing the kit](#developing-the-kit)
-13. [License](#license)
+4. [Styles](#styles)
+5. [Links and routers](#links-and-routers)
+6. [Composing the shell](#composing-the-shell)
+7. [Tokens](#tokens)
+8. [Class inventory](#class-inventory)
+9. [Components](#components)
+10. [Keyboard and focus](#keyboard-and-focus)
+11. [Conventions](#conventions)
+12. [CSP notes](#csp-notes)
+13. [Developing the kit](#developing-the-kit)
+14. [License](#license)
 
 ## Vendoring
 
@@ -265,6 +266,111 @@ While the mode is `system` the theme follows `prefers-color-scheme` live.
 Without JavaScript (or before bootstrap) the light tokens apply. Any element
 with `data-theme` re-themes its subtree (the gallery shows both themes side by
 side this way); portaled overlays follow `<html>`.
+
+## Styles
+
+The kit has two styles, chosen independently of the light/dark theme: the
+default (what the rest of this README describes) and **quiet**, a typographic
+look for dense tools: IBM Plex, ink on paper, colour only for status,
+sentence-case labels and hairlines instead of filled boxes. An application
+picks one for good; there is no user-facing style switch. Select quiet with
+`data-wb-style="quiet"` on `<html>`, either in `index.html`, so the first
+paint is already quiet:
+
+```html
+<html lang="en" data-wb-style="quiet"></html>
+```
+
+or before the first render (CSSOM, CSP safe):
+
+```ts
+// main.tsx
+import { applyStoredTheme, applyStyle } from "./workbench";
+applyStyle("quiet");
+applyStoredTheme("my-app:theme");
+```
+
+`applyStyle("default")` removes the attribute, `appliedStyle()` returns the
+current `StyleName` (`"default" | "quiet"`) and `STYLE_ATTRIBUTE` is
+`"data-wb-style"`. Without the attribute the kit renders exactly as it did
+before the quiet style existed: every quiet rule is scoped to the attribute
+(`tests/quiet.test.ts` checks this), and pages without it never download IBM
+Plex. Like `data-theme`, the attribute restyles the subtree of any element
+that carries it, and a `data-theme` inside picks quiet light or dark;
+portaled overlays follow `<html>`.
+
+What quiet changes, with no change to component APIs:
+
+- **Type:** IBM Plex Sans and Mono (`--wb-font-sans`, `--wb-font-mono`).
+  Plex ships 400, 500 and 600, so `--wb-fw-book`, `-strong` and `-bold`
+  become 400, 500 and 600. Page titles are 20px semibold.
+- **Colour means status.** Failed is `danger`, running is `info`, waiting is
+  `warning`; each has a faint tint (`-weak`). Success is the normal outcome
+  and stays grey: `--wb-success` (icons, dots, rules) is the muted grey,
+  while `--wb-success-text` keeps a green for success text such as a
+  positive delta. Success badges and pills read as plain text.
+- **Ink, not blue:** the accent is the ink, so primary buttons are solid ink
+  (one per page), focus rings and the current tab underline are ink, and
+  selection is grey (`--wb-surface-3`), not tinted.
+- **Surfaces:** `--wb-page` for main panes, toolbars, headers and drawers;
+  `--wb-side` (quiet only) for the sidebar and top bar; `--wb-surface` for
+  inputs, cards, code blocks and overlays.
+- **Labels:** no uppercase, letter-spaced micro labels. Sidebar, drawer,
+  menu and palette section titles, table headers and `wb-label-caps` are
+  sentence case; counts are plain numbers, coloured only by a status tone.
+- **Components:** badges are hairline-outlined tags; `StatePill` is a glyph
+  and a word; `Banner` and the table error row are a 2px left rule in the
+  tone colour with no fill or icon; `danger` buttons are bordered buttons
+  with red text; `Seg` is a bordered group with a grey pressed segment;
+  tables have hairline, single-line 42px rows (32px compact); `EmptyState`
+  icons have no tile; letter avatars are grey (the highlighted one ink);
+  inline `code` has no chip; `wb-link` is underlined with a hairline;
+  `KeyValue`'s label column is 96px; radii are 3–8px.
+
+| Token                | Light     | Dark      | Use                                          |
+| -------------------- | --------- | --------- | -------------------------------------------- |
+| `--wb-page`          | `#fcfcfa` | `#151514` | main panes, toolbars, headers, drawers       |
+| `--wb-side`          | `#f4f3ef` | `#1a1a19` | sidebar and top bar (quiet only)             |
+| `--wb-surface`       | `#ffffff` | `#1d1d1b` | inputs, cards, code and logs, overlays       |
+| `--wb-surface-2`     | `#f5f4f0` | `#1c1c1b` | hover                                        |
+| `--wb-surface-3`     | `#e9e7e1` | `#2a2926` | selected (also `--wb-accent-weak`)           |
+| `--wb-fg`            | `#1b1b19` | `#e9e7e2` | ink: text, `--wb-accent`, `--wb-accent-text` |
+| `--wb-on-accent`     | `#ffffff` | `#151514` | text on the ink primary                      |
+| `--wb-fg-2`          | `#5b5953` | `#a8a59e` | secondary text                               |
+| `--wb-muted`         | `#726f68` | `#8a8780` | muted text, labels, counts                   |
+| `--wb-border`        | `#e8e6e1` | `#292826` | hairlines                                    |
+| `--wb-border-strong` | `#d8d5ce` | `#3a3936` | control borders, tags                        |
+| `--wb-danger`        | `#c2302a` | `#ee6b60` | failed (`-weak`: `#fdf5f4` / 8%)             |
+| `--wb-info`          | `#2556c4` | `#7ea6f8` | running (`-weak`: `#f3f6fd` / 7%)            |
+| `--wb-warning`       | `#8a6009` | `#d6a24a` | waiting (`-weak`: `#fcf8ee` / 7%)            |
+| `--wb-success`       | muted     | muted     | success marks; `-text` `#2b7540` / `#62b57d` |
+| `--wb-deemph`        | `#d2cfc8` | `#4a4944` | de-emphasised chart marks                    |
+
+Each status colour is also its `-text` token. Chart series and the scrim
+keep their default values.
+
+**Quiet contrast.** The design's values are kept where they meet WCAG AA
+(4.5:1) for small text, and adjusted minimally where they don't:
+
+| Token               | Light / dark          | Was (design)          | Why                                                    |
+| ------------------- | --------------------- | --------------------- | ------------------------------------------------------ |
+| `--wb-muted`        | `#726f68` / `#8a8780` | `#8b8880` / `#78756e` | 3.2–3.5 and 3.7–4.0:1 on page, side, surface and hover |
+| `--wb-warning`      | `#8a6009` / `#d6a24a` | `#97690a` / same      | 3.9–4.4:1 on side, hover and selected backgrounds      |
+| `--wb-success-text` | `#2b7540` / `#62b57d` | `#2e7a43` / same      | 4.3:1 on selected backgrounds                          |
+
+- `--wb-muted` meets AA on page, side, surface, hover and the status tints
+  over the page. On a selected (`--wb-surface-3`) background it would give
+  4.1:1, so selected elements (current sidebar item and nav tab, active
+  rows, selected table rows, pressed segments and chip toggles, the
+  highlighted palette item) point `--wb-muted` at `--wb-fg-2` for their
+  content; their muted text stays readable without darkening muted text
+  everywhere else, which would erase the step between secondary and muted.
+- Status text (`danger`, `info`, `warning`, `success`, `neutral` text tokens)
+  meets AA on every background, selected included; status marks meet the
+  3:1 non-text minimum. Text on the ink primary is 17.3:1 (light) and
+  14.8:1 (dark).
+
+`tests/quiet.test.ts` pins the quiet palette and enforces these ratios.
 
 ## Links and routers
 
@@ -585,7 +691,7 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-chip` (`--removable`, `--readonly`), `wb-chip-label`, `wb-chip-remove`,
   `wb-badge` (`--outline`, `--dot`), `wb-state-pill`, `wb-state-cell`
   (`--quiet`; `-dot`, `-label`), `wb-status-dot`
-  (`--pulse`), `wb-kbd`, `wb-avatar` (`--md`, `--lg`, `--xl`), `wb-spinner`,
+  (`--pulse`), `wb-kbd`, `wb-avatar` (`--md`, `--lg`, `--xl`, `--highlight`), `wb-spinner`,
   `wb-icon`, `wb-qname` with `-prefix`, `-prefix-text`, `-name`.
 - **Forms:** `wb-field`, `wb-field-label`, `wb-field-optional`,
   `wb-field-hint`, `wb-field-error`, `wb-form-error`, `wb-input` (`--sm`,
