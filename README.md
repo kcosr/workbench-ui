@@ -325,26 +325,28 @@ What quiet changes, with no change to component APIs:
   tables have hairline, single-line 42px rows (32px compact); `EmptyState`
   icons have no tile; letter avatars are grey (the highlighted one ink);
   inline `code` has no chip; `wb-link` is underlined with a hairline;
-  `KeyValue`'s label column is 96px; radii are 3–8px.
+  `KeyValue`'s label column is 96px; radii are 3–8px. `Status`,
+  `HistoryStrip` and `Steps` need nothing extra: their ok marks are grey
+  through `--wb-success`.
 
-| Token                | Light     | Dark      | Use                                          |
-| -------------------- | --------- | --------- | -------------------------------------------- |
-| `--wb-page`          | `#fcfcfa` | `#151514` | main panes, toolbars, headers, drawers       |
-| `--wb-side`          | `#f4f3ef` | `#1a1a19` | sidebar and top bar (quiet only)             |
-| `--wb-surface`       | `#ffffff` | `#1d1d1b` | inputs, cards, code and logs, overlays       |
-| `--wb-surface-2`     | `#f5f4f0` | `#1c1c1b` | hover                                        |
-| `--wb-surface-3`     | `#e9e7e1` | `#2a2926` | selected (also `--wb-accent-weak`)           |
-| `--wb-fg`            | `#1b1b19` | `#e9e7e2` | ink: text, `--wb-accent`, `--wb-accent-text` |
-| `--wb-on-accent`     | `#ffffff` | `#151514` | text on the ink primary                      |
-| `--wb-fg-2`          | `#5b5953` | `#a8a59e` | secondary text                               |
-| `--wb-muted`         | `#726f68` | `#8a8780` | muted text, labels, counts                   |
-| `--wb-border`        | `#e8e6e1` | `#292826` | hairlines                                    |
-| `--wb-border-strong` | `#d8d5ce` | `#3a3936` | control borders, tags                        |
-| `--wb-danger`        | `#c2302a` | `#ee6b60` | failed (`-weak`: `#fdf5f4` / 8%)             |
-| `--wb-info`          | `#2556c4` | `#7ea6f8` | running (`-weak`: `#f3f6fd` / 7%)            |
-| `--wb-warning`       | `#8a6009` | `#d6a24a` | waiting (`-weak`: `#fcf8ee` / 7%)            |
-| `--wb-success`       | muted     | muted     | success marks; `-text` `#2b7540` / `#62b57d` |
-| `--wb-deemph`        | `#d2cfc8` | `#4a4944` | de-emphasised chart marks                    |
+| Token                | Light     | Dark      | Use                                           |
+| -------------------- | --------- | --------- | --------------------------------------------- |
+| `--wb-page`          | `#fcfcfa` | `#151514` | main panes, toolbars, headers, drawers        |
+| `--wb-side`          | `#f4f3ef` | `#1a1a19` | sidebar and top bar (quiet only)              |
+| `--wb-surface`       | `#ffffff` | `#1d1d1b` | inputs, cards, code and logs, overlays        |
+| `--wb-surface-2`     | `#f5f4f0` | `#1c1c1b` | hover                                         |
+| `--wb-surface-3`     | `#e9e7e1` | `#2a2926` | selected (also `--wb-accent-weak`)            |
+| `--wb-fg`            | `#1b1b19` | `#e9e7e2` | ink: text, `--wb-accent`, `--wb-accent-text`  |
+| `--wb-on-accent`     | `#ffffff` | `#151514` | text on the ink primary                       |
+| `--wb-fg-2`          | `#5b5953` | `#a8a59e` | secondary text                                |
+| `--wb-muted`         | `#726f68` | `#8a8780` | muted text, labels, counts                    |
+| `--wb-border`        | `#e8e6e1` | `#292826` | hairlines                                     |
+| `--wb-border-strong` | `#d8d5ce` | `#3a3936` | control borders, tags                         |
+| `--wb-danger`        | `#c2302a` | `#ee6b60` | failed (`-weak`: `#fdf5f4` / 8%)              |
+| `--wb-info`          | `#2556c4` | `#7ea6f8` | running (`-weak`: `#f3f6fd` / 7%)             |
+| `--wb-warning`       | `#8a6009` | `#d6a24a` | waiting (`-weak`: `#fcf8ee` / 7%)             |
+| `--wb-success`       | muted     | muted     | success marks; `-text` `#2b7540` / `#62b57d`  |
+| `--wb-deemph`        | `#d2cfc8` | `#4a4944` | faint marks: charts, normal HistoryStrip bars |
 
 Each status colour is also its `-text` token. Chart series and the scrim
 keep their default values.
@@ -369,6 +371,8 @@ keep their default values.
   meets AA on every background, selected included; status marks meet the
   3:1 non-text minimum. Text on the ink primary is 17.3:1 (light) and
   14.8:1 (dark).
+- The normal bars of a `HistoryStrip` (`--wb-deemph`) and its empty slots are
+  deliberately faint marks; every bar carries its state as text.
 
 `tests/quiet.test.ts` pins the quiet palette and enforces these ratios.
 
@@ -693,6 +697,11 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   (`--quiet`; `-dot`, `-label`), `wb-status-dot`
   (`--pulse`), `wb-kbd`, `wb-avatar` (`--md`, `--lg`, `--xl`, `--highlight`), `wb-spinner`,
   `wb-icon`, `wb-qname` with `-prefix`, `-prefix-text`, `-name`.
+- **Status:** `wb-status` (`--ok`, `--failed`, `--running`, `--waiting`,
+  `--skipped`, `--neutral`) with `-label`; `wb-status-glyph` (same tones,
+  e.g. `wb-status-glyph--failed`); `wb-history` with `wb-history-bar`
+  (tones, `--empty`); `wb-steps`, `wb-step` (`--done`, `--current`,
+  `--waiting`, `--failed`, `--not-reached`) with `-label`, `-name`, `-detail`.
 - **Forms:** `wb-field`, `wb-field-label`, `wb-field-optional`,
   `wb-field-hint`, `wb-field-error`, `wb-form-error`, `wb-input` (`--sm`,
   `--mono`, `--num`, `--auto`), `wb-textarea`, `wb-select` (`--block`),
@@ -1511,6 +1520,59 @@ const remove = async () => {
 Every list: `SkeletonRows` while loading, `EmptyState` when empty (with a
 "Clear filters" action when filters are active), `ErrorState` with Retry,
 `refetching` on `Main` for background reloads.
+
+### Status
+
+Outcomes shown the same way in every application, in both styles. Tones are
+`ok | failed | running | waiting | skipped | neutral` (`StatusTone`); colours
+come from the tone tokens: ok uses `--wb-success` (green in the default
+style, grey in quiet), failed `danger`, running `info`, waiting `warning`,
+skipped and neutral the muted grey.
+
+- `Status({ tone, children, glyphOnly?, title? })` — a glyph and a word,
+  never a pill: ✓ ok, ✕ failed, a live dot for running, a ring for waiting,
+  a dashed ring for skipped, a dash for neutral. The word ("Failed",
+  "Running · 1 min") takes the tone colour for failed, running and waiting;
+  ok and neutral words keep the text colour and skipped is muted.
+  `glyphOnly` keeps the word as screen-reader text and, for a string, the
+  tooltip. `StatusGlyph({ tone })` is the decorative 12px glyph alone, for
+  rows that lay out their own text.
+- `HistoryStrip({ label, items: { tone, label }[], length? })` — recent
+  states as 4×14px bars, oldest first, so the newest is on the right: ok is
+  faint (`--wb-deemph`), failed and running are solid in their colour,
+  waiting is outlined in its colour, neutral is solid grey and skipped a
+  grey outline. `length` fixes the number of slots: the newest `length`
+  items show, and hairline empty slots pad the left so strips line up in a
+  column. It is an `<ol>` named by `label` (say the order: "Last 20 runs,
+  newest last"); each bar has its `label` as text and tooltip ("Failed ·
+  Oct 24, 14:02"), and empty slots are hidden from assistive technology.
+- `Steps({ label, steps: { label, detail?, state, stateLabel?, title?, key? }[] })`
+  — a horizontal row of equal steps, each a glyph, a label and secondary
+  text (a duration, a time, "skipped"). The states `done`, `current`,
+  `waiting`, `failed` and `not-reached` (`StepState`) use the ok, running,
+  waiting, failed and skipped glyphs. The current, waiting and failed steps get a
+  faint tint and a 2px underline in their colour (`aria-current="step"` on
+  current and waiting), and their secondary text rises to `--wb-fg-2`;
+  steps not reached are muted. Screen readers hear the state after the
+  label ("Build, failed"; `stateLabel` overrides it). Labels truncate with
+  an ellipsis rather than wrap; string labels get a tooltip.
+
+```tsx
+<Status tone="failed">Failed</Status>
+<HistoryStrip
+  label="Last 20 runs, newest last"
+  items={runs.map((r) => ({ tone: r.tone, label: `${r.word} · ${r.when}` }))}
+  length={20}
+/>
+<Steps
+  label="Progress"
+  steps={[
+    { label: "Queued", detail: "12 s", state: "done" },
+    { label: "Build", detail: "exit 1 · 2 min 45 s", state: "failed" },
+    { label: "Deploy", detail: "skipped", state: "not-reached" },
+  ]}
+/>
+```
 
 ### Pages
 
