@@ -27,14 +27,17 @@ export {
   Sidebar,
   SidebarCheck,
   SidebarEmpty,
+  SidebarFoot,
   SidebarItem,
   SidebarMore,
+  SidebarNav,
   SidebarQuick,
   SidebarSection,
   SidebarTop,
 } from "./components/Sidebar";
 export type {
   SidebarItemProps,
+  SidebarNavProps,
   SidebarSectionAction,
   SidebarSectionProps,
 } from "./components/Sidebar";

@@ -441,8 +441,99 @@ looks through class names (`wb-nav-tab`, `wb-side-item`, `wb-tab`) or
 </AppShell>
 ```
 
-Grid: `topbar` across; `sidebar | main | drawer` below. Only panes scroll
+Grid: `topbar` across; `sidebar | main | drawer` below. Without a `topBar`
+the three columns take the full height (below). Only panes scroll
 (`.wb-sidebar`, `.wb-scroll`, `.wb-drawer-body`); the document never does.
+
+### Navigation in the sidebar, no top bar
+
+When the sidebar carries the navigation, leave out `topBar`: the sidebar
+then runs the full height. Compose it from the brand, a selector
+(`SidebarTop`), navigation groups (`SidebarNav`) and a foot (`SidebarFoot`)
+pinned to its bottom edge:
+
+```tsx
+<AppShell
+  sidebar={
+    <Sidebar label="Sidebar">
+      <Brand name="Example App" href="/" />
+      <SidebarTop>
+        <Select
+          aria-label="Project"
+          block
+          value={project}
+          onChange={pick}
+          options={projects}
+        />
+      </SidebarTop>
+      <SidebarNav label="Main">
+        <SidebarItem
+          href="/jobs"
+          label="Jobs"
+          count={8}
+          current={view === "jobs"}
+        />
+        <SidebarItem
+          href="/runs"
+          label="Runs"
+          count="3 running"
+          countTone="info"
+          current={view === "runs"}
+        />
+        <SidebarItem
+          href="/runs?attention=1"
+          label="Needs attention"
+          count={1}
+          countTone="danger"
+          nested
+        />
+      </SidebarNav>
+      <SidebarNav title="Administration">
+        <SidebarItem
+          href="/admin/users"
+          label="Users"
+          current={view === "users"}
+        />
+      </SidebarNav>
+      <SidebarFoot>
+        <AppLink href="/account">Ada Admin</AppLink>
+        <Spacer />
+        <SidebarToggle />
+        <IconButton icon="log-out" label="Sign out" onClick={signOut} />
+        <TopStatus
+          tone="success"
+          label="Healthy"
+          detail="All services answering"
+        />
+        <Spacer />
+        <ThemeMenu mode={mode} onChange={setMode} />
+      </SidebarFoot>
+    </Sidebar>
+  }
+  sidebarStorageKey="my-app:sidebar-width"
+  sidebarDefault={216}
+  sidebarMin={200}
+  sidebarMax={320}
+>
+  <Main toolbar={toolbar}>…</Main>
+</AppShell>
+```
+
+- `SidebarNav` is a `<nav>` landmark named by `label`, or by a visible
+  `title` (a group heading such as "Administration"). Groups in a row are
+  spaced apart.
+- `SidebarItem` links mark the current page with `current`. `countTone`
+  colours the count with a status tone ("3 running" in the running colour,
+  a count of failures in red); `nested` indents a sub-item under the item
+  before it.
+- `SidebarFoot` holds the signed-in user, sign out, the theme menu and a
+  health indicator (`TopStatus` works there too). It sits at the bottom,
+  above a hairline, and wraps its controls; an element with
+  `flex-basis: 100%` starts a second line.
+- With no top bar, put `SidebarToggle` in the sidebar (the foot) if it
+  should collapse; the rail shown while collapsed brings it back.
+- `#/pipelines` in the gallery composes this layout; pick the quiet style to
+  see it as designed.
 
 Sidebar: resizable (drag, ←/→ ±10px, Shift ±40px, Home/End, double-click
 resets) and collapsible (`<SidebarToggle/>` in the top bar, or the button on
@@ -632,7 +723,7 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
 `is-stale`, `is-tint`, `is-pending`, `is-selected`, `is-clickable`, `is-dim`,
 `is-resizing`, `is-good`/`is-bad`). Variants are `--modifiers`.
 
-- **Frame:** `wb-skip-link`, `wb-app` (`is-resizing`; sets `--wb-side-w`,
+- **Frame:** `wb-skip-link`, `wb-app` (`--no-topbar`, `is-resizing`; sets `--wb-side-w`,
   `--wb-drawer-max`), `wb-app-main`, `wb-app-drawer`, `wb-sidebar-pane`
   (`[hidden]` when collapsed), `wb-sidebar-resize`, `wb-sidebar-rail`.
 - **Top bar:** `wb-topbar` (compaction attributes `data-wb-brand`,
@@ -644,8 +735,9 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-top-status-short`.
 - **Sidebar:** `wb-sidebar`, `wb-side-top`, `wb-side-quick` (+ `-btn`,
   `-note`), `wb-side-section`, `wb-side-h` (+ `-title`, `-toggle`, `-note`,
-  `-count`, `-action`), `wb-side-body`, `wb-side-item` (+ `-label`, `-count`;
-  `aria-current`), `wb-side-row`, `wb-side-row-action`, `wb-side-check` (+
+  `-count`, `-action`), `wb-side-body`, `wb-side-item` (`--nested`; + `-label`,
+  `-count` with an optional tone class; `aria-current`), `wb-side-nav`,
+  `wb-side-foot`, `wb-side-row`, `wb-side-row-action`, `wb-side-check` (+
   `-label`, `-count`), `wb-side-empty`, `wb-side-more`.
 - **Main:** `wb-main` (`is-tint`), `wb-toolbar`, `wb-toolbar-row`
   (`--split`), `wb-toolbar-primary`, `wb-toolbar-title`, `wb-toolbar-label`, `wb-ctl`, `wb-summary`
@@ -787,7 +879,7 @@ where it makes sense.
 
 ### Shell
 
-- `AppShell({ topBar, sidebar?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
+- `AppShell({ topBar?, sidebar?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
   `SidebarToggle()`, `useAppShell()`, `SkipLink({ targetId?, children? })`.
 - `TopBar({ children })`, `Brand({ name, icon? = "pulse", href? })`,
   `NavTabs({ label? = "Main", moreLabel? = "More", children })`,
@@ -810,10 +902,12 @@ where it makes sense.
   NavTabs. Apps don't need their own brand/status hiding rules.
 
 - `Sidebar({ label, children })`, `SidebarTop`, `SidebarQuick({ note? })`,
+  `SidebarNav({ label | title, children })` (a navigation group; see
+  above), `SidebarFoot({ children })`,
   `SidebarSection({ title, note?, action?: { label, icon?, text?, onClick }, collapsible?, open?, defaultOpen?, onOpenChange?, activeCount?, lazy? })`
   (`lazy`: children mount when the section is first opened, so pickers in
   collapsed groups don't fetch early, and then stay mounted),
-  `SidebarItem({ label, icon?, iconTone?, count?, current?, href? | onClick?, action?, trailing? })`,
+  `SidebarItem({ label, icon?, iconTone?, count?, countTone?, current?, nested?, href? | onClick?, action?, trailing? })`,
   `SidebarCheck({ label, checked, onChange, count?, icon?, iconTone?, disabled? })`
   (the whole row toggles; the count describes rather than names it),
   `SidebarEmpty`, `SidebarMore({ expanded, onToggle })`.
