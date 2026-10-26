@@ -15,9 +15,12 @@ toasts.
   shared primitives does not add a phone layout to AppShell.
 - **CSP safe** for `style-src 'self'` / `script-src 'self'`: no `<style>`
   injection, no inline scripts, no `eval`, fonts are bundled files.
-- **Bundled fonts:** Inter Variable and JetBrains Mono 400/500 from Fontsource
-  5.3.0, including Latin, extended Latin, Cyrillic, Greek and Vietnamese subsets
-  (SIL OFL 1.1, licences in `src/fonts/`).
+- **Bundled fonts** from Fontsource 5.3.0: Inter Variable and JetBrains Mono
+  400/500 for the default style, IBM Plex Sans 400/500/600 and IBM Plex Mono
+  400/500 for the quiet style, including Latin, extended Latin, Cyrillic, Greek
+  (except Plex Mono, which has none) and Vietnamese subsets (SIL OFL 1.1,
+  licences in `src/fonts/`). A page downloads only the faces its style sets
+  text in.
 
 The gallery (`npm run dev`) is the reference: a sample app composing the whole
 shell (`#/`, `#/rules`, `#/people/u-alice`, `#/settings`) and a catalog of
@@ -1541,7 +1544,10 @@ accent border plus 3px halo.
 - Fonts use relative `url("../fonts/*.woff2?no-inline")`. The Vite query keeps
   small language subsets as external files as well, so `font-src` can fall back
   to `default-src 'self'`. Other bundlers must likewise preserve external font
-  assets. No `data:` URIs anywhere in the CSS.
+  assets. No `data:` URIs anywhere in the CSS. Every family is declared with
+  `@font-face`, but browsers fetch a file only when text is set in its family
+  and the page uses a character in its `unicode-range`: default-style pages
+  never fetch IBM Plex, quiet pages never fetch Inter or JetBrains Mono.
 - Theme bootstrap is a function call in `main.tsx`, not an inline script. With
   a deferred module script the first paint may briefly use the light
   background in dark mode; that is the accepted trade-off for
@@ -1595,6 +1601,7 @@ level. Closing and reopening starts at the root.
 ## License
 
 MIT; see [LICENSE](LICENSE), also included as `src/LICENSE` in vendored copies.
-The bundled Inter and JetBrains Mono fonts are
-under the SIL Open Font License 1.1: `src/fonts/LICENSE-Inter.txt` and
-`src/fonts/LICENSE-JetBrainsMono.txt`, which vendoring copies with the fonts.
+The bundled Inter, JetBrains Mono, IBM Plex Sans and IBM Plex Mono fonts are
+under the SIL Open Font License 1.1: `src/fonts/LICENSE-Inter.txt`,
+`src/fonts/LICENSE-JetBrainsMono.txt`, `src/fonts/LICENSE-IBMPlexSans.txt` and
+`src/fonts/LICENSE-IBMPlexMono.txt`, which vendoring copies with the fonts.

@@ -75,11 +75,36 @@ describe("CSS conventions", () => {
   it("fonts are relative file urls (no CDN, no data:)", () => {
     const fonts = read("styles/fonts.css");
     const urls = [...fonts.matchAll(/url\("([^"]+)"\)/g)].map((m) => m[1]);
-    expect(urls.length).toBe(19);
+    expect(urls.length).toBe(47);
     for (const u of urls)
       expect(u).toMatch(/^\.\.\/fonts\/[\w-]+\.woff2\?no-inline$/);
     for (const f of cssFiles)
       expect(read(`styles/${f}`)).not.toMatch(/url\(\s*["']?(data:|https?:)/);
+  });
+
+  it("declares every bundled font file exactly once, and no missing file", () => {
+    const fonts = read("styles/fonts.css");
+    const declared = [...fonts.matchAll(/url\("\.\.\/fonts\/([^"?]+)/g)]
+      .map((m) => m[1] ?? "")
+      .sort();
+    const bundled = readdirSync(join(root, "fonts"))
+      .filter((f) => f.endsWith(".woff2"))
+      .sort();
+    expect(declared).toEqual(bundled);
+  });
+
+  it("ships a licence for every bundled font family", () => {
+    const licences = readdirSync(join(root, "fonts"))
+      .filter((f) => f.startsWith("LICENSE-"))
+      .sort();
+    expect(licences).toEqual([
+      "LICENSE-IBMPlexMono.txt",
+      "LICENSE-IBMPlexSans.txt",
+      "LICENSE-Inter.txt",
+      "LICENSE-JetBrainsMono.txt",
+    ]);
+    for (const l of licences)
+      expect(read(`fonts/${l}`)).toContain("SIL Open Font License");
   });
 });
 
