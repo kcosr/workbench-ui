@@ -23,8 +23,11 @@ toasts.
   text in.
 
 The gallery (`npm run dev`) is the reference: a sample app composing the whole
-shell (`#/`, `#/rules`, `#/people/u-alice`, `#/settings`) and a catalog of
-every component in light and dark (`#/components`). Copy patterns from it.
+shell (`#/`, `#/rules`, `#/people/u-alice`, `#/settings`), a sample whose
+sidebar carries the navigation (`#/pipelines`) and a catalog of every
+component in light and dark (`#/components`). The style menu next to the
+theme menu switches between the default and quiet styles. Copy patterns
+from it.
 
 ## Contents
 
@@ -1845,12 +1848,12 @@ wrapped lines without horizontal overflow, Ctrl/⌘ A, and the selection
 fallback after a rejected write). Its optional
 output directory retains screenshots and a JSON result summary.
 
-Gallery URLs accept `?theme=light|dark` (before the `#`), and the sample app
-reads `#/?item=ev-4819` (drawer), `?modal=new`, `?palette=1`,
-`?density=compact`, `?loading=1`, `?refetch=1`, `#/rules?rule=r-regex-aws`
-(wide drawer) and `&draft=1` (draft bar). `?crowded=1` (before the `#`)
-gives the sample app a crowded top bar (space switch, five
-tabs, long status); resize the window to watch it compact.
+Gallery URLs accept `?theme=light|dark` and `?style=default|quiet` (before
+the `#`), and the sample app reads `#/?item=ev-4819` (drawer), `?modal=new`,
+`?palette=1`, `?density=compact`, `?loading=1`, `?refetch=1`,
+`#/rules?rule=r-regex-aws` (wide drawer) and `&draft=1` (draft bar).
+`?crowded=1` (before the `#`) gives the sample app a crowded top bar (space
+switch, five tabs, long status); resize the window to watch it compact.
 
 Open `#/?item=ev-4819&resize=1` for the resizable detail drawer. Drag its left
 separator, use arrows/Shift/Home/End, double-click to reset, or press Escape

@@ -20,6 +20,7 @@ import {
   useToast,
 } from "../../src";
 import { GalleryPalette } from "./palette";
+import { StyleMenu } from "./style";
 import { useRoute } from "./router";
 import { CatalogView } from "./views/Catalog";
 import { EventsView } from "./views/Events";
@@ -27,6 +28,7 @@ import { PersonView } from "./views/Person";
 import { RulesView } from "./views/Rules";
 import { SettingsView } from "./views/Settings";
 import { LabView } from "./views/Lab";
+import { PipelinesView } from "./views/Pipelines";
 import { TablesView } from "./views/Tables";
 
 export const THEME_KEY = "workbench-gallery:theme";
@@ -130,6 +132,7 @@ function Shell() {
         onClick={() => toast("Refreshed")}
       />
       <ThemeMenu mode={theme.mode} onChange={theme.setMode} />
+      <StyleMenu />
       <IconButton
         href="#/settings"
         icon="gear"
@@ -181,6 +184,7 @@ function Shell() {
   else if (view === "components") body = <CatalogView topBar={topBar} />;
   else if (view === "tables") body = <TablesView topBar={topBar} />;
   else if (view === "lab") body = <LabView />;
+  else if (view === "pipelines") body = <PipelinesView />;
   else body = <EventsView topBar={topBar} />;
 
   return (
