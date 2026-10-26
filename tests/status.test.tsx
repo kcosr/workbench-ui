@@ -72,6 +72,8 @@ describe("HistoryStrip", () => {
     render(<HistoryStrip label="Last 4 runs" items={items} />);
     const list = screen.getByRole("list", { name: "Last 4 runs" });
     expect(list.tagName).toBe("OL");
+    // explicit: Safari drops list semantics from unstyled lists
+    expect(list).toHaveAttribute("role", "list");
     const bars = within(list).getAllByRole("listitem");
     expect(bars.map((b) => b.textContent)).toEqual(items.map((i) => i.label));
     expect(bars.map((b) => b.getAttribute("title"))).toEqual(
@@ -132,6 +134,7 @@ describe("Steps", () => {
     );
     const list = screen.getByRole("list", { name: "Progress" });
     expect(list.tagName).toBe("OL");
+    expect(list).toHaveAttribute("role", "list");
     const steps = within(list).getAllByRole("listitem");
     expect(steps.map((s) => s.textContent)).toEqual([
       "Queued, done12 s",

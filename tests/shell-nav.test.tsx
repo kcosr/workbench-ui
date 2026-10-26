@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
@@ -119,5 +121,20 @@ describe("navigation sidebar without a top bar", () => {
     expect(screen.queryByRole("navigation", { name: "Main" })).toBeNull();
     await user.click(screen.getByRole("button", { name: "Show sidebar" }));
     expect(screen.getByRole("navigation", { name: "Main" })).toBeVisible();
+  });
+});
+
+describe("default compositions keep their spacing", () => {
+  const shell = readFileSync(
+    resolve(__dirname, "..", "src", "styles", "shell.css"),
+    "utf8",
+  ).replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("Brand gets sidebar margins only in a shell without a top bar", () => {
+    const selectors = [...shell.matchAll(/([^{}]+)\{/g)]
+      .flatMap((m) => (m[1] ?? "").split(","))
+      .map((s) => s.replace(/\s+/g, " ").trim())
+      .filter((s) => /\.wb-sidebar\b.*\.wb-brand\b/.test(s));
+    expect(selectors).toEqual([".wb-app--no-topbar .wb-sidebar > .wb-brand"]);
   });
 });

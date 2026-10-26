@@ -12,8 +12,9 @@
  *                      3.7-4.0:1): small muted text on page, side, surface,
  *                      hover and the status tints over the page. On
  *                      selected (surface-3) backgrounds, where it would fall
- *                      to 4.1:1, selected elements point --wb-muted at
- *                      --wb-fg-2.
+ *                      to 4.1:1, and on the blended hover of sidebar items,
+ *                      top-bar tabs and buttons (4.3-4.4:1), those elements
+ *                      point --wb-muted at --wb-fg-2.
  *   --wb-warning       #8a6009 light (#97690a gives 3.9-4.4:1 on side, hover
  *                      and selected backgrounds) and
  *   --wb-success-text  #2b7540 light (#2e7a43 gives 4.3:1 on selected):
@@ -154,8 +155,13 @@
   }
 }
 
-/* Inline code is set in mono, without a chip. */
+/* The quiet font from the style boundary down (a quiet subtree inside a
+   default-style page does not inherit Inter from <body>), and inline code
+   in mono without a chip. */
 @layer wb.base {
+  :where([data-wb-style="quiet"]) {
+    font-family: var(--wb-font-sans);
+  }
   :where([data-wb-style="quiet"]) :where(code) {
     padding: 0;
     border-radius: 0;
@@ -188,8 +194,11 @@
     border-radius: var(--wb-radius-sm);
     font-weight: var(--wb-fw-regular);
   }
+  /* hover on side-coloured chrome: muted text (counts) rises to fg-2, as on
+     selected backgrounds */
   [data-wb-style="quiet"] .wb-nav-tab:hover,
   [data-wb-style="quiet"] .wb-nav > .wb-nav-more-btn[aria-expanded="true"] {
+    --wb-muted: var(--wb-fg-2);
     background: color-mix(in srgb, var(--wb-surface-3) 55%, transparent);
   }
   [data-wb-style="quiet"]
@@ -240,6 +249,7 @@
   }
   [data-wb-style="quiet"] .wb-side-item:hover,
   [data-wb-style="quiet"] .wb-side-check:hover {
+    --wb-muted: var(--wb-fg-2);
     background: color-mix(in srgb, var(--wb-surface-3) 55%, transparent);
   }
   [data-wb-style="quiet"]
@@ -368,6 +378,7 @@
       :disabled,
       [aria-disabled="true"]
     ):hover {
+    --wb-muted: var(--wb-fg-2);
     background: color-mix(in srgb, var(--wb-surface-3) 45%, var(--wb-surface));
     filter: none;
   }

@@ -146,7 +146,7 @@ export function HistoryStrip({
   const shown = items.slice(Math.max(0, items.length - slots));
   const empty = slots - shown.length;
   return (
-    <ol className={cx("wb-history", className)} aria-label={label}>
+    <ol className={cx("wb-history", className)} role="list" aria-label={label}>
       {Array.from({ length: empty }, (_, i) => (
         <li
           key={`empty-${i}`}
@@ -221,7 +221,7 @@ const STEP_STATE_LABEL: Record<StepState, string> = {
  */
 export function Steps({ label, steps, className }: StepsProps) {
   return (
-    <ol className={cx("wb-steps", className)} aria-label={label}>
+    <ol className={cx("wb-steps", className)} role="list" aria-label={label}>
       {steps.map((step, i) => (
         <li
           key={step.key ?? i}

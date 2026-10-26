@@ -299,8 +299,10 @@ current `StyleName` (`"default" | "quiet"`) and `STYLE_ATTRIBUTE` is
 before the quiet style existed: every quiet rule is scoped to the attribute
 (`tests/quiet.test.ts` checks this), and pages without it never download IBM
 Plex. Like `data-theme`, the attribute restyles the subtree of any element
-that carries it, and a `data-theme` inside picks quiet light or dark;
-portaled overlays follow `<html>`.
+that carries it: the element sets the quiet font for its content, and a
+`data-theme` inside picks quiet light or dark. As with a `data-theme`
+subtree, the container sets its own background and text colour
+(`var(--wb-page)`, `var(--wb-fg)`); portaled overlays follow `<html>`.
 
 What quiet changes, with no change to component APIs:
 
@@ -365,11 +367,13 @@ keep their default values.
 
 - `--wb-muted` meets AA on page, side, surface, hover and the status tints
   over the page. On a selected (`--wb-surface-3`) background it would give
-  4.1:1, so selected elements (current sidebar item and nav tab, active
-  rows, selected table rows, pressed segments and chip toggles, the
-  highlighted palette item) point `--wb-muted` at `--wb-fg-2` for their
-  content; their muted text stays readable without darkening muted text
-  everywhere else, which would erase the step between secondary and muted.
+  4.1:1, and on the blended hover of sidebar items, top-bar tabs and
+  buttons 4.3–4.4:1, so those elements (current sidebar item and nav tab,
+  active rows, selected table rows, pressed segments and chip toggles, the
+  highlighted palette item; hovered sidebar items, top-bar tabs and
+  buttons) point `--wb-muted` at `--wb-fg-2` for their content. Their muted
+  text stays readable without darkening muted text everywhere else, which
+  would erase the step between secondary and muted.
 - Status text (`danger`, `info`, `warning`, `success`, `neutral` text tokens)
   meets AA on every background, selected included; status marks meet the
   3:1 non-text minimum. Text on the ink primary is 17.3:1 (light) and
@@ -377,7 +381,9 @@ keep their default values.
 - The normal bars of a `HistoryStrip` (`--wb-deemph`) and its empty slots are
   deliberately faint marks; every bar carries its state as text.
 
-`tests/quiet.test.ts` pins the quiet palette and enforces these ratios.
+`tests/quiet.test.ts` pins the quiet palette and enforces these ratios,
+including on the blended hover backgrounds; `scripts/style-check.mjs`
+checks the computed results in Chromium.
 
 ## Links and routers
 
@@ -535,6 +541,8 @@ pinned to its bottom edge:
   `flex-basis: 100%` starts a second line.
 - With no top bar, put `SidebarToggle` in the sidebar (the foot) if it
   should collapse; the rail shown while collapsed brings it back.
+- `Brand` as the sidebar's first child gets sidebar spacing only in a shell
+  without a top bar; elsewhere it keeps its own.
 - `#/pipelines` in the gallery composes this layout; pick the quiet style to
   see it as designed.
 
@@ -1835,6 +1843,7 @@ node scripts/page-pager-check.mjs http://127.0.0.1:5190/ <dir> # bounded paging,
 node scripts/shots.mjs http://127.0.0.1:5190/ <dir>   # Playwright screenshots
 node scripts/layout-check.mjs          # Chromium checks: table widths, toolbar split
 node scripts/interaction-check.mjs http://127.0.0.1:5190/ <dir> # drawer resize/persistence, palette steps and copy blocks, both themes
+node scripts/style-check.mjs http://127.0.0.1:5190/ # computed styles: quiet subtrees, Brand spacing, quiet hover contrast
 ```
 
 `scripts/layout-check.mjs` measures the gallery's hidden layout lab
@@ -1848,6 +1857,11 @@ copy blocks against the real clipboard (copy and revert, one scrolling line,
 wrapped lines without horizontal overflow, Ctrl/⌘ A, and the selection
 fallback after a rejected write). Its optional
 output directory retains screenshots and a JSON result summary.
+`scripts/style-check.mjs` adds a quiet subtree and `Brand` fixtures to a
+default-style gallery page and checks their computed fonts, tokens and
+margins, then hovers a quiet sidebar item and checks its count's contrast,
+in light and dark; run it after touching `quiet.css` or the shell's
+spacing.
 
 Gallery URLs accept `?theme=light|dark` and `?style=default|quiet` (before
 the `#`), and the sample app reads `#/?item=ev-4819` (drawer), `?modal=new`,

@@ -281,11 +281,88 @@ describe("quiet stylesheet scope", () => {
       '.wb-chip-toggle[aria-pressed="true"]',
       '.wb-seg-btn[aria-pressed="true"]',
       '.wb-palette-item[aria-selected="true"]',
+      ".wb-side-item:hover",
+      ".wb-side-check:hover",
+      ".wb-nav-tab:hover",
+      ".wb-nav-more-btn",
+      ".wb-btn:not(",
     ])
       expect(
         repointed.some((s) => s.includes(state)),
         state,
       ).toBe(true);
+  });
+
+  it("sets the quiet font at the style boundary, for quiet subtrees in default pages", () => {
+    const boundary = rules(css).find(
+      (r) => selectors(r.selector).join() === `:where(${Q})`,
+    );
+    expect(boundary?.body).toMatch(/font-family:\s*var\(--wb-font-sans\)/);
+  });
+});
+
+/** The background of the quiet rule whose selector list includes `selector`. */
+function hoverBackground(selector: string): string {
+  const rule = rules(css).find((r) =>
+    selectors(r.selector).some((s) => s.includes(selector)),
+  );
+  const bg = /background:\s*([^;]+);/.exec(rule?.body ?? "")?.[1];
+  if (!bg) throw new Error(`no background for ${selector}`);
+  return bg.replace(/\s+/g, " ").trim();
+}
+
+/** color-mix(in srgb, var(--a) P%, var(--b) | transparent) over `base`. */
+function composite(
+  mix: string,
+  vars: Record<string, string>,
+  base: RGBA,
+): RGBA {
+  const m =
+    /^color-mix\(in srgb, var\(--(wb-[\w-]+)\) ([\d.]+)%, (transparent|var\(--(wb-[\w-]+)\))\)$/.exec(
+      mix,
+    );
+  if (!m) throw new Error(`cannot read ${mix}`);
+  const [r, g, b] = parse(vars[m[1] ?? ""] ?? "", vars);
+  const share = Number(m[2]) / 100;
+  const other = m[4] ? parse(vars[m[4]] ?? "", vars) : base;
+  const mixed: RGBA = [
+    r * share + other[0] * (1 - share),
+    g * share + other[1] * (1 - share),
+    b * share + other[2] * (1 - share),
+    1,
+  ];
+  // mixing with transparent leaves the colour at `share` opacity
+  return m[4] ? mixed : over([r, g, b, share], base);
+}
+
+describe.each([
+  ["light", light],
+  ["dark", dark],
+] as const)("quiet %s hover backgrounds", (_theme, vars) => {
+  const bg = (name: string) => parse(vars[name] ?? "", vars);
+  const cases: [string, string, string][] = [
+    ["sidebar item", ".wb-side-item:hover", "wb-side"],
+    ["sidebar check", ".wb-side-check:hover", "wb-side"],
+    ["top-bar tab", ".wb-nav-tab:hover", "wb-side"],
+    ["button", ".wb-btn:not(", "wb-surface"],
+  ];
+
+  it.each(cases)(
+    "%s: fg and fg-2 (which muted text becomes there) meet AA",
+    (_name, selector, base) => {
+      const hover = composite(hoverBackground(selector), vars, bg(base));
+      for (const token of ["wb-fg", "wb-fg-2"])
+        expect(contrast(bg(token), hover), token).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  it("the primary button's hover keeps AA for its text", () => {
+    const hover = composite(
+      hoverBackground(".wb-btn--primary:not("),
+      vars,
+      bg("wb-page"),
+    );
+    expect(contrast(bg("wb-on-accent"), hover)).toBeGreaterThanOrEqual(4.5);
   });
 });
 
