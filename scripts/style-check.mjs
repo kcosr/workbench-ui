@@ -2,8 +2,9 @@
 // Check the styles' computed results in Chromium, light and dark: a quiet
 // subtree inside a default-style page gets the quiet font and tokens; Brand
 // keeps its default spacing in a sidebar unless the shell has no top bar;
-// hovered quiet sidebar items keep their counts at WCAG AA. The gallery dev
-// server must be running.
+// hovered quiet sidebar items keep their counts at WCAG AA; the expanded
+// textarea editor gets its own size over the modal's, on desktop and full
+// screen below 640px. The gallery dev server must be running.
 // Usage: node scripts/style-check.mjs [baseUrl]
 import { chromium } from "@playwright/test";
 
@@ -134,6 +135,39 @@ try {
     check(
       ratio >= 4.5,
       `${theme}: a hovered quiet sidebar item ("${hovered.label}") keeps its count at ${ratio.toFixed(2)}:1`,
+    );
+    await page.close();
+  }
+
+  // The expanded editor: 1120px wide (at most 94vw), 90vh tall and 5vh from
+  // the top on desktop; the whole viewport below 640px.
+  for (const [width, height] of [
+    [1280, 800],
+    [600, 800],
+  ]) {
+    const page = await browser.newPage({ viewport: { width, height } });
+    await page.goto(new URL("?theme=light#/components", base).href);
+    await page.waitForSelector(".wb-expandable-textarea");
+    await page
+      .locator(".wb-expandable-textarea-actions button")
+      .first()
+      .click();
+    const box = await page.locator(".wb-textarea-editor").evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return [r.left, r.top, r.width, r.height].map(Math.round);
+    });
+    const want =
+      width > 640
+        ? [
+            Math.round((width - Math.min(1120, width * 0.94)) / 2),
+            Math.round(height * 0.05),
+            Math.round(Math.min(1120, width * 0.94)),
+            Math.round(height * 0.9),
+          ]
+        : [0, 0, width, height];
+    check(
+      box.every((v, i) => Math.abs(v - want[i]) <= 1),
+      `expanded editor at ${width}×${height}: x, y, width, height ${box.join(", ")} (want ${want.join(", ")})`,
     );
     await page.close();
   }

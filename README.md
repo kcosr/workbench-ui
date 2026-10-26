@@ -1843,7 +1843,7 @@ node scripts/page-pager-check.mjs http://127.0.0.1:5190/ <dir> # bounded paging,
 node scripts/shots.mjs http://127.0.0.1:5190/ <dir>   # Playwright screenshots
 node scripts/layout-check.mjs          # Chromium checks: table widths, toolbar split
 node scripts/interaction-check.mjs http://127.0.0.1:5190/ <dir> # drawer resize/persistence, palette steps and copy blocks, both themes
-node scripts/style-check.mjs http://127.0.0.1:5190/ # computed styles: quiet subtrees, Brand spacing, quiet hover contrast
+node scripts/style-check.mjs http://127.0.0.1:5190/ # computed styles: quiet subtrees, Brand spacing, quiet hover contrast, editor size
 ```
 
 `scripts/layout-check.mjs` measures the gallery's hidden layout lab
@@ -1860,8 +1860,9 @@ output directory retains screenshots and a JSON result summary.
 `scripts/style-check.mjs` adds a quiet subtree and `Brand` fixtures to a
 default-style gallery page and checks their computed fonts, tokens and
 margins, then hovers a quiet sidebar item and checks its count's contrast,
-in light and dark; run it after touching `quiet.css` or the shell's
-spacing.
+in light and dark. It also opens the expanded textarea editor at 1280 and
+600px wide and checks its size. Run it after touching `quiet.css`, the
+shell's spacing or overlay sizes.
 
 Gallery URLs accept `?theme=light|dark` and `?style=default|quiet` (before
 the `#`), and the sample app reads `#/?item=ev-4819` (drawer), `?modal=new`,

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -76,5 +78,34 @@ describe("ExpandableTextarea", () => {
     expect(
       screen.getByRole("button", { name: "Expand Instructions" }),
     ).toBeDisabled();
+  });
+});
+
+describe("expanded editor size", () => {
+  const styles = resolve(__dirname, "..", "src", "styles");
+  const editorCss = readFileSync(
+    resolve(styles, "expandable-textarea.css"),
+    "utf8",
+  ).replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("outranks the modal's own sizes, whatever order the stylesheets load in", () => {
+    // Rules that size the dialog box (the modal sets top, width and
+    // max-height with one class; a size variant adds another).
+    const sizing = [...editorCss.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter((m) =>
+        /(^|[\s;])(top|width|height|max-height|inset):/.test(m[2] ?? ""),
+      )
+      .map((m) => (m[1] ?? "").trim());
+    expect(sizing).toEqual([
+      ".wb-modal.wb-textarea-editor",
+      ".wb-modal.wb-textarea-editor",
+    ]);
+  });
+
+  it("is imported after the modal styles", () => {
+    const index = readFileSync(resolve(styles, "index.css"), "utf8");
+    expect(index.indexOf('"./expandable-textarea.css"')).toBeGreaterThan(
+      index.indexOf('"./overlays.css"'),
+    );
   });
 });
