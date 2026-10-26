@@ -232,7 +232,7 @@ export function PipelinesView() {
   const id = route.path.split("/")[2];
   const sidebar = (
     <Sidebar label="Sidebar">
-      <Brand name="Workbench" href="#/pipelines" icon="shield" />
+      <Brand name="Workbench" href="#/pipelines" icon={null} />
       <SidebarTop>
         <Select
           aria-label="Project"

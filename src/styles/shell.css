@@ -263,7 +263,10 @@
   .wb-topbar[data-wb-brand="compact"] .wb-brand {
     margin-right: 4px;
   }
-  .wb-topbar[data-wb-brand="compact"] .wb-brand-name,
+  /* the name goes only where the mark stays to show the brand */
+  .wb-topbar[data-wb-brand="compact"]
+    .wb-brand:has(> .wb-brand-mark)
+    > .wb-brand-name,
   .wb-topbar[data-wb-status="short"] .wb-top-status-text {
     position: absolute;
     width: 1px;

@@ -465,7 +465,7 @@ pinned to its bottom edge:
 <AppShell
   sidebar={
     <Sidebar label="Sidebar">
-      <Brand name="Example App" href="/" />
+      <Brand name="Example App" icon={null} href="/" />
       <SidebarTop>
         <Select
           aria-label="Project"
@@ -740,7 +740,7 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   (`[hidden]` when collapsed), `wb-sidebar-resize`, `wb-sidebar-rail`.
 - **Top bar:** `wb-topbar` (compaction attributes `data-wb-brand`,
   `data-wb-search`, `data-wb-status`, `data-wb-nav-icons`, set by TopBar),
-  `wb-brand`, `wb-brand-mark`, `wb-brand-name`, `wb-nav` (`data-wb-more`),
+  `wb-brand`, `wb-brand-mark` (absent with `icon={null}`), `wb-brand-name`, `wb-nav` (`data-wb-more`),
   `wb-nav-tab` (`aria-current`; `data-wb-overflow` when moved into More),
   `wb-nav-count`, `wb-nav-more-btn`, `wb-nav-more-dot`, `wb-top-search`,
   `wb-top-search-text`, `wb-top-status`, `wb-top-status-text`,
@@ -893,7 +893,8 @@ where it makes sense.
 
 - `AppShell({ topBar?, sidebar?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
   `SidebarToggle()`, `useAppShell()`, `SkipLink({ targetId?, children? })`.
-- `TopBar({ children })`, `Brand({ name, icon? = "pulse", href? })`,
+- `TopBar({ children })`, `Brand({ name, icon? = "pulse", href? })`
+  (`icon={null}`: the name alone, no mark),
   `NavTabs({ label? = "Main", moreLabel? = "More", children })`,
   `NavTab({ href, current?, icon?, count?, countTone?, countLabel?, children })`,
   `TopSearch({ onClick, placeholder?, shortcut? })` (shows `⌘K`/`Ctrl K`),
@@ -905,7 +906,8 @@ where it makes sense.
   **Crowded bars never clip silently.** TopBar measures its content (on
   resize, web-font loads, re-renders and content changes inside the bar) and, while anything is clipped, applies
   these steps in order: TopSearch's placeholder shrinks (down to 170px);
-  the brand name is visually hidden (still the link's name); TopSearch
+  the brand name is visually hidden (still the link's name; a brand
+  without a mark keeps its name); TopSearch
   becomes its icon button; TopStatus shows `shortLabel` (or only its dot,
   the full label stays for screen readers and `detail` in the tooltip);
   NavTab icons go. If tabs still don't fit, the last ones (never the current

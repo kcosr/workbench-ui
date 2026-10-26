@@ -64,7 +64,11 @@ try {
         <div class="wb-app"><div class="wb-sidebar-pane"><aside class="wb-sidebar">
           <span class="wb-brand" id="b-topbar">Brand</span></aside></div></div>
         <div class="wb-app wb-app--no-topbar"><div class="wb-sidebar-pane"><aside class="wb-sidebar">
-          <span class="wb-brand" id="b-nav">Brand</span></aside></div></div>`;
+          <span class="wb-brand" id="b-nav">Brand</span></aside></div></div>
+        <header class="wb-topbar" data-wb-brand="compact">
+          <span class="wb-brand"><span class="wb-brand-mark"></span><span class="wb-brand-name" id="b-compact-mark">Brand</span></span>
+          <span class="wb-brand"><span class="wb-brand-name" id="b-compact-text">Brand</span></span>
+        </header>`;
       document.body.append(host);
       const cs = (id) => getComputedStyle(document.getElementById(id));
       return {
@@ -77,6 +81,12 @@ try {
         plain: cs("b-plain").margin,
         inTopbarShell: cs("b-topbar").margin,
         inNavShell: cs("b-nav").margin,
+        compactMark: document
+          .getElementById("b-compact-mark")
+          .getBoundingClientRect().width,
+        compactText: document
+          .getElementById("b-compact-text")
+          .getBoundingClientRect().width,
       };
     });
     check(
@@ -100,6 +110,10 @@ try {
       fixture.plain === fixture.alone &&
         fixture.inTopbarShell === fixture.alone,
       `${theme}: Brand in a default Sidebar keeps its default spacing (${fixture.alone}; in a Sidebar ${fixture.plain}, in a top-bar shell ${fixture.inTopbarShell})`,
+    );
+    check(
+      fixture.compactMark <= 1 && fixture.compactText > 20,
+      `${theme}: a crowded top bar hides the brand name only next to a mark (${fixture.compactMark.toFixed(0)}px with a mark, ${fixture.compactText.toFixed(0)}px without)`,
     );
     check(
       fixture.inNavShell === "2px 8px 12px",
