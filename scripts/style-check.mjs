@@ -3,7 +3,7 @@
 // subtree inside a default-style page gets the quiet font and tokens; Brand
 // keeps its default spacing in a sidebar unless the shell has no top bar;
 // hovered quiet sidebar items keep their counts at WCAG AA; the current
-// quiet sidebar item is tinted and ruled in the accent; the expanded
+// quiet sidebar item is tinted with the accent, with no rule; the expanded
 // textarea editor gets its own size over the modal's, on desktop and full
 // screen below 640px. The gallery dev server must be running.
 // Usage: node scripts/style-check.mjs [baseUrl]
@@ -152,25 +152,20 @@ try {
       `${theme}: a hovered quiet sidebar item ("${hovered.label}") keeps its count at ${ratio.toFixed(2)}:1`,
     );
 
-    // Quiet: the current sidebar item is tinted and ruled in the accent,
-    // and its label keeps AA on the tint over the side.
+    // Quiet: the current sidebar item is tinted with the accent, with no
+    // rule beside it, and its label keeps AA on the tint over the side.
     await page.mouse.move(0, 0);
     const current = await page
       .locator('.wb-side-item[aria-current="page"]')
       .first()
       .evaluate((el) => {
         const cs = getComputedStyle(el);
-        const probe = document.createElement("span");
-        probe.style.color = "var(--wb-accent)";
-        el.append(probe);
-        const accent = getComputedStyle(probe).color;
-        probe.remove();
         return {
           label: el.querySelector(".wb-side-item-label").textContent,
           color: cs.color,
           background: cs.backgroundColor,
           shadow: cs.boxShadow,
-          accent,
+          borderLeft: cs.borderLeftWidth,
           side: getComputedStyle(el.closest(".wb-sidebar")).backgroundColor,
         };
       });
@@ -182,9 +177,8 @@ try {
       `${theme}: the current quiet sidebar item ("${current.label}") is tinted with the accent (${current.background})`,
     );
     check(
-      current.shadow.startsWith(current.accent) &&
-        current.shadow.includes("inset"),
-      `${theme}: and ruled in the accent (${current.shadow})`,
+      current.shadow === "none" && current.borderLeft === "0px",
+      `${theme}: with no rule beside it (box-shadow ${current.shadow}, border-left ${current.borderLeft})`,
     );
     check(
       labelRatio >= 4.5,

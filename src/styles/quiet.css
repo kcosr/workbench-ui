@@ -247,7 +247,7 @@
   }
 
   /* ---------- sidebar: sentence-case section labels, grey hover, the current
-     item tinted and ruled in the accent */
+     item tinted with the accent */
   [data-wb-style="quiet"] .wb-side-h {
     font-size: var(--wb-fs-12);
     font-weight: var(--wb-fw-regular);
@@ -277,7 +277,6 @@
     .wb-side-item[aria-current]:not([aria-current="false"]) {
     --wb-muted: var(--wb-fg-2);
     background: var(--wb-accent-weak);
-    box-shadow: inset 2px 0 0 var(--wb-accent);
     font-weight: var(--wb-fw-medium);
   }
 

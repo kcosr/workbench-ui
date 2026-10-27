@@ -509,9 +509,9 @@ describe("quiet selection and success bars", () => {
     expect(body(selector)).toMatch(/background: var\(--wb-accent-weak\);/);
   });
 
-  it("the current sidebar item is ruled in the accent", () => {
-    expect(body(".wb-side-item[aria-current]")).toMatch(
-      /box-shadow: inset 2px 0 0 var\(--wb-accent\);/,
+  it("the current sidebar item is only tinted, with no rule beside it", () => {
+    expect(body(".wb-side-item[aria-current]")).not.toMatch(
+      /box-shadow|border/,
     );
   });
 

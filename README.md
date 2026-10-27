@@ -319,8 +319,7 @@ What quiet changes, with no change to component APIs:
   rings, checkboxes, switches and the current tab underline are blue, and
   selection (the current sidebar item and top-bar tab, active and selected
   rows, pressed segments and chip toggles, the highlighted palette item) is
-  tinted with `--wb-accent-weak`. The current sidebar item also carries a
-  2px accent rule. Hover stays grey.
+  tinted with `--wb-accent-weak`, with no rule beside it. Hover stays grey.
 - **Surfaces:** `--wb-page` for main panes, toolbars, headers and drawers;
   `--wb-side` (quiet only) for the sidebar and top bar; `--wb-surface` for
   inputs, cards, code blocks and overlays.
