@@ -143,24 +143,25 @@ const PALETTE: Record<"light" | "dark", Record<string, string>> = {
     "wb-fg": "#1b1b19",
     "wb-fg-2": "#5b5953",
     "wb-muted": "#726f68",
-    "wb-accent": "#1b1b19",
-    "wb-accent-weak": "#e9e7e1",
-    "wb-accent-text": "#1b1b19",
+    "wb-accent": "#2556c4",
+    "wb-accent-weak": "rgba(37, 86, 196, 0.09)",
+    "wb-accent-text": "#2150b5",
     "wb-on-accent": "#ffffff",
     "wb-shadow-pop":
       "0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.08)",
     "wb-shadow-drawer": "none",
     "wb-shadow-raised": "0 0 0 transparent",
-    "wb-success": "var(--wb-muted)",
-    "wb-success-text": "#2b7540",
+    "wb-success": "#2b7440",
+    "wb-success-text": "#2b7440",
     "wb-success-weak": "#f4f8f5",
     "wb-success-border": "rgba(43, 117, 64, 0.35)",
-    "wb-warning": "#8a6009",
-    "wb-warning-text": "#8a6009",
+    "wb-success-bar": "#a9cdb2",
+    "wb-warning": "#885f09",
+    "wb-warning-text": "#885f09",
     "wb-warning-weak": "#fcf8ee",
     "wb-warning-border": "rgba(138, 96, 9, 0.35)",
-    "wb-danger": "#c2302a",
-    "wb-danger-text": "#c2302a",
+    "wb-danger": "#c02f2a",
+    "wb-danger-text": "#c02f2a",
     "wb-danger-weak": "#fdf5f4",
     "wb-danger-border": "rgba(194, 48, 42, 0.35)",
     "wb-info": "#2556c4",
@@ -187,24 +188,25 @@ const PALETTE: Record<"light" | "dark", Record<string, string>> = {
     "wb-fg": "#e9e7e2",
     "wb-fg-2": "#a8a59e",
     "wb-muted": "#8a8780",
-    "wb-accent": "#e9e7e2",
-    "wb-accent-weak": "#2a2926",
-    "wb-accent-text": "#e9e7e2",
-    "wb-on-accent": "#151514",
+    "wb-accent": "#7ea6f8",
+    "wb-accent-weak": "rgba(126, 166, 248, 0.14)",
+    "wb-accent-text": "#93b4f9",
+    "wb-on-accent": "#0d1424",
     "wb-shadow-pop":
       "0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.4)",
     "wb-shadow-drawer": "none",
     "wb-shadow-raised": "0 0 0 transparent",
-    "wb-success": "var(--wb-muted)",
+    "wb-success": "#62b57d",
     "wb-success-text": "#62b57d",
     "wb-success-weak": "rgba(98, 181, 125, 0.08)",
     "wb-success-border": "rgba(98, 181, 125, 0.35)",
+    "wb-success-bar": "#3f6b4c",
     "wb-warning": "#d6a24a",
     "wb-warning-text": "#d6a24a",
     "wb-warning-weak": "rgba(214, 162, 74, 0.07)",
     "wb-warning-border": "rgba(214, 162, 74, 0.35)",
-    "wb-danger": "#ee6b60",
-    "wb-danger-text": "#ee6b60",
+    "wb-danger": "#ef7065",
+    "wb-danger-text": "#ef7065",
     "wb-danger-weak": "rgba(238, 107, 96, 0.08)",
     "wb-danger-border": "rgba(238, 107, 96, 0.35)",
     "wb-info": "#7ea6f8",
@@ -380,6 +382,11 @@ describe.each([
     ...["wb-page", "wb-side", "wb-surface", "wb-surface-2"].map(bg),
     ...TINTS.map((t) => tinted(t, "wb-page")),
   ];
+  /** Selected: the accent tint over the page, the side and a surface. */
+  const selected = () =>
+    ["wb-page", "wb-side", "wb-surface"].map((b) =>
+      tinted("wb-accent-weak", b),
+    );
 
   it("defines the documented colour values", () => {
     expect(vars).toEqual(PALETTE[theme]);
@@ -396,39 +403,110 @@ describe.each([
     },
   );
 
-  it("fg and fg-2 meet AA on selected backgrounds (muted is repointed there)", () => {
-    for (const token of ["wb-fg", "wb-fg-2"])
-      expect(contrast(bg(token), bg("wb-surface-3"))).toBeGreaterThanOrEqual(
-        4.5,
-      );
-    expect(contrast(bg("wb-muted"), bg("wb-surface-3"))).toBeLessThan(4.5);
+  it("fg and fg-2 meet AA on selected and neutral-fill backgrounds (muted is repointed there)", () => {
+    for (const b of [...selected(), bg("wb-surface-3")]) {
+      for (const token of ["wb-fg", "wb-fg-2"])
+        expect(contrast(bg(token), b), token).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(bg("wb-muted"), b)).toBeLessThan(4.5);
+    }
   });
 
-  it.each([...TONES, "neutral"])(
-    "%s text meets AA on every background, selected included, and on its tint",
+  it.each([...TONES, "neutral", "accent"])(
+    "%s text meets AA on every background, selected included",
     (tone) => {
       const text = bg(`wb-${tone}-text`);
-      for (const b of [...plain(), bg("wb-surface-3")])
-        expect(contrast(text, b)).toBeGreaterThanOrEqual(4.5);
+      for (const b of [...plain(), ...selected()])
+        expect(
+          contrast(text, b),
+          `on rgb(${b.slice(0, 3).map(Math.round).join(",")})`,
+        ).toBeGreaterThanOrEqual(4.5);
     },
   );
 
-  it("text on the ink primary (on-accent) meets AA", () => {
+  it("the accent itself meets AA as text (the current top-bar tab's icon and label)", () => {
+    for (const b of [...plain(), ...selected()])
+      expect(contrast(bg("wb-accent"), b)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("text on the accent primary (on-accent) meets AA", () => {
     expect(
       contrast(bg("wb-on-accent"), bg("wb-accent")),
     ).toBeGreaterThanOrEqual(4.5);
   });
 
-  it.each(TONES)(
+  it.each([...TONES, "accent"])(
     "%s marks (glyphs, dots, rules) meet the 3:1 non-text minimum",
     (tone) => {
       for (const b of [
         ...["wb-page", "wb-side", "wb-surface", "wb-surface-2"].map(bg),
         bg("wb-surface-3"),
+        ...selected(),
       ])
         expect(contrast(bg(`wb-${tone}`), b)).toBeGreaterThanOrEqual(3);
     },
   );
+
+  it("success marks are the success text colour, not a grey", () => {
+    expect(vars["wb-success"]).toBe(vars["wb-success-text"]);
+    expect(vars["wb-success"]).not.toBe(vars["wb-muted"]);
+  });
+});
+
+describe("quiet selection and success bars", () => {
+  const body = (selector: string) => {
+    const rule = rules(css).find((r) =>
+      selectors(r.selector).some((s) => s.includes(selector)),
+    );
+    if (!rule) throw new Error(`no quiet rule for ${selector}`);
+    return rule.body.replace(/\s+/g, " ");
+  };
+
+  it.each([
+    ".wb-side-item[aria-current]",
+    ".wb-nav-tab[aria-current]",
+    '.wb-seg-btn[aria-pressed="true"]',
+  ])("%s is tinted with the accent", (selector) => {
+    expect(body(selector)).toMatch(/background: var\(--wb-accent-weak\);/);
+  });
+
+  it("the current sidebar item is ruled in the accent", () => {
+    expect(body(".wb-side-item[aria-current]")).toMatch(
+      /box-shadow: inset 2px 0 0 var\(--wb-accent\);/,
+    );
+  });
+
+  it.each([
+    ".wb-side-item:hover",
+    ".wb-nav-tab:hover",
+    ".wb-side-quick > button:hover",
+    ".wb-side-more:hover",
+    ".wb-row-actions .wb-btn--icon:hover",
+    ".wb-btn:not(",
+  ])("%s keeps a grey hover", (selector) => {
+    const b = body(selector);
+    expect(b).toMatch(/background: color-mix\(in srgb, var\(--wb-surface-3\)/);
+    expect(b).not.toMatch(/accent/);
+  });
+
+  it("neutral fills stay grey: --wb-surface-3 and --wb-deemph are not tinted", () => {
+    for (const vars of [light, dark]) {
+      const [r, g, b] = parse(vars["wb-surface-3"] ?? "", vars);
+      expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeLessThan(12);
+      const [dr, dg, db] = parse(vars["wb-deemph"] ?? "", vars);
+      expect(Math.max(dr, dg, db) - Math.min(dr, dg, db)).toBeLessThan(12);
+    }
+  });
+
+  it("HistoryStrip's ok bars use --wb-success-bar, a green", () => {
+    expect(body(".wb-history-bar--ok")).toMatch(
+      /background: var\(--wb-success-bar\);/,
+    );
+    for (const vars of [light, dark]) {
+      const [r, g, b] = parse(vars["wb-success-bar"] ?? "", vars);
+      expect(g).toBeGreaterThan(r);
+      expect(g).toBeGreaterThan(b);
+    }
+  });
 });
 
 describe("quiet contrast notes", () => {
@@ -438,18 +516,25 @@ describe("quiet contrast notes", () => {
   );
   const header = css.slice(0, css.indexOf("*/"));
 
-  it.each(["wb-muted", "wb-warning", "wb-success-text"])(
+  /** Tokens the notes explain, and the themes whose values they state. */
+  const NOTED: [string, ("light" | "dark")[]][] = [
+    ["wb-muted", ["light", "dark"]],
+    ["wb-accent-text", ["light", "dark"]],
+    ["wb-success-text", ["light", "dark"]],
+    ["wb-warning", ["light"]],
+    ["wb-danger", ["light", "dark"]],
+  ];
+
+  it.each(NOTED)(
     "the README and the quiet.css header state %s",
-    (token) => {
+    (token, themes) => {
       expect(notes).not.toBe("");
       expect(notes).toContain(`\`--${token}\``);
       expect(header).toContain(`--${token}`);
-      for (const vars of [light, dark]) {
-        const value = vars[token] ?? "";
-        if (token === "wb-muted" || vars === light) {
-          expect(notes, `${token} ${value}`).toContain(`\`${value}\``);
-          expect(header, `${token} ${value}`).toContain(value);
-        }
+      for (const theme of themes) {
+        const value = (theme === "light" ? light : dark)[token] ?? "";
+        expect(notes, `${token} ${value}`).toContain(`\`${value}\``);
+        expect(header, `${token} ${value}`).toContain(value);
       }
     },
   );

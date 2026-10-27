@@ -2,7 +2,8 @@
 // Check the styles' computed results in Chromium, light and dark: a quiet
 // subtree inside a default-style page gets the quiet font and tokens; Brand
 // keeps its default spacing in a sidebar unless the shell has no top bar;
-// hovered quiet sidebar items keep their counts at WCAG AA; the expanded
+// hovered quiet sidebar items keep their counts at WCAG AA; the current
+// quiet sidebar item is tinted and ruled in the accent; the expanded
 // textarea editor gets its own size over the modal's, on desktop and full
 // screen below 640px. The gallery dev server must be running.
 // Usage: node scripts/style-check.mjs [baseUrl]
@@ -149,6 +150,45 @@ try {
     check(
       ratio >= 4.5,
       `${theme}: a hovered quiet sidebar item ("${hovered.label}") keeps its count at ${ratio.toFixed(2)}:1`,
+    );
+
+    // Quiet: the current sidebar item is tinted and ruled in the accent,
+    // and its label keeps AA on the tint over the side.
+    await page.mouse.move(0, 0);
+    const current = await page
+      .locator('.wb-side-item[aria-current="page"]')
+      .first()
+      .evaluate((el) => {
+        const cs = getComputedStyle(el);
+        const probe = document.createElement("span");
+        probe.style.color = "var(--wb-accent)";
+        el.append(probe);
+        const accent = getComputedStyle(probe).color;
+        probe.remove();
+        return {
+          label: el.querySelector(".wb-side-item-label").textContent,
+          color: cs.color,
+          background: cs.backgroundColor,
+          shadow: cs.boxShadow,
+          accent,
+          side: getComputedStyle(el.closest(".wb-sidebar")).backgroundColor,
+        };
+      });
+    const [r, g, b, a] = rgba(current.background);
+    const tint = over(rgba(current.background), rgba(current.side));
+    const labelRatio = contrast(rgba(current.color), tint);
+    check(
+      a > 0 && a < 1 && b > r && b > g,
+      `${theme}: the current quiet sidebar item ("${current.label}") is tinted with the accent (${current.background})`,
+    );
+    check(
+      current.shadow.startsWith(current.accent) &&
+        current.shadow.includes("inset"),
+      `${theme}: and ruled in the accent (${current.shadow})`,
+    );
+    check(
+      labelRatio >= 4.5,
+      `${theme}: its label meets AA on the tint (${labelRatio.toFixed(2)}:1)`,
     );
     await page.close();
   }

@@ -45,7 +45,7 @@ import {
 import type { DataColumn, HistoryItem, StatusTone } from "../../../src";
 import { THEME_KEY } from "../App";
 import { useRoute } from "../router";
-import { StyleMenu } from "../style";
+import { StyleMenu, useGalleryStyle } from "../style";
 
 interface Pipeline {
   id: string;
@@ -307,6 +307,7 @@ export function PipelinesView() {
 }
 
 function PipelineList() {
+  const style = useGalleryStyle();
   const [q, setQ] = useState("");
   const rows = PIPELINES.filter((p) =>
     p.name.toLowerCase().includes(q.trim().toLowerCase()),
@@ -371,8 +372,9 @@ function PipelineList() {
           bleed
         />
         <p className="gal-note">
-          Grey bars succeeded; red failed, blue is running and an outlined bar
-          is waiting. The newest run is on the right.
+          {style === "quiet" ? "Green" : "Grey"} bars succeeded; red failed,
+          blue is running and an outlined bar is waiting. The newest run is on
+          the right.
         </p>
       </div>
     </Main>

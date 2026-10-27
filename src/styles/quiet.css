@@ -1,27 +1,40 @@
 /*
  * The quiet style (README, "Styles"): data-wb-style="quiet" on <html>, next
- * to data-theme. IBM Plex type, ink on paper, colour only for status (failed,
- * running, waiting; success stays grey where it is the normal outcome),
- * sentence-case labels, hairline rules instead of filled boxes, ink primary
- * buttons and left-ruled alerts. Every rule here is scoped to the attribute,
- * so the default style is untouched.
+ * to data-theme. IBM Plex type, ink on paper, sentence-case labels, hairline
+ * rules instead of filled boxes and left-ruled alerts. Colour is kept to a
+ * few hues: failed red, waiting amber, success a muted green, and blue, the
+ * accent, which also means running (primary buttons, focus, the current tab
+ * and selection, tinted with --wb-accent-weak; hover stays grey). Every rule
+ * here is scoped to the attribute, so the default style is untouched.
  *
- * Contrast is part of the palette; these values meet WCAG AA (4.5:1):
+ * Contrast is part of the palette; these values meet WCAG AA (4.5:1).
+ * "Selected" is --wb-accent-weak over the page, side or surface.
  *   --wb-muted         #726f68 light, #8a8780 dark (the design's ink-3,
  *                      #8b8880 and #78756e, gives only 3.2-3.5 and
  *                      3.7-4.0:1): small muted text on page, side, surface,
  *                      hover and the status tints over the page. On
- *                      selected (surface-3) backgrounds, where it would fall
- *                      to 4.1:1, and on the blended hover of sidebar items,
+ *                      selected backgrounds, where it would fall to
+ *                      3.7-4.4:1, and on the blended hover of sidebar items,
  *                      top-bar tabs and buttons (4.3-4.4:1), those elements
  *                      point --wb-muted at --wb-fg-2.
- *   --wb-warning       #8a6009 light (#97690a gives 3.9-4.4:1 on side, hover
- *                      and selected backgrounds) and
- *   --wb-success-text  #2b7540 light (#2e7a43 gives 4.3:1 on selected):
- *                      status text on every background, selected included.
- *                      The other status colours are the design's values.
- * Success marks (--wb-success: icons, dots, rules) are the muted grey: the
- * normal outcome stays quiet, colour is for what needs attention.
+ *   --wb-accent-text   #2150b5 light, #93b4f9 dark: 5.8-7.3:1 and
+ *                      6.4-8.8:1 on page, side, surface, hover and selected.
+ *   --wb-success-text  #2b7440 light (the design's #2e7a43 gives 4.2-4.5:1
+ *                      on hover and selected backgrounds), #62b57d dark:
+ *                      4.5-5.7:1 and 5.3-7.3:1.
+ *   --wb-warning       #885f09 light (the design's #97690a gives 3.8-4.4:1
+ *                      on side, hover and selected backgrounds) and
+ *   --wb-danger        #c02f2a light, #ef7065 dark (the design's #c2302a and
+ *                      #ee6b60 give 4.43 and 4.35:1 on selected over the side
+ *                      and the surface): status text on every background,
+ *                      selected included. The other status colours are the
+ *                      design's values.
+ *   --wb-on-accent     #ffffff light, #0d1424 dark: 6.6 and 7.6:1 on the
+ *                      primary, 4.9 and 5.9:1 on its hover.
+ * Status marks (--wb-success and the other solids: icons, dots, rules) are
+ * their text colours. The succeeded bars of HistoryStrip
+ * (--wb-success-bar) are a faint green, like the other faint marks
+ * (--wb-deemph); each bar carries its state as text.
  * The theme is chosen by data-theme as in the default style; any element
  * with data-theme re-themes its subtree.
  */
@@ -58,7 +71,7 @@
     --wb-surface: #ffffff;
     /* hover */
     --wb-surface-2: #f5f4f0;
-    /* selected */
+    /* neutral fills: hover blends, avatars, meter tracks */
     --wb-surface-3: #e9e7e1;
     --wb-raised: var(--wb-surface);
     --wb-border: #e8e6e1;
@@ -66,10 +79,11 @@
     --wb-fg: #1b1b19;
     --wb-fg-2: #5b5953;
     --wb-muted: #726f68;
-    /* ink: primary buttons, focus, current tab; selection is grey */
-    --wb-accent: #1b1b19;
-    --wb-accent-weak: #e9e7e1;
-    --wb-accent-text: #1b1b19;
+    /* blue, the running hue: primary buttons, focus, current tab; weak is
+       the selected tint */
+    --wb-accent: #2556c4;
+    --wb-accent-weak: rgba(37, 86, 196, 0.09);
+    --wb-accent-text: #2150b5;
     --wb-on-accent: #ffffff;
     --wb-shadow-pop:
       0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.08);
@@ -77,18 +91,18 @@
     --wb-shadow-raised: 0 0 0 transparent;
 
     /* status: ok, waiting, failed, running (info); weak = the faint tints */
-    /* success marks (icons, dots, rules) stay grey, the normal outcome;
-       success text (a positive delta) is the ok green */
-    --wb-success: var(--wb-muted);
-    --wb-success-text: #2b7540;
+    --wb-success: #2b7440;
+    --wb-success-text: #2b7440;
     --wb-success-weak: #f4f8f5;
     --wb-success-border: rgba(43, 117, 64, 0.35);
-    --wb-warning: #8a6009;
-    --wb-warning-text: #8a6009;
+    /* the succeeded bars in HistoryStrip (quiet only) */
+    --wb-success-bar: #a9cdb2;
+    --wb-warning: #885f09;
+    --wb-warning-text: #885f09;
     --wb-warning-weak: #fcf8ee;
     --wb-warning-border: rgba(138, 96, 9, 0.35);
-    --wb-danger: #c2302a;
-    --wb-danger-text: #c2302a;
+    --wb-danger: #c02f2a;
+    --wb-danger-text: #c02f2a;
     --wb-danger-weak: #fdf5f4;
     --wb-danger-border: rgba(194, 48, 42, 0.35);
     --wb-info: #2556c4;
@@ -102,7 +116,6 @@
 
     --wb-grid: #e8e6e1;
     --wb-axis: #d8d5ce;
-    /* also the normal (succeeded) marks in HistoryStrip */
     --wb-deemph: #d2cfc8;
   }
 
@@ -119,25 +132,26 @@
     --wb-fg: #e9e7e2;
     --wb-fg-2: #a8a59e;
     --wb-muted: #8a8780;
-    --wb-accent: #e9e7e2;
-    --wb-accent-weak: #2a2926;
-    --wb-accent-text: #e9e7e2;
-    --wb-on-accent: #151514;
+    --wb-accent: #7ea6f8;
+    --wb-accent-weak: rgba(126, 166, 248, 0.14);
+    --wb-accent-text: #93b4f9;
+    --wb-on-accent: #0d1424;
     --wb-shadow-pop:
       0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.4);
     --wb-shadow-drawer: none;
     --wb-shadow-raised: 0 0 0 transparent;
 
-    --wb-success: var(--wb-muted);
+    --wb-success: #62b57d;
     --wb-success-text: #62b57d;
     --wb-success-weak: rgba(98, 181, 125, 0.08);
     --wb-success-border: rgba(98, 181, 125, 0.35);
+    --wb-success-bar: #3f6b4c;
     --wb-warning: #d6a24a;
     --wb-warning-text: #d6a24a;
     --wb-warning-weak: rgba(214, 162, 74, 0.07);
     --wb-warning-border: rgba(214, 162, 74, 0.35);
-    --wb-danger: #ee6b60;
-    --wb-danger-text: #ee6b60;
+    --wb-danger: #ef7065;
+    --wb-danger-text: #ef7065;
     --wb-danger-weak: rgba(238, 107, 96, 0.08);
     --wb-danger-border: rgba(238, 107, 96, 0.35);
     --wb-info: #7ea6f8;
@@ -204,7 +218,7 @@
   [data-wb-style="quiet"]
     .wb-nav-tab[aria-current]:not([aria-current="false"]) {
     --wb-muted: var(--wb-fg-2);
-    background: var(--wb-surface-3);
+    background: var(--wb-accent-weak);
     font-weight: var(--wb-fw-medium);
   }
   /* counts are plain numbers; only status tones colour them */
@@ -232,7 +246,8 @@
     border-color: var(--wb-muted);
   }
 
-  /* ---------- sidebar: sentence-case section labels, grey selection */
+  /* ---------- sidebar: sentence-case section labels, grey hover, the current
+     item tinted and ruled in the accent */
   [data-wb-style="quiet"] .wb-side-h {
     font-size: var(--wb-fs-12);
     font-weight: var(--wb-fw-regular);
@@ -252,10 +267,17 @@
     --wb-muted: var(--wb-fg-2);
     background: color-mix(in srgb, var(--wb-surface-3) 55%, transparent);
   }
+  /* the default style tints these accent buttons' hover; quiet keeps it grey */
+  [data-wb-style="quiet"] .wb-side-quick > button:hover,
+  [data-wb-style="quiet"] .wb-side-quick-btn:hover,
+  [data-wb-style="quiet"] .wb-side-more:hover {
+    background: color-mix(in srgb, var(--wb-surface-3) 55%, transparent);
+  }
   [data-wb-style="quiet"]
     .wb-side-item[aria-current]:not([aria-current="false"]) {
     --wb-muted: var(--wb-fg-2);
-    background: var(--wb-surface-3);
+    background: var(--wb-accent-weak);
+    box-shadow: inset 2px 0 0 var(--wb-accent);
     font-weight: var(--wb-fw-medium);
   }
 
@@ -316,6 +338,11 @@
   [data-wb-style="quiet"] .wb-row.is-active {
     --wb-muted: var(--wb-fg-2);
   }
+  /* the default style tints the row actions' hover; quiet keeps it grey */
+  [data-wb-style="quiet"] .wb-row-actions .wb-btn--icon:hover {
+    background: color-mix(in srgb, var(--wb-surface-3) 55%, transparent);
+    color: var(--wb-fg);
+  }
   [data-wb-style="quiet"] .wb-list-note {
     padding: 0;
     border-radius: 0;
@@ -372,7 +399,7 @@
     display: none;
   }
 
-  /* ---------- buttons: plain bordered, ink primary, red-text destructive */
+  /* ---------- buttons: plain bordered, accent primary, red-text destructive */
   [data-wb-style="quiet"]
     .wb-btn:not(.wb-btn--primary, .wb-btn--ghost, .wb-btn--danger-ghost):not(
       :disabled,
@@ -409,7 +436,7 @@
     opacity: 0.75;
   }
 
-  /* ---------- segmented control: a bordered group, grey pressed segment */
+  /* ---------- segmented control: a bordered group, tinted pressed segment */
   [data-wb-style="quiet"] .wb-seg {
     gap: 0;
     padding: 1px;
@@ -425,7 +452,7 @@
   [data-wb-style="quiet"]
     .wb-seg-btn[aria-current]:not([aria-current="false"]) {
     --wb-muted: var(--wb-fg-2);
-    background: var(--wb-surface-3);
+    background: var(--wb-accent-weak);
     box-shadow: none;
     font-weight: var(--wb-fw-medium);
   }
@@ -486,11 +513,15 @@
     border-radius: 50%;
     background: var(--wb-tone);
   }
+  /* HistoryStrip: succeeded runs are faint green bars */
+  [data-wb-style="quiet"] .wb-history-bar--ok {
+    background: var(--wb-success-bar);
+  }
   [data-wb-style="quiet"] .wb-kbd {
     padding: 2px 5px;
     border-bottom-width: 1px;
   }
-  /* letter avatars are grey; the highlighted one (the signed-in user) ink */
+  /* letter avatars are grey; the highlighted one (the signed-in user) accent */
   [data-wb-style="quiet"] .wb-avatar {
     background: var(--wb-surface-3);
     color: var(--wb-fg-2);
@@ -602,10 +633,10 @@
 }
 
 @layer wb.utilities {
-  /* text links read as links without colour: a hairline underline */
+  /* text links: accent text over a softened accent underline */
   [data-wb-style="quiet"] .wb-link {
     text-decoration: underline;
-    text-decoration-color: var(--wb-border-strong);
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
     text-underline-offset: 3px;
   }
   [data-wb-style="quiet"]

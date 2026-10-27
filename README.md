@@ -274,11 +274,11 @@ side this way); portaled overlays follow `<html>`.
 
 The kit has two styles, chosen independently of the light/dark theme: the
 default (what the rest of this README describes) and **quiet**, a typographic
-look for dense tools: IBM Plex, ink on paper, colour only for status,
-sentence-case labels and hairlines instead of filled boxes. An application
-picks one for good; there is no user-facing style switch. Select quiet with
-`data-wb-style="quiet"` on `<html>`, either in `index.html`, so the first
-paint is already quiet:
+look for dense tools: IBM Plex, ink on paper, a few hues (red, amber, a
+muted green and a blue accent), sentence-case labels and hairlines instead
+of filled boxes. An application picks one for good; there is no user-facing
+style switch. Select quiet with `data-wb-style="quiet"` on `<html>`, either
+in `index.html`, so the first paint is already quiet:
 
 ```html
 <html lang="en" data-wb-style="quiet"></html>
@@ -309,14 +309,18 @@ What quiet changes, with no change to component APIs:
 - **Type:** IBM Plex Sans and Mono (`--wb-font-sans`, `--wb-font-mono`).
   Plex ships 400, 500 and 600, so `--wb-fw-book`, `-strong` and `-bold`
   become 400, 500 and 600. Page titles are 20px semibold.
-- **Colour means status.** Failed is `danger`, running is `info`, waiting is
-  `warning`; each has a faint tint (`-weak`). Success is the normal outcome
-  and stays grey: `--wb-success` (icons, dots, rules) is the muted grey,
-  while `--wb-success-text` keeps a green for success text such as a
-  positive delta. Success badges and pills read as plain text.
-- **Ink, not blue:** the accent is the ink, so primary buttons are solid ink
-  (one per page), focus rings and the current tab underline are ink, and
-  selection is grey (`--wb-surface-3`), not tinted.
+- **Few hues.** Failed is `danger` (red), waiting is `warning` (amber);
+  each has a faint tint (`-weak`). Success is a muted green: `--wb-success`
+  (icons, dots, rules) and `--wb-success-text` are one green, and
+  `HistoryStrip`'s succeeded bars are a faint green (`--wb-success-bar`).
+  Success badges and pills read as plain text with a green glyph.
+- **Blue is the accent and also means running:** `--wb-accent` is the
+  `info` blue, so primary buttons are solid blue (one per page), focus
+  rings, checkboxes, switches and the current tab underline are blue, and
+  selection (the current sidebar item and top-bar tab, active and selected
+  rows, pressed segments and chip toggles, the highlighted palette item) is
+  tinted with `--wb-accent-weak`. The current sidebar item also carries a
+  2px accent rule. Hover stays grey.
 - **Surfaces:** `--wb-page` for main panes, toolbars, headers and drawers;
   `--wb-side` (quiet only) for the sidebar and top bar; `--wb-surface` for
   inputs, cards, code blocks and overlays.
@@ -326,32 +330,36 @@ What quiet changes, with no change to component APIs:
 - **Components:** badges are hairline-outlined tags; `StatePill` is a glyph
   and a word; `Banner` and the table error row are a 2px left rule in the
   tone colour with no fill or icon; `danger` buttons are bordered buttons
-  with red text; `Seg` is a bordered group with a grey pressed segment;
+  with red text; `Seg` is a bordered group with a tinted pressed segment;
   tables have hairlines and 42px rows (32px compact); `EmptyState`
-  icons have no tile; letter avatars are grey (the highlighted one ink);
-  inline `code` has no chip; `wb-link` is underlined with a hairline;
-  `KeyValue`'s label column is 96px; radii are 3–8px. `Status`,
-  `HistoryStrip` and `Steps` need nothing extra: their ok marks are grey
-  through `--wb-success`.
+  icons have no tile; letter avatars are grey (the highlighted one blue);
+  inline `code` has no chip; `wb-link` is accent text over a softened accent
+  underline; `KeyValue`'s label column is 96px; radii are 3–8px. `Status`,
+  `HistoryStrip` and `Steps` need nothing extra: their ok marks are green
+  through `--wb-success` and `--wb-success-bar`.
 
-| Token                | Light     | Dark      | Use                                           |
-| -------------------- | --------- | --------- | --------------------------------------------- |
-| `--wb-page`          | `#fcfcfa` | `#151514` | main panes, toolbars, headers, drawers        |
-| `--wb-side`          | `#f4f3ef` | `#1a1a19` | sidebar and top bar (quiet only)              |
-| `--wb-surface`       | `#ffffff` | `#1d1d1b` | inputs, cards, code and logs, overlays        |
-| `--wb-surface-2`     | `#f5f4f0` | `#1c1c1b` | hover                                         |
-| `--wb-surface-3`     | `#e9e7e1` | `#2a2926` | selected (also `--wb-accent-weak`)            |
-| `--wb-fg`            | `#1b1b19` | `#e9e7e2` | ink: text, `--wb-accent`, `--wb-accent-text`  |
-| `--wb-on-accent`     | `#ffffff` | `#151514` | text on the ink primary                       |
-| `--wb-fg-2`          | `#5b5953` | `#a8a59e` | secondary text                                |
-| `--wb-muted`         | `#726f68` | `#8a8780` | muted text, labels, counts                    |
-| `--wb-border`        | `#e8e6e1` | `#292826` | hairlines                                     |
-| `--wb-border-strong` | `#d8d5ce` | `#3a3936` | control borders, tags                         |
-| `--wb-danger`        | `#c2302a` | `#ee6b60` | failed (`-weak`: `#fdf5f4` / 8%)              |
-| `--wb-info`          | `#2556c4` | `#7ea6f8` | running (`-weak`: `#f3f6fd` / 7%)             |
-| `--wb-warning`       | `#8a6009` | `#d6a24a` | waiting (`-weak`: `#fcf8ee` / 7%)             |
-| `--wb-success`       | muted     | muted     | success marks; `-text` `#2b7540` / `#62b57d`  |
-| `--wb-deemph`        | `#d2cfc8` | `#4a4944` | faint marks: charts, normal HistoryStrip bars |
+| Token                | Light     | Dark      | Use                                          |
+| -------------------- | --------- | --------- | -------------------------------------------- |
+| `--wb-page`          | `#fcfcfa` | `#151514` | main panes, toolbars, headers, drawers       |
+| `--wb-side`          | `#f4f3ef` | `#1a1a19` | sidebar and top bar (quiet only)             |
+| `--wb-surface`       | `#ffffff` | `#1d1d1b` | inputs, cards, code and logs, overlays       |
+| `--wb-surface-2`     | `#f5f4f0` | `#1c1c1b` | hover                                        |
+| `--wb-surface-3`     | `#e9e7e1` | `#2a2926` | neutral fills: hover blends, avatars, meters |
+| `--wb-fg`            | `#1b1b19` | `#e9e7e2` | ink: text                                    |
+| `--wb-fg-2`          | `#5b5953` | `#a8a59e` | secondary text                               |
+| `--wb-muted`         | `#726f68` | `#8a8780` | muted text, labels, counts                   |
+| `--wb-border`        | `#e8e6e1` | `#292826` | hairlines                                    |
+| `--wb-border-strong` | `#d8d5ce` | `#3a3936` | control borders, tags                        |
+| `--wb-accent`        | `#2556c4` | `#7ea6f8` | primary, focus, checks, current tab, rules   |
+| `--wb-accent-text`   | `#2150b5` | `#93b4f9` | accent text: links, the current sidebar item |
+| `--wb-accent-weak`   | 9%        | 14%       | selected (the accent at that opacity)        |
+| `--wb-on-accent`     | `#ffffff` | `#0d1424` | text on the primary                          |
+| `--wb-danger`        | `#c02f2a` | `#ef7065` | failed (`-weak`: `#fdf5f4` / 8%)             |
+| `--wb-info`          | `#2556c4` | `#7ea6f8` | running (`-weak`: `#f3f6fd` / 7%)            |
+| `--wb-warning`       | `#885f09` | `#d6a24a` | waiting (`-weak`: `#fcf8ee` / 7%)            |
+| `--wb-success`       | `#2b7440` | `#62b57d` | success marks and text (`-text`)             |
+| `--wb-success-bar`   | `#a9cdb2` | `#3f6b4c` | succeeded HistoryStrip bars (quiet only)     |
+| `--wb-deemph`        | `#d2cfc8` | `#4a4944` | faint marks: charts                          |
 
 Each status colour is also its `-text` token. Chart series and the scrim
 keep their default values.
@@ -359,27 +367,34 @@ keep their default values.
 **Quiet contrast.** The design's values are kept where they meet WCAG AA
 (4.5:1) for small text, and adjusted minimally where they don't:
 
-| Token               | Light / dark          | Was (design)          | Why                                                    |
-| ------------------- | --------------------- | --------------------- | ------------------------------------------------------ |
-| `--wb-muted`        | `#726f68` / `#8a8780` | `#8b8880` / `#78756e` | 3.2–3.5 and 3.7–4.0:1 on page, side, surface and hover |
-| `--wb-warning`      | `#8a6009` / `#d6a24a` | `#97690a` / same      | 3.9–4.4:1 on side, hover and selected backgrounds      |
-| `--wb-success-text` | `#2b7540` / `#62b57d` | `#2e7a43` / same      | 4.3:1 on selected backgrounds                          |
+A selected background is `--wb-accent-weak` over the page, the side or a
+surface.
+
+| Token               | Light / dark          | Was (design)            | Why                                                     |
+| ------------------- | --------------------- | ----------------------- | ------------------------------------------------------- |
+| `--wb-muted`        | `#726f68` / `#8a8780` | `#8b8880` / `#78756e`   | 3.2–3.5 and 3.7–4.0:1 on page, side, surface and hover  |
+| `--wb-warning`      | `#885f09` / `#d6a24a` | `#97690a` / same        | 3.8–4.4:1 on side, hover and selected backgrounds       |
+| `--wb-success-text` | `#2b7440` / `#62b57d` | `#2e7a43` / same        | 4.2–4.5:1 on hover and selected backgrounds             |
+| `--wb-danger`       | `#c02f2a` / `#ef7065` | `#c2302a` / `#ee6b60`   | 4.43:1 on selected over the side, 4.35:1 over a surface |
+| `--wb-accent-text`  | `#2150b5` / `#93b4f9` | (new: the running blue) | 5.8–7.3:1 and 6.4–8.8:1 on every background             |
 
 - `--wb-muted` meets AA on page, side, surface, hover and the status tints
-  over the page. On a selected (`--wb-surface-3`) background it would give
-  4.1:1, and on the blended hover of sidebar items, top-bar tabs and
-  buttons 4.3–4.4:1, so those elements (current sidebar item and nav tab,
-  active rows, selected table rows, pressed segments and chip toggles, the
-  highlighted palette item; hovered sidebar items, top-bar tabs and
-  buttons) point `--wb-muted` at `--wb-fg-2` for their content. Their muted
-  text stays readable without darkening muted text everywhere else, which
-  would erase the step between secondary and muted.
-- Status text (`danger`, `info`, `warning`, `success`, `neutral` text tokens)
-  meets AA on every background, selected included; status marks meet the
-  3:1 non-text minimum. Text on the ink primary is 17.3:1 (light) and
-  14.8:1 (dark).
-- The normal bars of a `HistoryStrip` (`--wb-deemph`) and its empty slots are
-  deliberately faint marks; every bar carries its state as text.
+  over the page. On a selected background it would give 3.7–4.4:1, and on
+  the blended hover of sidebar items, top-bar tabs and buttons 4.3–4.4:1,
+  so those elements (current sidebar item and nav tab, active rows,
+  selected table rows, pressed segments and chip toggles, the highlighted
+  palette item; hovered sidebar items, top-bar tabs and buttons) point
+  `--wb-muted` at `--wb-fg-2` for their content. Their muted text stays
+  readable without darkening muted text everywhere else, which would erase
+  the step between secondary and muted.
+- Status and accent text (`danger`, `info`, `warning`, `success`,
+  `neutral` and `accent` text tokens) meet AA on every background, selected
+  included: success text 4.5–5.7:1 (light) and 5.3–7.3:1 (dark). Status
+  marks and the accent meet the 3:1 non-text minimum. Text on the primary
+  is 6.6:1 (light) and 7.6:1 (dark), 4.9 and 5.9:1 on its hover.
+- The succeeded bars of a `HistoryStrip` (`--wb-success-bar`), the faint
+  chart marks (`--wb-deemph`) and empty slots are deliberately faint marks;
+  every bar carries its state as text.
 
 `tests/quiet.test.ts` pins the quiet palette and enforces these ratios,
 including on the blended hover backgrounds; `scripts/style-check.mjs`
@@ -1634,8 +1649,8 @@ Every list: `SkeletonRows` while loading, `EmptyState` when empty (with a
 Outcomes shown the same way in every application, in both styles. Tones are
 `ok | failed | running | waiting | skipped | neutral` (`StatusTone`); colours
 come from the tone tokens: ok uses `--wb-success` (green in the default
-style, grey in quiet), failed `danger`, running `info`, waiting `warning`,
-skipped and neutral the muted grey.
+style, a muted green in quiet), failed `danger`, running `info`, waiting
+`warning`, skipped and neutral the muted grey.
 
 - `Status({ tone, children, glyphOnly?, title? })` — a glyph and a word,
   never a pill: ✓ ok, ✕ failed, a live dot for running, a ring for waiting,
@@ -1647,7 +1662,8 @@ skipped and neutral the muted grey.
   rows that lay out their own text.
 - `HistoryStrip({ label, items: { tone, label }[], length? })` — recent
   states as 4×14px bars, oldest first, so the newest is on the right: ok is
-  faint (`--wb-deemph`), failed and running are solid in their colour,
+  faint (`--wb-deemph`; a faint green, `--wb-success-bar`, in the quiet
+  style), failed and running are solid in their colour,
   waiting is outlined in its colour, neutral is solid grey and skipped a
   grey outline. `length` fixes the number of slots: the newest `length`
   items show, and hairline empty slots pad the left so strips line up in a

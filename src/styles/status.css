@@ -1,7 +1,8 @@
 /*
  * Status (glyph + word), HistoryStrip and Steps. Colours come from the tone
- * tokens, so each style colours them its own way: the default style shows
- * ok in green, the quiet style keeps it grey.
+ * tokens, so each style colours them its own way: ok glyphs are green in
+ * both; the quiet style also tints the ok bars of HistoryStrip a faint green
+ * (--wb-success-bar), where the default style leaves them grey.
  */
 @layer wb.components {
   /* ---------- glyph */
