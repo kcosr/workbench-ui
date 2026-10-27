@@ -430,10 +430,10 @@
     font-size: var(--wb-fs-12);
     font-weight: var(--wb-fw-regular);
   }
+  /* full strength: dimmed white on the blue primary falls below AA */
   [data-wb-style="quiet"] .wb-btn--primary .wb-btn-count {
     background: none;
     color: inherit;
-    opacity: 0.75;
   }
 
   /* ---------- segmented control: a bordered group, tinted pressed segment */

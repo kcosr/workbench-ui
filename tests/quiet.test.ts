@@ -366,6 +366,27 @@ describe.each([
     );
     expect(contrast(bg("wb-on-accent"), hover)).toBeGreaterThanOrEqual(4.5);
   });
+
+  it("counts on the primary button keep AA, at rest and on hover", () => {
+    const rule = rules(css).find((r) =>
+      selectors(r.selector).some((s) =>
+        s.endsWith(".wb-btn--primary .wb-btn-count"),
+      ),
+    );
+    const opacity = Number(
+      /opacity:\s*([\d.]+)/.exec(rule?.body ?? "")?.[1] ?? 1,
+    );
+    const hover = composite(
+      hoverBackground(".wb-btn--primary:not("),
+      vars,
+      bg("wb-page"),
+    );
+    for (const base of [bg("wb-accent"), hover]) {
+      const [r, g, b] = bg("wb-on-accent");
+      const count = over([r, g, b, opacity], base);
+      expect(contrast(count, base)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
 });
 
 describe.each([
