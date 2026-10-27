@@ -464,6 +464,12 @@
   [data-wb-style="quiet"] .wb-chip-toggle[aria-pressed="true"] {
     --wb-muted: var(--wb-fg-2);
   }
+  /* full strength: the dimmed accent count falls below AA on the tint */
+  [data-wb-style="quiet"]
+    .wb-chip-toggle[aria-pressed="true"]
+    .wb-chip-toggle-count {
+    opacity: 1;
+  }
   [data-wb-style="quiet"] .wb-chip {
     border: 1px solid var(--wb-border-strong);
     border-radius: var(--wb-radius-sm);

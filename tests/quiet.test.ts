@@ -6,6 +6,7 @@ import { appliedStyle, applyStyle, STYLE_ATTRIBUTE } from "../src";
 const styles = resolve(__dirname, "..", "src", "styles");
 const css = readFileSync(resolve(styles, "quiet.css"), "utf8");
 const tokensCss = readFileSync(resolve(styles, "tokens.css"), "utf8");
+const controlsCss = readFileSync(resolve(styles, "controls.css"), "utf8");
 const readme = readFileSync(resolve(__dirname, "..", "README.md"), "utf8");
 const Q = '[data-wb-style="quiet"]';
 
@@ -447,6 +448,24 @@ describe.each([
   it("the accent itself meets AA as text (the current top-bar tab's icon and label)", () => {
     for (const b of [...plain(), ...selected()])
       expect(contrast(bg("wb-accent"), b)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("pressed chip-toggle counts keep AA on the selected tint", () => {
+    const selector =
+      '.wb-chip-toggle[aria-pressed="true"] .wb-chip-toggle-count';
+    const opacityIn = (source: string) => {
+      const rule = rules(source).find((r) =>
+        selectors(r.selector).some((s) => s.endsWith(selector)),
+      );
+      const m = /opacity:\s*([\d.]+)/.exec(rule?.body ?? "");
+      return m ? Number(m[1]) : undefined;
+    };
+    const opacity = opacityIn(css) ?? opacityIn(controlsCss) ?? 1;
+    const [r, g, b] = bg("wb-accent-text");
+    for (const base of selected())
+      expect(
+        contrast(over([r, g, b, opacity], base), base),
+      ).toBeGreaterThanOrEqual(4.5);
   });
 
   it("text on the accent primary (on-accent) meets AA", () => {
