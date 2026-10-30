@@ -442,12 +442,14 @@ describe("showSidebar / hideSidebar", () => {
 });
 
 describe("icons", () => {
-  it("includes branch, comment and diff, drawn as 1.5 stroke paths", () => {
-    for (const name of ["branch", "comment", "diff"] as const) {
+  it("includes branch, comment, diff and notebook, drawn as 1.5 stroke paths", () => {
+    for (const name of ["branch", "comment", "diff", "notebook"] as const) {
       expect(iconNames).toContain(name);
       const { container, unmount } = render(<Icon name={name} />);
       const svg = container.querySelector("svg.wb-icon");
       expect(svg).toHaveAttribute("stroke-width", "1.5");
+      // Geometry inherits that weight without overrides or scaled strokes.
+      expect(svg?.querySelector("[stroke-width], [transform]")).toBeNull();
       expect(svg?.querySelectorAll("path").length).toBeGreaterThan(0);
       unmount();
     }
