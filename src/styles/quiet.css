@@ -124,7 +124,7 @@
     --wb-page: #151514;
     --wb-side: #1a1a19;
     --wb-surface: #1d1d1b;
-    --wb-surface-2: #1c1c1b;
+    --wb-surface-2: #20201e;
     --wb-surface-3: #2a2926;
     --wb-raised: var(--wb-surface);
     --wb-border: #292826;
@@ -160,7 +160,7 @@
     --wb-info-border: rgba(126, 166, 248, 0.35);
     --wb-neutral: #8a8780;
     --wb-neutral-text: #a8a59e;
-    --wb-neutral-weak: #1c1c1b;
+    --wb-neutral-weak: #20201e;
     --wb-neutral-border: #3a3936;
 
     --wb-grid: #292826;

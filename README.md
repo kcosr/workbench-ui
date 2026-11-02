@@ -342,7 +342,7 @@ What quiet changes, with no change to component APIs:
 | `--wb-page`          | `#fcfcfa` | `#151514` | main panes, toolbars, headers, drawers       |
 | `--wb-side`          | `#f4f3ef` | `#1a1a19` | sidebar and top bar (quiet only)             |
 | `--wb-surface`       | `#ffffff` | `#1d1d1b` | inputs, cards, code and logs, overlays       |
-| `--wb-surface-2`     | `#f5f4f0` | `#1c1c1b` | hover                                        |
+| `--wb-surface-2`     | `#f5f4f0` | `#20201e` | hover                                        |
 | `--wb-surface-3`     | `#e9e7e1` | `#2a2926` | neutral fills: hover blends, avatars, meters |
 | `--wb-fg`            | `#1b1b19` | `#e9e7e2` | ink: text                                    |
 | `--wb-fg-2`          | `#5b5953` | `#a8a59e` | secondary text                               |
