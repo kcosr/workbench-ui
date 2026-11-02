@@ -173,6 +173,7 @@ export type {
 export { Menu, Popover } from "./components/Popover";
 export type {
   PopoverInitialFocus,
+  MenuCheckbox,
   MenuEntry,
   MenuHeading,
   MenuItem,

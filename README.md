@@ -1589,6 +1589,10 @@ state, so disable it while its action runs.
   the button (spread `props`); items `{ id, label, icon?, hint?, onSelect?, href?, external?, danger?, disabled?, checked? }`,
   `{ type: "separator" }`, `{ type: "heading", label, sub? }`. Arrow keys,
   Home/End, type-ahead, Esc/Tab close.
+  Independent options use `{ type: "checkbox", id, label, checked, onSelect?,
+disabled?, hint? }`: Space, Enter or a click invokes `onSelect` and keeps the
+  menu open with focus on the option. The caller updates `checked`. Ordinary
+  items with `checked` retain their radio semantics and close on selection.
 
 ```tsx
 <Menu

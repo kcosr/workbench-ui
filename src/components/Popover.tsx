@@ -210,6 +210,17 @@ export interface MenuItem {
   checked?: boolean | undefined;
 }
 
+/** An independent option that toggles without closing the menu. */
+export interface MenuCheckbox extends Omit<
+  MenuItem,
+  "type" | "checked" | "href" | "external"
+> {
+  type: "checkbox";
+  checked: boolean;
+  href?: never;
+  external?: never;
+}
+
 export interface MenuSeparator {
   type: "separator";
   id?: string | undefined;
@@ -222,7 +233,7 @@ export interface MenuHeading {
   sub?: ReactNode;
 }
 
-export type MenuEntry = MenuItem | MenuSeparator | MenuHeading;
+export type MenuEntry = MenuItem | MenuCheckbox | MenuSeparator | MenuHeading;
 
 export interface MenuTriggerProps {
   ref: RefObject<HTMLButtonElement | null>;
@@ -276,7 +287,12 @@ export function Menu({
     setOpen(true);
   };
 
-  const select = (item: MenuItem) => {
+  const select = (item: MenuItem | MenuCheckbox, target: HTMLButtonElement) => {
+    if (item.type === "checkbox") {
+      target.focus({ preventScroll: true });
+      item.onSelect?.();
+      return;
+    }
     setOpen(false);
     // Focus the trigger before the action so dialogs it opens return focus here.
     triggerRef.current?.focus({ preventScroll: true });
@@ -372,7 +388,11 @@ export function Menu({
               );
             }
             const role =
-              entry.checked === undefined ? "menuitem" : "menuitemradio";
+              entry.type === "checkbox"
+                ? "menuitemcheckbox"
+                : entry.checked === undefined
+                  ? "menuitem"
+                  : "menuitemradio";
             const cls = cx(
               "wb-menu-item",
               entry.danger && "wb-menu-item--danger",
@@ -380,7 +400,13 @@ export function Menu({
             const body = (
               <>
                 {entry.checked !== undefined ? (
-                  <span className="wb-menu-check">
+                  <span
+                    className={cx(
+                      "wb-menu-check",
+                      entry.type === "checkbox" && "wb-menu-checkbox",
+                    )}
+                    aria-hidden="true"
+                  >
                     {entry.checked ? <Icon name="check" /> : null}
                   </span>
                 ) : entry.icon ? (
@@ -434,8 +460,8 @@ export function Menu({
                 className={cls}
                 aria-checked={entry.checked}
                 aria-disabled={entry.disabled ? true : undefined}
-                onClick={() => {
-                  if (!entry.disabled) select(entry);
+                onClick={(event) => {
+                  if (!entry.disabled) select(entry, event.currentTarget);
                 }}
               >
                 {body}
