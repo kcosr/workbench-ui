@@ -234,3 +234,58 @@ describe("draft bar tones", () => {
     expect(readme).toContain("`wb-draftbar` (`--neutral`)");
   });
 });
+
+describe("table cell vertical alignment", () => {
+  const table = read("table.css");
+  const quiet = read("quiet.css");
+  const controls =
+    ':is(td, tbody th[scope="row"]):has(\n      .wb-btn,\n      button:not(.wb-row-link),\n      input,\n      select,\n      textarea\n    )';
+
+  it("puts text cells on the row baseline", () => {
+    const cell = rule(
+      table,
+      '.wb-table td,\n  .wb-table tbody th[scope="row"]',
+    );
+    expect(cell["vertical-align"]).toBe("baseline");
+  });
+
+  it("centres icon, avatar and control cells, controls with less padding", () => {
+    expect(
+      rule(
+        table,
+        '.wb-table :is(td, tbody th[scope="row"]):has(svg, .wb-avatar)',
+      )["vertical-align"],
+    ).toBe("middle");
+    const control = rule(table, `.wb-table\n    ${controls}`);
+    expect(control["vertical-align"]).toBe("middle");
+    expect(px(control["padding-block"])).toBe(2);
+  });
+
+  it("centres one line of text in the quiet style's fixed row heights", () => {
+    for (const [selector, height, bottom] of [
+      [
+        '[data-wb-style="quiet"] .wb-table td,\n  [data-wb-style="quiet"] .wb-table tbody th[scope="row"]',
+        42,
+        6,
+      ],
+      [
+        '[data-wb-style="quiet"] .wb-table--compact td,\n  [data-wb-style="quiet"] .wb-table--compact tbody th[scope="row"]',
+        32,
+        3,
+      ],
+    ] as const) {
+      const cell = rule(quiet, selector);
+      expect(cell.height).toBe(`${height}px`);
+      expect(cell["padding-block"]).toBe(
+        `calc((${height}px - 1lh) / 2) ${bottom}px`,
+      );
+    }
+    // Centred cells keep even padding: asymmetric padding would offset them.
+    expect(
+      rule(
+        quiet,
+        '[data-wb-style="quiet"]\n    .wb-table\n    :is(td, tbody th[scope="row"]):has(svg, .wb-avatar)',
+      )["padding-block"],
+    ).toBe("6px");
+  });
+});

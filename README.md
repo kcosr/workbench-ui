@@ -1090,6 +1090,14 @@ renders them and owns the interaction:
   proportionally more for larger ones; cell content counts up to 5000px),
   so put tables in block, `1fr` or `flex: 1` containers, not shrink-to-fit
   ones (inline-block, `auto` grid tracks).
+- **Vertical alignment:** text cells sit on the row's text baseline, so
+  12px mono IDs line up with the sans text beside them. Cells holding a
+  control (`wb-btn`, `button` other than the row link, `input`, `select`,
+  `textarea`), an icon or other SVG, or an avatar are centred instead.
+  Control cells pad only 2px, as a baseline cell takes no share of a
+  taller row: keep controls no taller than a line of text plus the
+  padding (small buttons, switches). An inline-flex wrapper that leads
+  with an icon centres its whole cell.
 - **Capped values:** `maxWidth` ("hug up to N") shows short values in full
   and ends long ones (UUIDs) in an ellipsis at the cap (with `wrap`, the
   text wraps within the cap instead). Capped cells get the cell text as
@@ -1331,7 +1339,7 @@ const cursor = useListCursor({
 
 ### Drawer
 
-- `Drawer({ title, onClose, ref?, label?, kicker?, meta?, actions?, headerExtra?, footer?, size? = "default" | "wide", resetKey?, returnFocus?, autoFocus? = true, children })`
+- `Drawer({ title, onClose, ref?, label?, kicker?, meta?, actions?, secondaryActions?, headerExtra?, footer?, size? = "default" | "wide", resetKey?, returnFocus?, autoFocus? = true, children })`
 - `DrawerSection({ title, count?, action? })`, `KeyValue({ items, labelWidth? })`
   (falsy items are skipped).
 
@@ -1344,6 +1352,43 @@ first child for drawer tabs. `ref` exposes the `<aside>` for application-owned
 responsive focus behavior. Set `autoFocus={false}` when opening a desktop detail
 pane should leave focus in the list; the app can explicitly focus that ref for
 its compact layout.
+
+`actions` holds the primary buttons (the main action, such as Edit, and
+perhaps View audit); they always show. `secondaryActions` takes `Menu` entries
+(falsy entries are skipped, for conditional actions) and always renders them
+in a "More actions" ⋯ menu after the primary buttons, so a drawer with five
+actions keeps one row in a narrow pane. Nothing is measured: callers decide
+what is secondary. Mark destructive items `danger`; a menu item has no pending
+state, so disable it while its action runs.
+
+```tsx
+<Drawer
+  title={grant.name}
+  onClose={close}
+  actions={
+    <Button variant="primary" icon="pencil" onClick={edit}>
+      Edit
+    </Button>
+  }
+  secondaryActions={[
+    { id: "duplicate", label: "Duplicate", icon: "copy", onSelect: duplicate },
+    canToggle && {
+      id: "toggle",
+      label: "Disable",
+      icon: "pause",
+      onSelect: toggle,
+    },
+    { type: "separator" },
+    {
+      id: "delete",
+      label: "Delete",
+      icon: "trash",
+      danger: true,
+      onSelect: remove,
+    },
+  ]}
+/>
+```
 
 ### Navigation and controls
 
