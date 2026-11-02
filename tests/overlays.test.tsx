@@ -191,6 +191,88 @@ describe("Menu", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
+  it("toggles checkbox items by keyboard and pointer without closing or losing focus", async () => {
+    const user = userEvent.setup();
+    const activate = vi.fn();
+    function Options() {
+      const [checked, setChecked] = useState(false);
+      return (
+        <Menu
+          label="Options"
+          items={[
+            {
+              type: "checkbox",
+              id: "include",
+              label: "Include files",
+              checked,
+              onSelect: () => setChecked((value) => !value),
+            },
+            {
+              type: "checkbox",
+              id: "disabled",
+              label: "Unavailable option",
+              checked: false,
+              disabled: true,
+              onSelect: activate,
+            },
+            { id: "run", label: "Run", onSelect: activate },
+          ]}
+          trigger={(props) => <Button {...props}>Options</Button>}
+        />
+      );
+    }
+    render(<Options />);
+    const trigger = screen.getByRole("button", { name: "Options" });
+    await user.click(trigger);
+    const checkbox = screen.getByRole("menuitemcheckbox", {
+      name: "Include files",
+    });
+    expect(checkbox).toHaveAttribute("aria-checked", "false");
+    expect(checkbox).toHaveFocus();
+    await user.keyboard(" ");
+    expect(checkbox).toHaveAttribute("aria-checked", "true");
+    expect(checkbox).toHaveFocus();
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await user.keyboard("{Enter}");
+    expect(checkbox).toHaveAttribute("aria-checked", "false");
+    await user.click(checkbox);
+    expect(checkbox).toHaveAttribute("aria-checked", "true");
+    expect(checkbox).toHaveFocus();
+    await user.click(
+      screen.getByRole("menuitemcheckbox", { name: "Unavailable option" }),
+    );
+    expect(activate).not.toHaveBeenCalled();
+    await user.click(checkbox);
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Run" })).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(activate).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("preserves radio item selection and closes the menu", async () => {
+    const user = userEvent.setup();
+    const choose = vi.fn();
+    render(
+      <Menu
+        label="Appearance"
+        items={[
+          { id: "light", label: "Light", checked: true },
+          { id: "dark", label: "Dark", checked: false, onSelect: choose },
+        ]}
+        trigger={(props) => <Button {...props}>Appearance</Button>}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Appearance" }));
+    expect(
+      screen.getByRole("menuitemradio", { name: "Light" }),
+    ).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByRole("menuitemradio", { name: "Dark" }));
+    expect(choose).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
   it("closes on outside click", async () => {
     const user = userEvent.setup();
     render(
