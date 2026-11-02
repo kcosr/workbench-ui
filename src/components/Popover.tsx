@@ -287,8 +287,9 @@ export function Menu({
     setOpen(true);
   };
 
-  const select = (item: MenuItem | MenuCheckbox) => {
+  const select = (item: MenuItem | MenuCheckbox, target: HTMLButtonElement) => {
     if (item.type === "checkbox") {
+      target.focus({ preventScroll: true });
       item.onSelect?.();
       return;
     }
@@ -459,8 +460,8 @@ export function Menu({
                 className={cls}
                 aria-checked={entry.checked}
                 aria-disabled={entry.disabled ? true : undefined}
-                onClick={() => {
-                  if (!entry.disabled) select(entry);
+                onClick={(event) => {
+                  if (!entry.disabled) select(entry, event.currentTarget);
                 }}
               >
                 {body}
