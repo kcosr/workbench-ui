@@ -788,6 +788,46 @@ export function TablesView({ topBar }: { topBar: ReactNode }) {
               {GRANT_STATE[g.status].label}
             </Badge>
           }
+          actions={
+            <>
+              <Button
+                variant="primary"
+                icon="pencil"
+                onClick={() => toast(`Edit ${g.id}`)}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                icon="list"
+                onClick={() => toast(`Audit for ${g.id}`)}
+              >
+                View audit
+              </Button>
+            </>
+          }
+          secondaryActions={[
+            {
+              id: "duplicate",
+              label: "Duplicate",
+              icon: "copy",
+              onSelect: () => toast(`Duplicated ${g.id}`),
+            },
+            {
+              id: "toggle",
+              label: g.status === "active" ? "Disable" : "Enable",
+              icon: g.status === "active" ? "pause" : "play",
+              onSelect: () => toast("Toggled"),
+            },
+            { type: "separator" },
+            {
+              id: "delete",
+              label: "Delete",
+              icon: "trash",
+              danger: true,
+              onSelect: () => toast(`Deleted ${g.id}`),
+            },
+          ]}
         >
           <DrawerSection title="Grant">
             <KeyValue

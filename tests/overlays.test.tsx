@@ -427,6 +427,78 @@ describe("Drawer", () => {
       screen.queryByRole("complementary", { name: "Token laptop-cli" }),
     ).toBeNull();
   });
+
+  it("shows primary actions and puts secondary actions in a More actions menu", async () => {
+    const user = userEvent.setup();
+    const disable = vi.fn();
+    const remove = vi.fn();
+    render(
+      <Drawer
+        title="Grant g-101"
+        onClose={() => {}}
+        actions={<Button variant="primary">Edit</Button>}
+        secondaryActions={[
+          { id: "duplicate", label: "Duplicate", icon: "copy" },
+          false,
+          { id: "disable", label: "Disable", onSelect: disable },
+          null,
+          { type: "separator" },
+          { id: "delete", label: "Delete", danger: true, onSelect: remove },
+        ]}
+      />,
+    );
+    const actions = document.querySelector(".wb-drawer-actions")!;
+    // Always in the menu, never measured into the row.
+    expect(Array.from(actions.children, (el) => el.textContent ?? "")).toEqual([
+      "Edit",
+      "",
+    ]);
+    expect(screen.queryByRole("button", { name: "Disable" })).toBeNull();
+    const more = screen.getByRole("button", { name: "More actions" });
+    expect(more).toHaveAttribute("aria-haspopup", "menu");
+    expect(more).toHaveAttribute("aria-expanded", "false");
+    await user.click(more);
+    const menu = screen.getByRole("menu", { name: "More actions" });
+    expect(
+      Array.from(menu.querySelectorAll('[role="menuitem"]'), (el) =>
+        el.textContent?.trim(),
+      ),
+    ).toEqual(["Duplicate", "Disable", "Delete"]);
+    expect(screen.getByRole("menuitem", { name: "Duplicate" })).toHaveFocus();
+    expect(screen.getByRole("menuitem", { name: "Delete" })).toHaveClass(
+      "wb-menu-item--danger",
+    );
+    await user.click(screen.getByRole("menuitem", { name: "Disable" }));
+    expect(disable).toHaveBeenCalledTimes(1);
+    expect(remove).not.toHaveBeenCalled();
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(more).toHaveFocus();
+  });
+
+  it("renders the menu alone and omits it without secondary items", () => {
+    const { rerender } = render(
+      <Drawer
+        title="Token"
+        onClose={() => {}}
+        secondaryActions={[{ id: "revoke", label: "Revoke" }]}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "More actions" }),
+    ).toBeInTheDocument();
+    rerender(
+      <Drawer
+        title="Token"
+        onClose={() => {}}
+        actions={<Button>Pause</Button>}
+        secondaryActions={[false, { type: "separator" }]}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "More actions" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+    rerender(<Drawer title="Token" onClose={() => {}} secondaryActions={[]} />);
+    expect(document.querySelector(".wb-drawer-actions")).toBeNull();
+  });
 });
 
 describe("AppShell sidebar", () => {
