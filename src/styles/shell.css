@@ -76,7 +76,7 @@
     height: var(--wb-ctl-lg);
     padding: 0 12px;
     border-radius: var(--wb-radius-ctl);
-    background: var(--wb-accent);
+    background: var(--wb-accent-solid);
     color: var(--wb-on-accent);
     font-size: var(--wb-fs-13);
     font-weight: var(--wb-fw-medium);
@@ -130,7 +130,7 @@
     width: 24px;
     height: 24px;
     border-radius: var(--wb-radius-ctl);
-    background: var(--wb-accent);
+    background: var(--wb-accent-solid);
     color: var(--wb-on-accent);
     display: grid;
     place-items: center;

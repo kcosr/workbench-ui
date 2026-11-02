@@ -274,7 +274,7 @@ export function Avatar({
 }) {
   const style = {
     "--wb-avatar-bg": highlight
-      ? "var(--wb-accent)"
+      ? "var(--wb-accent-solid)"
       : avatarColor(name.toLowerCase()),
   } as CSSProperties;
   return (

@@ -82,6 +82,7 @@
     /* blue, the running hue: primary buttons, focus, current tab; weak is
        the selected tint */
     --wb-accent: #2556c4;
+    --wb-accent-solid: var(--wb-accent);
     --wb-accent-weak: rgba(37, 86, 196, 0.09);
     --wb-accent-text: #2150b5;
     --wb-on-accent: #ffffff;
@@ -133,6 +134,7 @@
     --wb-fg-2: #a8a59e;
     --wb-muted: #8a8780;
     --wb-accent: #7ea6f8;
+    --wb-accent-solid: var(--wb-accent);
     --wb-accent-weak: rgba(126, 166, 248, 0.14);
     --wb-accent-text: #93b4f9;
     --wb-on-accent: #0d1424;

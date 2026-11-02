@@ -51,7 +51,7 @@ try {
     // A default-style page with a quiet subtree and Brand in sidebars.
     await page.goto(new URL(`?theme=${theme}&style=default#/`, base).href);
     await page.waitForSelector(".wb-app");
-    const fixture = await page.evaluate(() => {
+    const fixture = await page.evaluate((theme) => {
       const host = document.createElement("div");
       host.innerHTML = `
         <div data-wb-style="quiet" id="q">
@@ -59,6 +59,15 @@ try {
           <span class="wb-mono" id="q-mono">run_954d</span>
           <span class="wb-muted" id="q-muted">muted</span>
           <div data-theme="dark"><span class="wb-muted" id="q-dark-muted">muted</span></div>
+        </div>
+        <button class="wb-btn wb-btn--primary" id="default-primary">Primary<span class="wb-btn-count" id="default-primary-count">12</span></button>
+        <span class="wb-state-pill wb-tone-info" id="default-info-pill">Info</span>
+        <span class="wb-status-glyph--running" id="default-info-mark">Running</span>
+        <div data-wb-style="quiet" data-theme="${theme}">
+          <button class="wb-btn wb-btn--primary" id="quiet-primary">Primary</button>
+          <a class="wb-skip-link" id="quiet-skip" href="#q-text">Skip</a>
+          <span class="wb-avatar wb-avatar--highlight" id="quiet-avatar"
+            style="--wb-avatar-bg: var(--wb-accent-solid)">Q</span>
         </div>
         <span class="wb-brand" id="b-alone">Brand</span>
         <aside class="wb-sidebar"><span class="wb-brand" id="b-plain">Brand</span></aside>
@@ -78,6 +87,23 @@ try {
         mono: cs("q-mono").fontFamily,
         muted: cs("q-muted").color,
         darkMuted: cs("q-dark-muted").color,
+        defaultPrimary: {
+          color: cs("default-primary").color,
+          background: cs("default-primary").backgroundColor,
+        },
+        primaryCount: {
+          color: cs("default-primary-count").color,
+          background: cs("default-primary-count").backgroundColor,
+        },
+        infoPill: cs("default-info-pill").backgroundColor,
+        infoMark: cs("default-info-mark").color,
+        quietControls: ["quiet-primary", "quiet-skip", "quiet-avatar"].map(
+          (id) => ({
+            id,
+            color: cs(id).color,
+            background: cs(id).backgroundColor,
+          }),
+        ),
         alone: cs("b-alone").margin,
         plain: cs("b-plain").margin,
         inTopbarShell: cs("b-topbar").margin,
@@ -89,7 +115,37 @@ try {
           .getElementById("b-compact-text")
           .getBoundingClientRect().width,
       };
-    });
+    }, theme);
+    check(
+      rgba(fixture.primaryCount.background)[3] === 0 &&
+        contrast(
+          rgba(fixture.primaryCount.color),
+          rgba(fixture.defaultPrimary.background),
+        ) >= 4.5,
+      `${theme}: primary counts retain AA without a contrast-reducing wash`,
+    );
+    check(
+      fixture.infoPill === "rgb(36, 105, 189)" &&
+        fixture.infoMark ===
+          (theme === "light" ? "rgb(42, 120, 214)" : "rgb(57, 135, 229)"),
+      `${theme}: info pills use the solid fill while info marks retain the bright accent`,
+    );
+    check(
+      fixture.defaultPrimary.background === "rgb(36, 105, 189)" &&
+        contrast(
+          rgba(fixture.defaultPrimary.color),
+          rgba(fixture.defaultPrimary.background),
+        ) >= 4.5,
+      `${theme}: default primary uses the AA solid accent`,
+    );
+    for (const control of fixture.quietControls) {
+      check(
+        control.background ===
+          (theme === "light" ? "rgb(37, 86, 196)" : "rgb(126, 166, 248)") &&
+          contrast(rgba(control.color), rgba(control.background)) >= 4.5,
+        `${theme}: ${control.id} retains the quiet accent and AA text`,
+      );
+    }
     check(
       fixture.body.startsWith('"Inter Variable"'),
       `${theme}: the default page is set in Inter (${fixture.body.split(",")[0]})`,

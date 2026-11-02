@@ -320,6 +320,8 @@ What quiet changes, with no change to component APIs:
   selection (the current sidebar item and top-bar tab, active and selected
   rows, pressed segments and chip toggles, the highlighted palette item) is
   tinted with `--wb-accent-weak`, with no rule beside it. Hover stays grey.
+  `--wb-accent-solid` follows `--wb-accent` in quiet, preserving its paired
+  light or dark `--wb-on-accent` text colour.
 - **Surfaces:** `--wb-page` for main panes, toolbars, headers and drawers;
   `--wb-side` (quiet only) for the sidebar and top bar; `--wb-surface` for
   inputs, cards, code blocks and overlays.
@@ -674,9 +676,10 @@ tokens.
 | `--wb-raised`                             | surface                       | surface-3                     | selected segment                           |
 | `--wb-border` / `--wb-border-strong`      | 9% / 16% black                | 8% / 15% white                | hairlines / control borders                |
 | `--wb-fg` / `--wb-fg-2` / `--wb-muted`    | `#0b0b0b` `#52514e` `#6a6964` | `#f5f5f3` `#c3c2b7` `#97958f` | text, secondary text, tertiary             |
-| `--wb-accent`                             | `#2a78d6`                     | `#3987e5`                     | selection, primary, focus, links           |
+| `--wb-accent`                             | `#2a78d6`                     | `#3987e5`                     | selection, focus, chart accents            |
+| `--wb-accent-solid`                       | `#2469bd`                     | `#2469bd`                     | filled controls carrying white text        |
 | `--wb-accent-weak` / `--wb-accent-text`   | 9% accent / `#1c5cab`         | 15% accent / `#86b6ef`        | selected backgrounds / accent text         |
-| `--wb-on-accent`                          | `#fff`                        | `#fff`                        | text on accent                             |
+| `--wb-on-accent`                          | `#fff`                        | `#fff`                        | text on solid accent                       |
 | `--wb-scrim`                              | 28%                           | 50%                           | modal backdrop                             |
 | `--wb-shadow-pop` / `-drawer` / `-raised` |                               |                               | overlays / drawer edge / selected segment  |
 | `--wb-{tone}`                             |                               |                               | solid fill: dots, state pills (white text) |
@@ -688,12 +691,13 @@ tokens.
 **Contrast.** Muted text and the solid tone fills are chosen to meet WCAG AA
 4.5:1 (lowest ratio over the backgrounds each sits on):
 
-| Token          | Light / dark          | Contrast                        |
-| -------------- | --------------------- | ------------------------------- |
-| `--wb-muted`   | `#6a6964` / `#97958f` | lowest: light 4.6, dark 4.5     |
-| `--wb-success` | `#1a7f37` / `#238636` | white text: light 5.1, dark 4.6 |
-| `--wb-danger`  | `#cf222e` / `#da3633` | white text: light 5.4, dark 4.6 |
-| `--wb-warning` | `#9a6700` / `#9e6a03` | white text: light 4.9, dark 4.7 |
+| Token               | Light / dark          | Contrast                        |
+| ------------------- | --------------------- | ------------------------------- |
+| `--wb-accent-solid` | `#2469bd` / `#2469bd` | white text: 5.5; hover: 5.0     |
+| `--wb-muted`        | `#6a6964` / `#97958f` | lowest: light 4.6, dark 4.5     |
+| `--wb-success`      | `#1a7f37` / `#238636` | white text: light 5.1, dark 4.6 |
+| `--wb-danger`       | `#cf222e` / `#da3633` | white text: light 5.4, dark 4.6 |
+| `--wb-warning`      | `#9a6700` / `#9e6a03` | white text: light 4.9, dark 4.7 |
 
 - `--wb-muted` is the lowest-contrast grey that still lets small muted text
   (key/value labels, row meta, hints, counts) meet AA on page, surface,
@@ -706,6 +710,13 @@ tokens.
   danger fills are deep solids rather than the bright greens and reds that
   suit text on dark backgrounds (`#3fb950` and `#f85149` give 2.5:1 and
   3.4:1 with white). The light success and danger fills already pass.
+- `--wb-accent-solid` supplies primary buttons, skip links, brand marks,
+  highlighted avatars and solid info pills. It reaches 5.5:1 against
+  white in both themes, and 5.0:1 when primary-button hover brightens it by
+  6%. Selection, focus, chart accents and accent-text tokens retain their
+  separate palette. Info glyphs, dots and history bars keep the brighter
+  `--wb-info` accent so they remain visible on dark surfaces. Primary-button
+  counts inherit the button text without a lighter background wash.
 - Amber is too light for white text in both themes at the chart's values
   (`#c98500` gives 3.1:1, `#eda100` gives 2.2:1), so `--wb-warning` is a
   deeper amber.
@@ -717,10 +728,9 @@ the values above and enforces muted and `fg-2` on the backgrounds above,
 white text on the solids, and tone text on tone-weak backgrounds.
 
 Tones are `success` (green), `warning` (amber), `danger` (red), `info`
-(= accent), `neutral`. Text-on-weak contrast is at least 5.4:1 in both
+(accent marks, solid-accent pills), `neutral`. Text-on-weak contrast is at least 5.4:1 in both
 themes on page and surface (`tests/tokens.test.ts` enforces 4.5:1). White
-on solid success/warning/danger/neutral is ≥4.5:1; `info` equals the accent,
-whose white-text contrast is 4.4:1 in light and 3.6:1 in dark.
+on every solid tone is ≥4.5:1 in both themes.
 
 Scales (theme independent):
 

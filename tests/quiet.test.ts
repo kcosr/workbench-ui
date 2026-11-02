@@ -145,6 +145,7 @@ const PALETTE: Record<"light" | "dark", Record<string, string>> = {
     "wb-fg-2": "#5b5953",
     "wb-muted": "#726f68",
     "wb-accent": "#2556c4",
+    "wb-accent-solid": "var(--wb-accent)",
     "wb-accent-weak": "rgba(37, 86, 196, 0.09)",
     "wb-accent-text": "#2150b5",
     "wb-on-accent": "#ffffff",
@@ -190,6 +191,7 @@ const PALETTE: Record<"light" | "dark", Record<string, string>> = {
     "wb-fg-2": "#a8a59e",
     "wb-muted": "#8a8780",
     "wb-accent": "#7ea6f8",
+    "wb-accent-solid": "var(--wb-accent)",
     "wb-accent-weak": "rgba(126, 166, 248, 0.14)",
     "wb-accent-text": "#93b4f9",
     "wb-on-accent": "#0d1424",
@@ -382,7 +384,7 @@ describe.each([
       vars,
       bg("wb-page"),
     );
-    for (const base of [bg("wb-accent"), hover]) {
+    for (const base of [bg("wb-accent-solid"), hover]) {
       const [r, g, b] = bg("wb-on-accent");
       const count = over([r, g, b, opacity], base);
       expect(contrast(count, base)).toBeGreaterThanOrEqual(4.5);
@@ -469,8 +471,12 @@ describe.each([
   });
 
   it("text on the accent primary (on-accent) meets AA", () => {
+    const primary = rules(controlsCss).find((r) =>
+      selectors(r.selector).includes(".wb-btn--primary"),
+    );
+    expect(primary?.body).toMatch(/background:\s*var\(--wb-accent-solid\)/);
     expect(
-      contrast(bg("wb-on-accent"), bg("wb-accent")),
+      contrast(bg("wb-on-accent"), bg("wb-accent-solid")),
     ).toBeGreaterThanOrEqual(4.5);
   });
 
