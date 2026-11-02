@@ -8,6 +8,7 @@ import {
 } from "../../src";
 import type { PaletteItem, PaletteSource, ThemeMode } from "../../src";
 import { DECISIONS, makeEvents, PEOPLE } from "./data";
+import { setGalleryStyle, useGalleryStyle } from "./style";
 
 const EVENTS = makeEvents();
 
@@ -24,6 +25,7 @@ export function usePaletteSources({
   setMode: (mode: ThemeMode) => void;
 }): PaletteSource[] {
   const toast = useToast();
+  const style = useGalleryStyle();
   return useMemo(() => {
     const goTo: PaletteItem[] = [
       {
@@ -57,6 +59,13 @@ export function usePaletteSources({
         icon: "grid",
         keywords: ["kit"],
         onSelect: () => go("#/components"),
+      },
+      {
+        id: "go-pipelines",
+        label: "Pipelines",
+        icon: "sidebar",
+        hint: "navigation sidebar, no top bar",
+        onSelect: () => go("#/pipelines"),
       },
     ];
     const people: PaletteSource = {
@@ -132,6 +141,15 @@ export function usePaletteSources({
         onSelect: () => setMode(mode === "dark" ? "light" : "dark"),
       },
       {
+        id: "style",
+        label:
+          style === "quiet" ? "Use the default style" : "Use the quiet style",
+        icon: "layers",
+        keywords: ["style", "quiet", "default"],
+        onSelect: () =>
+          setGalleryStyle(style === "quiet" ? "default" : "quiet"),
+      },
+      {
         id: "refresh",
         label: "Refresh data",
         icon: "refresh",
@@ -167,7 +185,7 @@ export function usePaletteSources({
       events,
       { id: "actions", title: "Actions", items: actions },
     ];
-  }, [mode, setMode, toast]);
+  }, [mode, setMode, style, toast]);
 }
 
 const EXAMPLES = [
@@ -186,6 +204,11 @@ const EXAMPLES = [
         href: "#/rules?rule=r-regex-aws",
       },
       { id: "dense", label: "Dense event list", href: "#/?density=compact" },
+      {
+        id: "nav-sidebar",
+        label: "Navigation sidebar, no top bar",
+        href: "#/pipelines",
+      },
     ],
   },
   {

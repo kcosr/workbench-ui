@@ -173,3 +173,26 @@ describe("refitting", () => {
     expect(bar).toHaveAttribute("data-wb-status", "short");
   });
 });
+
+describe("Brand", () => {
+  it("shows its mark before the name by default", () => {
+    const { container } = render(<Brand name="Workbench" href="#/" />);
+    const link = screen.getByRole("link", { name: "Workbench" });
+    expect(link).toHaveAttribute("href", "#/");
+    expect(container.querySelector(".wb-brand-mark")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+  });
+
+  it("icon={null} renders the name alone", () => {
+    const { container } = render(
+      <Brand name="Workbench" href="#/" icon={null} />,
+    );
+    expect(screen.getByRole("link", { name: "Workbench" })).toBeInTheDocument();
+    expect(container.querySelector(".wb-brand-mark")).toBeNull();
+    expect(container.querySelector(".wb-brand-name")).toHaveTextContent(
+      "Workbench",
+    );
+  });
+});

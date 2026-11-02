@@ -15,29 +15,36 @@ toasts.
   shared primitives does not add a phone layout to AppShell.
 - **CSP safe** for `style-src 'self'` / `script-src 'self'`: no `<style>`
   injection, no inline scripts, no `eval`, fonts are bundled files.
-- **Bundled fonts:** Inter Variable and JetBrains Mono 400/500 from Fontsource
-  5.3.0, including Latin, extended Latin, Cyrillic, Greek and Vietnamese subsets
-  (SIL OFL 1.1, licences in `src/fonts/`).
+- **Bundled fonts** from Fontsource 5.3.0: Inter Variable and JetBrains Mono
+  400/500 for the default style, IBM Plex Sans 400/500/600 and IBM Plex Mono
+  400/500 for the quiet style, including Latin, extended Latin, Cyrillic, Greek
+  (except Plex Mono, which has none) and Vietnamese subsets (SIL OFL 1.1,
+  licences in `src/fonts/`). A page downloads only the faces its style sets
+  text in.
 
 The gallery (`npm run dev`) is the reference: a sample app composing the whole
-shell (`#/`, `#/rules`, `#/people/u-alice`, `#/settings`) and a catalog of
-every component in light and dark (`#/components`). Copy patterns from it.
+shell (`#/`, `#/rules`, `#/people/u-alice`, `#/settings`), a sample whose
+sidebar carries the navigation (`#/pipelines`) and a catalog of every
+component in light and dark (`#/components`). The style menu next to the
+theme menu switches between the default and quiet styles. Copy patterns
+from it.
 
 ## Contents
 
 1. [Vendoring](#vendoring)
 2. [CSS integration and cascade layers](#css-integration-and-cascade-layers)
 3. [Theme bootstrap](#theme-bootstrap)
-4. [Links and routers](#links-and-routers)
-5. [Composing the shell](#composing-the-shell)
-6. [Tokens](#tokens)
-7. [Class inventory](#class-inventory)
-8. [Components](#components)
-9. [Keyboard and focus](#keyboard-and-focus)
-10. [Conventions](#conventions)
-11. [CSP notes](#csp-notes)
-12. [Developing the kit](#developing-the-kit)
-13. [License](#license)
+4. [Styles](#styles)
+5. [Links and routers](#links-and-routers)
+6. [Composing the shell](#composing-the-shell)
+7. [Tokens](#tokens)
+8. [Class inventory](#class-inventory)
+9. [Components](#components)
+10. [Keyboard and focus](#keyboard-and-focus)
+11. [Conventions](#conventions)
+12. [CSP notes](#csp-notes)
+13. [Developing the kit](#developing-the-kit)
+14. [License](#license)
 
 ## Vendoring
 
@@ -263,6 +270,137 @@ Without JavaScript (or before bootstrap) the light tokens apply. Any element
 with `data-theme` re-themes its subtree (the gallery shows both themes side by
 side this way); portaled overlays follow `<html>`.
 
+## Styles
+
+The kit has two styles, chosen independently of the light/dark theme: the
+default (what the rest of this README describes) and **quiet**, a typographic
+look for dense tools: IBM Plex, ink on paper, a few hues (red, amber, a
+muted green and a blue accent), sentence-case labels and hairlines instead
+of filled boxes. An application picks one for good; there is no user-facing
+style switch. Select quiet with `data-wb-style="quiet"` on `<html>`, either
+in `index.html`, so the first paint is already quiet:
+
+```html
+<html lang="en" data-wb-style="quiet"></html>
+```
+
+or before the first render (CSSOM, CSP safe):
+
+```ts
+// main.tsx
+import { applyStoredTheme, applyStyle } from "./workbench";
+applyStyle("quiet");
+applyStoredTheme("my-app:theme");
+```
+
+`applyStyle("default")` removes the attribute, `appliedStyle()` returns the
+current `StyleName` (`"default" | "quiet"`) and `STYLE_ATTRIBUTE` is
+`"data-wb-style"`. Without the attribute the kit renders exactly as it did
+before the quiet style existed: every quiet rule is scoped to the attribute
+(`tests/quiet.test.ts` checks this), and pages without it never download IBM
+Plex. Like `data-theme`, the attribute restyles the subtree of any element
+that carries it: the element sets the quiet font for its content, and a
+`data-theme` inside picks quiet light or dark. As with a `data-theme`
+subtree, the container sets its own background and text colour
+(`var(--wb-page)`, `var(--wb-fg)`); portaled overlays follow `<html>`.
+
+What quiet changes, with no change to component APIs:
+
+- **Type:** IBM Plex Sans and Mono (`--wb-font-sans`, `--wb-font-mono`).
+  Plex ships 400, 500 and 600, so `--wb-fw-book`, `-strong` and `-bold`
+  become 400, 500 and 600. Page titles are 20px semibold.
+- **Few hues.** Failed is `danger` (red), waiting is `warning` (amber);
+  each has a faint tint (`-weak`). Success is a muted green: `--wb-success`
+  (icons, dots, rules) and `--wb-success-text` are one green, and
+  `HistoryStrip`'s succeeded bars are a faint green (`--wb-success-bar`).
+  Success badges and pills read as plain text with a green glyph.
+- **Blue is the accent and also means running:** `--wb-accent` is the
+  `info` blue, so primary buttons are solid blue (one per page), focus
+  rings, checkboxes, switches and the current tab underline are blue, and
+  selection (the current sidebar item and top-bar tab, active and selected
+  rows, pressed segments and chip toggles, the highlighted palette item) is
+  tinted with `--wb-accent-weak`, with no rule beside it. Hover stays grey.
+  `--wb-accent-solid` follows `--wb-accent` in quiet, preserving its paired
+  light or dark `--wb-on-accent` text colour.
+- **Surfaces:** `--wb-page` for main panes, toolbars, headers and drawers;
+  `--wb-side` (quiet only) for the sidebar and top bar; `--wb-surface` for
+  inputs, cards, code blocks and overlays.
+- **Labels:** no uppercase, letter-spaced micro labels. Sidebar, drawer,
+  menu and palette section titles, table headers and `wb-label-caps` are
+  sentence case; counts are plain numbers, coloured only by a status tone.
+- **Components:** badges are hairline-outlined tags; `StatePill` is a glyph
+  and a word; `Banner` and the table error row are a 2px left rule in the
+  tone colour with no fill or icon; `danger` buttons are bordered buttons
+  with red text; `Seg` is a bordered group with a tinted pressed segment;
+  tables have hairlines and 42px rows (32px compact); `EmptyState`
+  icons have no tile; letter avatars are grey (the highlighted one blue);
+  inline `code` has no chip; `wb-link` is accent text over a softened accent
+  underline; `KeyValue`'s label column is 96px; radii are 3–8px. `Status`,
+  `HistoryStrip` and `Steps` need nothing extra: their ok marks are green
+  through `--wb-success` and `--wb-success-bar`.
+
+| Token                | Light     | Dark      | Use                                          |
+| -------------------- | --------- | --------- | -------------------------------------------- |
+| `--wb-page`          | `#fcfcfa` | `#151514` | main panes, toolbars, headers, drawers       |
+| `--wb-side`          | `#f4f3ef` | `#1a1a19` | sidebar and top bar (quiet only)             |
+| `--wb-surface`       | `#ffffff` | `#1d1d1b` | inputs, cards, code and logs, overlays       |
+| `--wb-surface-2`     | `#f5f4f0` | `#20201e` | hover                                        |
+| `--wb-surface-3`     | `#e9e7e1` | `#2a2926` | neutral fills: hover blends, avatars, meters |
+| `--wb-fg`            | `#1b1b19` | `#e9e7e2` | ink: text                                    |
+| `--wb-fg-2`          | `#5b5953` | `#a8a59e` | secondary text                               |
+| `--wb-muted`         | `#726f68` | `#8a8780` | muted text, labels, counts                   |
+| `--wb-border`        | `#e8e6e1` | `#292826` | hairlines                                    |
+| `--wb-border-strong` | `#d8d5ce` | `#3a3936` | control borders, tags                        |
+| `--wb-accent`        | `#2556c4` | `#7ea6f8` | primary, focus, checks, current tab, rules   |
+| `--wb-accent-text`   | `#2150b5` | `#93b4f9` | accent text: links, the current sidebar item |
+| `--wb-accent-weak`   | 9%        | 14%       | selected (the accent at that opacity)        |
+| `--wb-on-accent`     | `#ffffff` | `#0d1424` | text on the primary                          |
+| `--wb-danger`        | `#c02f2a` | `#ef7065` | failed (`-weak`: `#fdf5f4` / 8%)             |
+| `--wb-info`          | `#2556c4` | `#7ea6f8` | running (`-weak`: `#f3f6fd` / 7%)            |
+| `--wb-warning`       | `#885f09` | `#d6a24a` | waiting (`-weak`: `#fcf8ee` / 7%)            |
+| `--wb-success`       | `#2b7440` | `#62b57d` | success marks and text (`-text`)             |
+| `--wb-success-bar`   | `#a9cdb2` | `#3f6b4c` | succeeded HistoryStrip bars (quiet only)     |
+| `--wb-deemph`        | `#d2cfc8` | `#4a4944` | faint marks: charts                          |
+
+Each status colour is also its `-text` token. Chart series and the scrim
+keep their default values.
+
+**Quiet contrast.** The design's values are kept where they meet WCAG AA
+(4.5:1) for small text, and adjusted minimally where they don't:
+
+A selected background is `--wb-accent-weak` over the page, the side or a
+surface.
+
+| Token               | Light / dark          | Was (design)            | Why                                                     |
+| ------------------- | --------------------- | ----------------------- | ------------------------------------------------------- |
+| `--wb-muted`        | `#726f68` / `#8a8780` | `#8b8880` / `#78756e`   | 3.2–3.5 and 3.7–4.0:1 on page, side, surface and hover  |
+| `--wb-warning`      | `#885f09` / `#d6a24a` | `#97690a` / same        | 3.8–4.4:1 on side, hover and selected backgrounds       |
+| `--wb-success-text` | `#2b7440` / `#62b57d` | `#2e7a43` / same        | 4.2–4.5:1 on hover and selected backgrounds             |
+| `--wb-danger`       | `#c02f2a` / `#ef7065` | `#c2302a` / `#ee6b60`   | 4.43:1 on selected over the side, 4.35:1 over a surface |
+| `--wb-accent-text`  | `#2150b5` / `#93b4f9` | (new: the running blue) | 5.8–7.3:1 and 6.4–8.8:1 on every background             |
+
+- `--wb-muted` meets AA on page, side, surface, hover and the status tints
+  over the page. On a selected background it would give 3.7–4.4:1, and on
+  the blended hover of sidebar items, top-bar tabs and buttons 4.3–4.4:1,
+  so those elements (current sidebar item and nav tab, active rows,
+  selected table rows, pressed segments and chip toggles, the highlighted
+  palette item; hovered sidebar items, top-bar tabs and buttons) point
+  `--wb-muted` at `--wb-fg-2` for their content. Their muted text stays
+  readable without darkening muted text everywhere else, which would erase
+  the step between secondary and muted.
+- Status and accent text (`danger`, `info`, `warning`, `success`,
+  `neutral` and `accent` text tokens) meet AA on every background, selected
+  included: success text 4.5–5.7:1 (light) and 5.3–7.3:1 (dark). Status
+  marks and the accent meet the 3:1 non-text minimum. Text on the primary
+  is 6.6:1 (light) and 7.6:1 (dark), 4.9 and 5.9:1 on its hover.
+- The succeeded bars of a `HistoryStrip` (`--wb-success-bar`), the faint
+  chart marks (`--wb-deemph`) and empty slots are deliberately faint marks;
+  every bar carries its state as text.
+
+`tests/quiet.test.ts` pins the quiet palette and enforces these ratios,
+including on the blended hover backgrounds; `scripts/style-check.mjs`
+checks the computed results in Chromium.
+
 ## Links and routers
 
 Every kit component that renders a link (`NavTab`, `Brand`, `SidebarItem`,
@@ -328,8 +466,101 @@ looks through class names (`wb-nav-tab`, `wb-side-item`, `wb-tab`) or
 </AppShell>
 ```
 
-Grid: `topbar` across; `sidebar | main | drawer` below. Only panes scroll
+Grid: `topbar` across; `sidebar | main | drawer` below. Without a `topBar`
+the three columns take the full height (below). Only panes scroll
 (`.wb-sidebar`, `.wb-scroll`, `.wb-drawer-body`); the document never does.
+
+### Navigation in the sidebar, no top bar
+
+When the sidebar carries the navigation, leave out `topBar`: the sidebar
+then runs the full height. Compose it from the brand, a selector
+(`SidebarTop`), navigation groups (`SidebarNav`) and a foot (`SidebarFoot`)
+pinned to its bottom edge:
+
+```tsx
+<AppShell
+  sidebar={
+    <Sidebar label="Sidebar">
+      <Brand name="Example App" icon={null} href="/" />
+      <SidebarTop>
+        <Select
+          aria-label="Project"
+          block
+          value={project}
+          onChange={pick}
+          options={projects}
+        />
+      </SidebarTop>
+      <SidebarNav label="Main">
+        <SidebarItem
+          href="/jobs"
+          label="Jobs"
+          count={8}
+          current={view === "jobs"}
+        />
+        <SidebarItem
+          href="/runs"
+          label="Runs"
+          count="3 running"
+          countTone="info"
+          current={view === "runs"}
+        />
+        <SidebarItem
+          href="/runs?attention=1"
+          label="Needs attention"
+          count={1}
+          countTone="danger"
+          nested
+        />
+      </SidebarNav>
+      <SidebarNav title="Administration">
+        <SidebarItem
+          href="/admin/users"
+          label="Users"
+          current={view === "users"}
+        />
+      </SidebarNav>
+      <SidebarFoot>
+        <AppLink href="/account">Ada Admin</AppLink>
+        <Spacer />
+        <SidebarToggle />
+        <IconButton icon="log-out" label="Sign out" onClick={signOut} />
+        <TopStatus
+          tone="success"
+          label="Healthy"
+          detail="All services answering"
+        />
+        <Spacer />
+        <ThemeMenu mode={mode} onChange={setMode} />
+      </SidebarFoot>
+    </Sidebar>
+  }
+  sidebarStorageKey="my-app:sidebar-width"
+  sidebarDefault={216}
+  sidebarMin={200}
+  sidebarMax={320}
+>
+  <Main toolbar={toolbar}>…</Main>
+</AppShell>
+```
+
+- `SidebarNav` is a `<nav>` landmark named by `label`, or by a visible
+  `title` (a group heading such as "Administration"). Groups in a row are
+  spaced apart.
+- `SidebarItem` links mark the current page with `current`. `countTone`
+  colours the count with a status tone ("3 running" in the running colour,
+  a count of failures in red); `nested` indents a sub-item under the item
+  before it.
+- `SidebarFoot` holds the signed-in user, sign out, the theme menu and a
+  health indicator (`TopStatus` works there too). It sits at the bottom,
+  above a hairline, and wraps its controls; an element with
+  `flex-basis: 100%` starts a second line.
+- With no top bar, put `SidebarToggle` in the sidebar (the foot) if it
+  should collapse; the rail shown while collapsed brings it back.
+- `Brand` as the sidebar's first child gets sidebar spacing only in a shell
+  without a top bar; elsewhere it keeps its own.
+- `#/pipelines` in the gallery composes this layout; pick the quiet style to
+  see it as designed.
 
 Sidebar: resizable (drag, ←/→ ±10px, Shift ±40px, Home/End, double-click
 resets) and collapsible (`<SidebarToggle/>` in the top bar, or the button on
@@ -433,7 +664,8 @@ targetId>` outside AppShell.
 Surface, border, text, accent, scrim, tone and chart colours, in two themes.
 Light on `:root` and `[data-theme="light"]`, dark on `[data-theme="dark"]`.
 The contrast requirements that fix the muted text and solid tone values follow
-the table.
+the table. The [quiet style](#styles) sets its own values for the same
+tokens.
 
 | Token                                     | Light                         | Dark                          | Use                                        |
 | ----------------------------------------- | ----------------------------- | ----------------------------- | ------------------------------------------ |
@@ -444,9 +676,10 @@ the table.
 | `--wb-raised`                             | surface                       | surface-3                     | selected segment                           |
 | `--wb-border` / `--wb-border-strong`      | 9% / 16% black                | 8% / 15% white                | hairlines / control borders                |
 | `--wb-fg` / `--wb-fg-2` / `--wb-muted`    | `#0b0b0b` `#52514e` `#6a6964` | `#f5f5f3` `#c3c2b7` `#97958f` | text, secondary text, tertiary             |
-| `--wb-accent`                             | `#2a78d6`                     | `#3987e5`                     | selection, primary, focus, links           |
+| `--wb-accent`                             | `#2a78d6`                     | `#3987e5`                     | selection, focus, chart accents            |
+| `--wb-accent-solid`                       | `#2469bd`                     | `#2469bd`                     | filled controls carrying white text        |
 | `--wb-accent-weak` / `--wb-accent-text`   | 9% accent / `#1c5cab`         | 15% accent / `#86b6ef`        | selected backgrounds / accent text         |
-| `--wb-on-accent`                          | `#fff`                        | `#fff`                        | text on accent                             |
+| `--wb-on-accent`                          | `#fff`                        | `#fff`                        | text on solid accent                       |
 | `--wb-scrim`                              | 28%                           | 50%                           | modal backdrop                             |
 | `--wb-shadow-pop` / `-drawer` / `-raised` |                               |                               | overlays / drawer edge / selected segment  |
 | `--wb-{tone}`                             |                               |                               | solid fill: dots, state pills (white text) |
@@ -458,12 +691,13 @@ the table.
 **Contrast.** Muted text and the solid tone fills are chosen to meet WCAG AA
 4.5:1 (lowest ratio over the backgrounds each sits on):
 
-| Token          | Light / dark          | Contrast                        |
-| -------------- | --------------------- | ------------------------------- |
-| `--wb-muted`   | `#6a6964` / `#97958f` | lowest: light 4.6, dark 4.5     |
-| `--wb-success` | `#1a7f37` / `#238636` | white text: light 5.1, dark 4.6 |
-| `--wb-danger`  | `#cf222e` / `#da3633` | white text: light 5.4, dark 4.6 |
-| `--wb-warning` | `#9a6700` / `#9e6a03` | white text: light 4.9, dark 4.7 |
+| Token               | Light / dark          | Contrast                        |
+| ------------------- | --------------------- | ------------------------------- |
+| `--wb-accent-solid` | `#2469bd` / `#2469bd` | white text: 5.5; hover: 5.0     |
+| `--wb-muted`        | `#6a6964` / `#97958f` | lowest: light 4.6, dark 4.5     |
+| `--wb-success`      | `#1a7f37` / `#238636` | white text: light 5.1, dark 4.6 |
+| `--wb-danger`       | `#cf222e` / `#da3633` | white text: light 5.4, dark 4.6 |
+| `--wb-warning`      | `#9a6700` / `#9e6a03` | white text: light 4.9, dark 4.7 |
 
 - `--wb-muted` is the lowest-contrast grey that still lets small muted text
   (key/value labels, row meta, hints, counts) meet AA on page, surface,
@@ -476,6 +710,13 @@ the table.
   danger fills are deep solids rather than the bright greens and reds that
   suit text on dark backgrounds (`#3fb950` and `#f85149` give 2.5:1 and
   3.4:1 with white). The light success and danger fills already pass.
+- `--wb-accent-solid` supplies primary buttons, skip links, brand marks,
+  highlighted avatars and solid info pills. It reaches 5.5:1 against
+  white in both themes, and 5.0:1 when primary-button hover brightens it by
+  6%. Selection, focus, chart accents and accent-text tokens retain their
+  separate palette. Info glyphs, dots and history bars keep the brighter
+  `--wb-info` accent so they remain visible on dark surfaces. Primary-button
+  counts inherit the button text without a lighter background wash.
 - Amber is too light for white text in both themes at the chart's values
   (`#c98500` gives 3.1:1, `#eda100` gives 2.2:1), so `--wb-warning` is a
   deeper amber.
@@ -487,10 +728,9 @@ the values above and enforces muted and `fg-2` on the backgrounds above,
 white text on the solids, and tone text on tone-weak backgrounds.
 
 Tones are `success` (green), `warning` (amber), `danger` (red), `info`
-(= accent), `neutral`. Text-on-weak contrast is at least 5.4:1 in both
+(accent marks, solid-accent pills), `neutral`. Text-on-weak contrast is at least 5.4:1 in both
 themes on page and surface (`tests/tokens.test.ts` enforces 4.5:1). White
-on solid success/warning/danger/neutral is ≥4.5:1; `info` equals the accent,
-whose white-text contrast is 4.4:1 in light and 3.6:1 in dark.
+on every solid tone is ≥4.5:1 in both themes.
 
 Scales (theme independent):
 
@@ -519,20 +759,21 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
 `is-stale`, `is-tint`, `is-pending`, `is-selected`, `is-clickable`, `is-dim`,
 `is-resizing`, `is-good`/`is-bad`). Variants are `--modifiers`.
 
-- **Frame:** `wb-skip-link`, `wb-app` (`is-resizing`; sets `--wb-side-w`,
+- **Frame:** `wb-skip-link`, `wb-app` (`--no-topbar`, `is-resizing`; sets `--wb-side-w`,
   `--wb-drawer-max`), `wb-app-main`, `wb-app-drawer`, `wb-sidebar-pane`
   (`[hidden]` when collapsed), `wb-sidebar-resize`, `wb-sidebar-rail`.
 - **Top bar:** `wb-topbar` (compaction attributes `data-wb-brand`,
   `data-wb-search`, `data-wb-status`, `data-wb-nav-icons`, set by TopBar),
-  `wb-brand`, `wb-brand-mark`, `wb-brand-name`, `wb-nav` (`data-wb-more`),
+  `wb-brand`, `wb-brand-mark` (absent with `icon={null}`), `wb-brand-name`, `wb-nav` (`data-wb-more`),
   `wb-nav-tab` (`aria-current`; `data-wb-overflow` when moved into More),
   `wb-nav-count`, `wb-nav-more-btn`, `wb-nav-more-dot`, `wb-top-search`,
   `wb-top-search-text`, `wb-top-status`, `wb-top-status-text`,
   `wb-top-status-short`.
 - **Sidebar:** `wb-sidebar`, `wb-side-top`, `wb-side-quick` (+ `-btn`,
   `-note`), `wb-side-section`, `wb-side-h` (+ `-title`, `-toggle`, `-note`,
-  `-count`, `-action`), `wb-side-body`, `wb-side-item` (+ `-label`, `-count`;
-  `aria-current`), `wb-side-row`, `wb-side-row-action`, `wb-side-check` (+
+  `-count`, `-action`), `wb-side-body`, `wb-side-item` (`--nested`; + `-label`,
+  `-count` with an optional tone class; `aria-current`), `wb-side-nav`,
+  `wb-side-foot`, `wb-side-row`, `wb-side-row-action`, `wb-side-check` (+
   `-label`, `-count`), `wb-side-empty`, `wb-side-more`.
 - **Main:** `wb-main` (`is-tint`), `wb-toolbar`, `wb-toolbar-row`
   (`--split`), `wb-toolbar-primary`, `wb-toolbar-title`, `wb-toolbar-label`, `wb-ctl`, `wb-summary`
@@ -582,8 +823,13 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-chip` (`--removable`, `--readonly`), `wb-chip-label`, `wb-chip-remove`,
   `wb-badge` (`--outline`, `--dot`), `wb-state-pill`, `wb-state-cell`
   (`--quiet`; `-dot`, `-label`), `wb-status-dot`
-  (`--pulse`), `wb-kbd`, `wb-avatar` (`--md`, `--lg`, `--xl`), `wb-spinner`,
+  (`--pulse`), `wb-kbd`, `wb-avatar` (`--md`, `--lg`, `--xl`, `--highlight`), `wb-spinner`,
   `wb-icon`, `wb-qname` with `-prefix`, `-prefix-text`, `-name`.
+- **Status:** `wb-status` (`--ok`, `--failed`, `--running`, `--waiting`,
+  `--skipped`, `--neutral`) with `-label`; `wb-status-glyph` (same tones,
+  e.g. `wb-status-glyph--failed`); `wb-history` with `wb-history-bar`
+  (tones, `--empty`); `wb-steps`, `wb-step` (`--done`, `--current`,
+  `--waiting`, `--failed`, `--not-reached`) with `-label`, `-name`, `-detail`.
 - **Forms:** `wb-field`, `wb-field-label`, `wb-field-optional`,
   `wb-field-hint`, `wb-field-error`, `wb-form-error`, `wb-input` (`--sm`,
   `--mono`, `--num`, `--auto`), `wb-textarea`, `wb-select` (`--block`),
@@ -669,9 +915,10 @@ where it makes sense.
 
 ### Shell
 
-- `AppShell({ topBar, sidebar?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
+- `AppShell({ topBar?, sidebar?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
   `SidebarToggle()`, `useAppShell()`, `SkipLink({ targetId?, children? })`.
-- `TopBar({ children })`, `Brand({ name, icon? = "pulse", href? })`,
+- `TopBar({ children })`, `Brand({ name, icon? = "pulse", href? })`
+  (`icon={null}`: the name alone, no mark),
   `NavTabs({ label? = "Main", moreLabel? = "More", children })`,
   `NavTab({ href, current?, icon?, count?, countTone?, countLabel?, children })`,
   `TopSearch({ onClick, placeholder?, shortcut? })` (shows `⌘K`/`Ctrl K`),
@@ -683,7 +930,8 @@ where it makes sense.
   **Crowded bars never clip silently.** TopBar measures its content (on
   resize, web-font loads, re-renders and content changes inside the bar) and, while anything is clipped, applies
   these steps in order: TopSearch's placeholder shrinks (down to 170px);
-  the brand name is visually hidden (still the link's name); TopSearch
+  the brand name is visually hidden (still the link's name; a brand
+  without a mark keeps its name); TopSearch
   becomes its icon button; TopStatus shows `shortLabel` (or only its dot,
   the full label stays for screen readers and `detail` in the tooltip);
   NavTab icons go. If tabs still don't fit, the last ones (never the current
@@ -692,10 +940,12 @@ where it makes sense.
   NavTabs. Apps don't need their own brand/status hiding rules.
 
 - `Sidebar({ label, children })`, `SidebarTop`, `SidebarQuick({ note? })`,
+  `SidebarNav({ label | title, children })` (a navigation group; see
+  above), `SidebarFoot({ children })`,
   `SidebarSection({ title, note?, action?: { label, icon?, text?, onClick }, collapsible?, open?, defaultOpen?, onOpenChange?, activeCount?, lazy? })`
   (`lazy`: children mount when the section is first opened, so pickers in
   collapsed groups don't fetch early, and then stay mounted),
-  `SidebarItem({ label, icon?, iconTone?, count?, current?, href? | onClick?, action?, trailing? })`,
+  `SidebarItem({ label, icon?, iconTone?, count?, countTone?, current?, nested?, href? | onClick?, action?, trailing? })`,
   `SidebarCheck({ label, checked, onChange, count?, icon?, iconTone?, disabled? })`
   (the whole row toggles; the count describes rather than names it),
   `SidebarEmpty`, `SidebarMore({ expanded, onToggle })`.
@@ -1403,6 +1653,60 @@ Every list: `SkeletonRows` while loading, `EmptyState` when empty (with a
 "Clear filters" action when filters are active), `ErrorState` with Retry,
 `refetching` on `Main` for background reloads.
 
+### Status
+
+Outcomes shown the same way in every application, in both styles. Tones are
+`ok | failed | running | waiting | skipped | neutral` (`StatusTone`); colours
+come from the tone tokens: ok uses `--wb-success` (green in the default
+style, a muted green in quiet), failed `danger`, running `info`, waiting
+`warning`, skipped and neutral the muted grey.
+
+- `Status({ tone, children, glyphOnly?, title? })` — a glyph and a word,
+  never a pill: ✓ ok, ✕ failed, a live dot for running, a ring for waiting,
+  a dashed ring for skipped, a dash for neutral. The word ("Failed",
+  "Running · 1 min") takes the tone colour for failed, running and waiting;
+  ok and neutral words keep the text colour and skipped is muted.
+  `glyphOnly` keeps the word as screen-reader text and, for a string, the
+  tooltip. `StatusGlyph({ tone })` is the decorative 12px glyph alone, for
+  rows that lay out their own text.
+- `HistoryStrip({ label, items: { tone, label }[], length? })` — recent
+  states as 4×14px bars, oldest first, so the newest is on the right: ok is
+  faint (`--wb-deemph`; a faint green, `--wb-success-bar`, in the quiet
+  style), failed and running are solid in their colour,
+  waiting is outlined in its colour, neutral is solid grey and skipped a
+  grey outline. `length` fixes the number of slots: the newest `length`
+  items show, and hairline empty slots pad the left so strips line up in a
+  column. It is an `<ol>` named by `label` (say the order: "Last 20 runs,
+  newest last"); each bar has its `label` as text and tooltip ("Failed ·
+  Oct 24, 14:02"), and empty slots are hidden from assistive technology.
+- `Steps({ label, steps: { label, detail?, state, stateLabel?, title?, key? }[] })`
+  — a horizontal row of equal steps, each a glyph, a label and secondary
+  text (a duration, a time, "skipped"). The states `done`, `current`,
+  `waiting`, `failed` and `not-reached` (`StepState`) use the ok, running,
+  waiting, failed and skipped glyphs. The current, waiting and failed steps get a
+  faint tint and a 2px underline in their colour (`aria-current="step"` on
+  current and waiting), and their secondary text rises to `--wb-fg-2`;
+  steps not reached are muted. Screen readers hear the state after the
+  label ("Build, failed"; `stateLabel` overrides it). Labels truncate with
+  an ellipsis rather than wrap; string labels get a tooltip.
+
+```tsx
+<Status tone="failed">Failed</Status>
+<HistoryStrip
+  label="Last 20 runs, newest last"
+  items={runs.map((r) => ({ tone: r.tone, label: `${r.word} · ${r.when}` }))}
+  length={20}
+/>
+<Steps
+  label="Progress"
+  steps={[
+    { label: "Queued", detail: "12 s", state: "done" },
+    { label: "Build", detail: "exit 1 · 2 min 45 s", state: "failed" },
+    { label: "Deploy", detail: "skipped", state: "not-reached" },
+  ]}
+/>
+```
+
 ### Pages
 
 - `SettingsPage({ center? })` (max 860px column; use in `<Main tint>` without
@@ -1541,7 +1845,10 @@ accent border plus 3px halo.
 - Fonts use relative `url("../fonts/*.woff2?no-inline")`. The Vite query keeps
   small language subsets as external files as well, so `font-src` can fall back
   to `default-src 'self'`. Other bundlers must likewise preserve external font
-  assets. No `data:` URIs anywhere in the CSS.
+  assets. No `data:` URIs anywhere in the CSS. Every family is declared with
+  `@font-face`, but browsers fetch a file only when text is set in its family
+  and the page uses a character in its `unicode-range`: default-style pages
+  never fetch IBM Plex, quiet pages never fetch Inter or JetBrains Mono.
 - Theme bootstrap is a function call in `main.tsx`, not an inline script. With
   a deferred module script the first paint may briefly use the light
   background in dark mode; that is the accepted trade-off for
@@ -1563,6 +1870,7 @@ node scripts/page-pager-check.mjs http://127.0.0.1:5190/ <dir> # bounded paging,
 node scripts/shots.mjs http://127.0.0.1:5190/ <dir>   # Playwright screenshots
 node scripts/layout-check.mjs          # Chromium checks: table widths, toolbar split
 node scripts/interaction-check.mjs http://127.0.0.1:5190/ <dir> # drawer resize/persistence, palette steps and copy blocks, both themes
+node scripts/style-check.mjs http://127.0.0.1:5190/ # computed styles: quiet subtrees, Brand spacing, quiet hover contrast, editor size
 ```
 
 `scripts/layout-check.mjs` measures the gallery's hidden layout lab
@@ -1576,13 +1884,19 @@ copy blocks against the real clipboard (copy and revert, one scrolling line,
 wrapped lines without horizontal overflow, Ctrl/⌘ A, and the selection
 fallback after a rejected write). Its optional
 output directory retains screenshots and a JSON result summary.
+`scripts/style-check.mjs` adds a quiet subtree and `Brand` fixtures to a
+default-style gallery page and checks their computed fonts, tokens and
+margins, then hovers a quiet sidebar item and checks its count's contrast,
+in light and dark. It also opens the expanded textarea editor at 1280 and
+600px wide and checks its size. Run it after touching `quiet.css`, the
+shell's spacing or overlay sizes.
 
-Gallery URLs accept `?theme=light|dark` (before the `#`), and the sample app
-reads `#/?item=ev-4819` (drawer), `?modal=new`, `?palette=1`,
-`?density=compact`, `?loading=1`, `?refetch=1`, `#/rules?rule=r-regex-aws`
-(wide drawer) and `&draft=1` (draft bar). `?crowded=1` (before the `#`)
-gives the sample app a crowded top bar (space switch, five
-tabs, long status); resize the window to watch it compact.
+Gallery URLs accept `?theme=light|dark` and `?style=default|quiet` (before
+the `#`), and the sample app reads `#/?item=ev-4819` (drawer), `?modal=new`,
+`?palette=1`, `?density=compact`, `?loading=1`, `?refetch=1`,
+`#/rules?rule=r-regex-aws` (wide drawer) and `&draft=1` (draft bar).
+`?crowded=1` (before the `#`) gives the sample app a crowded top bar (space
+switch, five tabs, long status); resize the window to watch it compact.
 
 Open `#/?item=ev-4819&resize=1` for the resizable detail drawer. Drag its left
 separator, use arrows/Shift/Home/End, double-click to reset, or press Escape
@@ -1595,6 +1909,7 @@ level. Closing and reopening starts at the root.
 ## License
 
 MIT; see [LICENSE](LICENSE), also included as `src/LICENSE` in vendored copies.
-The bundled Inter and JetBrains Mono fonts are
-under the SIL Open Font License 1.1: `src/fonts/LICENSE-Inter.txt` and
-`src/fonts/LICENSE-JetBrainsMono.txt`, which vendoring copies with the fonts.
+The bundled Inter, JetBrains Mono, IBM Plex Sans and IBM Plex Mono fonts are
+under the SIL Open Font License 1.1: `src/fonts/LICENSE-Inter.txt`,
+`src/fonts/LICENSE-JetBrainsMono.txt`, `src/fonts/LICENSE-IBMPlexSans.txt` and
+`src/fonts/LICENSE-IBMPlexMono.txt`, which vendoring copies with the fonts.

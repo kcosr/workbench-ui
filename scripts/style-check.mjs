@@ -1,0 +1,284 @@
+#!/usr/bin/env node
+// Check the styles' computed results in Chromium, light and dark: a quiet
+// subtree inside a default-style page gets the quiet font and tokens; Brand
+// keeps its default spacing in a sidebar unless the shell has no top bar;
+// hovered quiet sidebar items keep their counts at WCAG AA; the current
+// quiet sidebar item is tinted with the accent, with no rule; the expanded
+// textarea editor gets its own size over the modal's, on desktop and full
+// screen below 640px. The gallery dev server must be running.
+// Usage: node scripts/style-check.mjs [baseUrl]
+import { chromium } from "@playwright/test";
+
+const base = process.argv[2] ?? "http://127.0.0.1:5190/";
+const failures = [];
+const check = (ok, message) => {
+  if (!ok) failures.push(message);
+  console.log(`${ok ? "ok  " : "FAIL"} ${message}`);
+};
+
+/** rgb(), rgba() or color(srgb …) as [r, g, b, a] in 0–255 (alpha 0–1). */
+function rgba(value) {
+  const nums = (value.match(/[\d.]+/g) ?? []).map(Number);
+  if (value.startsWith("color(srgb"))
+    return [nums[0] * 255, nums[1] * 255, nums[2] * 255, nums[3] ?? 1];
+  return [nums[0], nums[1], nums[2], nums[3] ?? 1];
+}
+const over = ([r, g, b, a], [br, bg, bb]) => [
+  r * a + br * (1 - a),
+  g * a + bg * (1 - a),
+  b * a + bb * (1 - a),
+  1,
+];
+const luminance = ([r, g, b]) => {
+  const lin = (c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+};
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+const browser = await chromium.launch();
+try {
+  for (const theme of ["light", "dark"]) {
+    const page = await browser.newPage({
+      viewport: { width: 1280, height: 800 },
+    });
+
+    // A default-style page with a quiet subtree and Brand in sidebars.
+    await page.goto(new URL(`?theme=${theme}&style=default#/`, base).href);
+    await page.waitForSelector(".wb-app");
+    const fixture = await page.evaluate((theme) => {
+      const host = document.createElement("div");
+      host.innerHTML = `
+        <div data-wb-style="quiet" id="q">
+          <p id="q-text">Quiet text</p>
+          <span class="wb-mono" id="q-mono">run_954d</span>
+          <span class="wb-muted" id="q-muted">muted</span>
+          <div data-theme="dark"><span class="wb-muted" id="q-dark-muted">muted</span></div>
+        </div>
+        <button class="wb-btn wb-btn--primary" id="default-primary">Primary<span class="wb-btn-count" id="default-primary-count">12</span></button>
+        <span class="wb-state-pill wb-tone-info" id="default-info-pill">Info</span>
+        <span class="wb-status-glyph--running" id="default-info-mark">Running</span>
+        <div data-wb-style="quiet" data-theme="${theme}">
+          <button class="wb-btn wb-btn--primary" id="quiet-primary">Primary</button>
+          <a class="wb-skip-link" id="quiet-skip" href="#q-text">Skip</a>
+          <span class="wb-avatar wb-avatar--highlight" id="quiet-avatar"
+            style="--wb-avatar-bg: var(--wb-accent-solid)">Q</span>
+        </div>
+        <span class="wb-brand" id="b-alone">Brand</span>
+        <aside class="wb-sidebar"><span class="wb-brand" id="b-plain">Brand</span></aside>
+        <div class="wb-app"><div class="wb-sidebar-pane"><aside class="wb-sidebar">
+          <span class="wb-brand" id="b-topbar">Brand</span></aside></div></div>
+        <div class="wb-app wb-app--no-topbar"><div class="wb-sidebar-pane"><aside class="wb-sidebar">
+          <span class="wb-brand" id="b-nav">Brand</span></aside></div></div>
+        <header class="wb-topbar" data-wb-brand="compact">
+          <span class="wb-brand"><span class="wb-brand-mark"></span><span class="wb-brand-name" id="b-compact-mark">Brand</span></span>
+          <span class="wb-brand"><span class="wb-brand-name" id="b-compact-text">Brand</span></span>
+        </header>`;
+      document.body.append(host);
+      const cs = (id) => getComputedStyle(document.getElementById(id));
+      return {
+        body: getComputedStyle(document.body).fontFamily,
+        text: cs("q-text").fontFamily,
+        mono: cs("q-mono").fontFamily,
+        muted: cs("q-muted").color,
+        darkMuted: cs("q-dark-muted").color,
+        defaultPrimary: {
+          color: cs("default-primary").color,
+          background: cs("default-primary").backgroundColor,
+        },
+        primaryCount: {
+          color: cs("default-primary-count").color,
+          background: cs("default-primary-count").backgroundColor,
+        },
+        infoPill: cs("default-info-pill").backgroundColor,
+        infoMark: cs("default-info-mark").color,
+        quietControls: ["quiet-primary", "quiet-skip", "quiet-avatar"].map(
+          (id) => ({
+            id,
+            color: cs(id).color,
+            background: cs(id).backgroundColor,
+          }),
+        ),
+        alone: cs("b-alone").margin,
+        plain: cs("b-plain").margin,
+        inTopbarShell: cs("b-topbar").margin,
+        inNavShell: cs("b-nav").margin,
+        compactMark: document
+          .getElementById("b-compact-mark")
+          .getBoundingClientRect().width,
+        compactText: document
+          .getElementById("b-compact-text")
+          .getBoundingClientRect().width,
+      };
+    }, theme);
+    check(
+      rgba(fixture.primaryCount.background)[3] === 0 &&
+        contrast(
+          rgba(fixture.primaryCount.color),
+          rgba(fixture.defaultPrimary.background),
+        ) >= 4.5,
+      `${theme}: primary counts retain AA without a contrast-reducing wash`,
+    );
+    check(
+      fixture.infoPill === "rgb(36, 105, 189)" &&
+        fixture.infoMark ===
+          (theme === "light" ? "rgb(42, 120, 214)" : "rgb(57, 135, 229)"),
+      `${theme}: info pills use the solid fill while info marks retain the bright accent`,
+    );
+    check(
+      fixture.defaultPrimary.background === "rgb(36, 105, 189)" &&
+        contrast(
+          rgba(fixture.defaultPrimary.color),
+          rgba(fixture.defaultPrimary.background),
+        ) >= 4.5,
+      `${theme}: default primary uses the AA solid accent`,
+    );
+    for (const control of fixture.quietControls) {
+      check(
+        control.background ===
+          (theme === "light" ? "rgb(37, 86, 196)" : "rgb(126, 166, 248)") &&
+          contrast(rgba(control.color), rgba(control.background)) >= 4.5,
+        `${theme}: ${control.id} retains the quiet accent and AA text`,
+      );
+    }
+    check(
+      fixture.body.startsWith('"Inter Variable"'),
+      `${theme}: the default page is set in Inter (${fixture.body.split(",")[0]})`,
+    );
+    check(
+      fixture.text.startsWith('"IBM Plex Sans"'),
+      `${theme}: a quiet subtree in a default page is set in IBM Plex Sans (${fixture.text.split(",")[0]})`,
+    );
+    check(
+      fixture.mono.startsWith('"IBM Plex Mono"'),
+      `${theme}: its identifiers in IBM Plex Mono (${fixture.mono.split(",")[0]})`,
+    );
+    check(
+      fixture.muted === "rgb(114, 111, 104)" &&
+        fixture.darkMuted === "rgb(138, 135, 128)",
+      `${theme}: its tokens are quiet, a data-theme inside picks quiet light or dark (${fixture.muted}, ${fixture.darkMuted})`,
+    );
+    check(
+      fixture.plain === fixture.alone &&
+        fixture.inTopbarShell === fixture.alone,
+      `${theme}: Brand in a default Sidebar keeps its default spacing (${fixture.alone}; in a Sidebar ${fixture.plain}, in a top-bar shell ${fixture.inTopbarShell})`,
+    );
+    check(
+      fixture.compactMark <= 1 && fixture.compactText > 20,
+      `${theme}: a crowded top bar hides the brand name only next to a mark (${fixture.compactMark.toFixed(0)}px with a mark, ${fixture.compactText.toFixed(0)}px without)`,
+    );
+    check(
+      fixture.inNavShell === "2px 8px 12px",
+      `${theme}: Brand in a shell without a top bar gets the sidebar spacing (${fixture.inNavShell})`,
+    );
+
+    // Quiet: hovered sidebar items keep their counts at AA.
+    await page.goto(new URL(`?theme=${theme}&style=quiet#/`, base).href);
+    await page.waitForSelector(".wb-side-item");
+    const body = await page.evaluate(
+      () => getComputedStyle(document.body).fontFamily,
+    );
+    check(
+      body.startsWith('"IBM Plex Sans"'),
+      `${theme}: a quiet page is set in IBM Plex Sans`,
+    );
+    const item = page
+      .locator(".wb-side-item:not([aria-current])")
+      .filter({ has: page.locator(".wb-side-item-count") })
+      .first();
+    await item.hover();
+    await page.waitForTimeout(200);
+    const hovered = await item.evaluate((el) => ({
+      label: el.querySelector(".wb-side-item-label").textContent,
+      count: getComputedStyle(el.querySelector(".wb-side-item-count")).color,
+      background: getComputedStyle(el).backgroundColor,
+      side: getComputedStyle(el.closest(".wb-sidebar")).backgroundColor,
+    }));
+    const ratio = contrast(
+      rgba(hovered.count),
+      over(rgba(hovered.background), rgba(hovered.side)),
+    );
+    check(
+      ratio >= 4.5,
+      `${theme}: a hovered quiet sidebar item ("${hovered.label}") keeps its count at ${ratio.toFixed(2)}:1`,
+    );
+
+    // Quiet: the current sidebar item is tinted with the accent, with no
+    // rule beside it, and its label keeps AA on the tint over the side.
+    await page.mouse.move(0, 0);
+    const current = await page
+      .locator('.wb-side-item[aria-current="page"]')
+      .first()
+      .evaluate((el) => {
+        const cs = getComputedStyle(el);
+        return {
+          label: el.querySelector(".wb-side-item-label").textContent,
+          color: cs.color,
+          background: cs.backgroundColor,
+          shadow: cs.boxShadow,
+          borderLeft: cs.borderLeftWidth,
+          side: getComputedStyle(el.closest(".wb-sidebar")).backgroundColor,
+        };
+      });
+    const [r, g, b, a] = rgba(current.background);
+    const tint = over(rgba(current.background), rgba(current.side));
+    const labelRatio = contrast(rgba(current.color), tint);
+    check(
+      a > 0 && a < 1 && b > r && b > g,
+      `${theme}: the current quiet sidebar item ("${current.label}") is tinted with the accent (${current.background})`,
+    );
+    check(
+      current.shadow === "none" && current.borderLeft === "0px",
+      `${theme}: with no rule beside it (box-shadow ${current.shadow}, border-left ${current.borderLeft})`,
+    );
+    check(
+      labelRatio >= 4.5,
+      `${theme}: its label meets AA on the tint (${labelRatio.toFixed(2)}:1)`,
+    );
+    await page.close();
+  }
+
+  // The expanded editor: 1120px wide (at most 94vw), 90vh tall and 5vh from
+  // the top on desktop; the whole viewport below 640px.
+  for (const [width, height] of [
+    [1280, 800],
+    [600, 800],
+  ]) {
+    const page = await browser.newPage({ viewport: { width, height } });
+    await page.goto(new URL("?theme=light#/components", base).href);
+    await page.waitForSelector(".wb-expandable-textarea");
+    await page
+      .locator(".wb-expandable-textarea-actions button")
+      .first()
+      .click();
+    const box = await page.locator(".wb-textarea-editor").evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return [r.left, r.top, r.width, r.height].map(Math.round);
+    });
+    const want =
+      width > 640
+        ? [
+            Math.round((width - Math.min(1120, width * 0.94)) / 2),
+            Math.round(height * 0.05),
+            Math.round(Math.min(1120, width * 0.94)),
+            Math.round(height * 0.9),
+          ]
+        : [0, 0, width, height];
+    check(
+      box.every((v, i) => Math.abs(v - want[i]) <= 1),
+      `expanded editor at ${width}×${height}: x, y, width, height ${box.join(", ")} (want ${want.join(", ")})`,
+    );
+    await page.close();
+  }
+} finally {
+  await browser.close();
+}
+if (failures.length) {
+  console.error(`${failures.length} style check(s) failed`);
+  process.exit(1);
+}

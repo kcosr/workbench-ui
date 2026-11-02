@@ -27,14 +27,17 @@ export {
   Sidebar,
   SidebarCheck,
   SidebarEmpty,
+  SidebarFoot,
   SidebarItem,
   SidebarMore,
+  SidebarNav,
   SidebarQuick,
   SidebarSection,
   SidebarTop,
 } from "./components/Sidebar";
 export type {
   SidebarItemProps,
+  SidebarNavProps,
   SidebarSectionAction,
   SidebarSectionProps,
 } from "./components/Sidebar";
@@ -221,6 +224,16 @@ export type {
   ErrorStateProps,
   MeterProps,
 } from "./components/States";
+export { HistoryStrip, Status, StatusGlyph, Steps } from "./components/Status";
+export type {
+  HistoryItem,
+  HistoryStripProps,
+  StatusProps,
+  StatusTone,
+  StepItem,
+  StepState,
+  StepsProps,
+} from "./components/Status";
 
 // pages
 export {
@@ -273,6 +286,8 @@ export {
   useTheme,
 } from "./lib/theme";
 export type { Theme, ThemeMode, ThemeState } from "./lib/theme";
+export { appliedStyle, applyStyle, STYLE_ATTRIBUTE } from "./lib/style";
+export type { StyleName } from "./lib/style";
 export {
   formatDate,
   formatDateTime,

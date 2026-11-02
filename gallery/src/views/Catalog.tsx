@@ -18,6 +18,7 @@ import {
   ErrorState,
   Field,
   FilterInput,
+  HistoryStrip,
   Icon,
   IconButton,
   Input,
@@ -45,7 +46,9 @@ import {
   SkeletonRows,
   Spinner,
   StatePill,
+  Status,
   StatusDot,
+  Steps,
   Switch,
   TabPanel,
   Tabs,
@@ -61,7 +64,7 @@ import {
   useConfirm,
   useToast,
 } from "../../../src";
-import type { LinkProps, Tone } from "../../../src";
+import type { HistoryItem, LinkProps, StatusTone, Tone } from "../../../src";
 
 const TONES: Tone[] = [
   "neutral",
@@ -804,7 +807,155 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
           ))}
         </div>
       </Section>
+      <StatusPatterns />
+      <Section title="Navigation sidebar">
+        <p className="gal-note">
+          An application whose sidebar carries the navigation, with no top bar:
+          brand, a selector, navigation groups and a foot.
+        </p>
+        <Button href="#/pipelines" iconRight="arrow-right">
+          Open the sample
+        </Button>
+      </Section>
     </div>
+  );
+}
+
+const HISTORY_TONES: Record<string, StatusTone> = {
+  o: "ok",
+  x: "failed",
+  r: "running",
+  w: "waiting",
+  s: "skipped",
+  n: "neutral",
+};
+const HISTORY_WORDS: Record<StatusTone, string> = {
+  ok: "Succeeded",
+  failed: "Failed",
+  running: "Running",
+  waiting: "Waiting",
+  skipped: "Skipped",
+  neutral: "Cancelled",
+};
+
+/** "ooxw…" (oldest first) as history items, labelled with a day each. */
+function history(pattern: string): HistoryItem[] {
+  return [...pattern].map((c, i) => {
+    const tone = HISTORY_TONES[c] ?? "ok";
+    return {
+      tone,
+      label: `${HISTORY_WORDS[tone]} · Oct ${i + 1}`,
+    };
+  });
+}
+
+const HISTORY_ROWS: [string, string, ReactNode][] = [
+  [
+    "Nightly import",
+    "oooooooxoooooooooxoo",
+    <Time key="t" value={new Date(Date.now() - 3 * 36e5)} />,
+  ],
+  [
+    "Review queue",
+    "oooooooooowoww",
+    <Status key="s" tone="waiting">
+      waiting for CI
+    </Status>,
+  ],
+  [
+    "Release notes",
+    "ooxoooooxoooooorrn",
+    <Status key="s" tone="running">
+      2 running
+    </Status>,
+  ],
+  [
+    "Intake triage",
+    "",
+    <span key="s" className="wb-muted">
+      never
+    </span>,
+  ],
+];
+
+/** Status, HistoryStrip and Steps (both styles). */
+function StatusPatterns() {
+  return (
+    <Section title="Status, history strip, steps">
+      <div className="wb-inline">
+        <Status tone="ok">Succeeded</Status>
+        <Status tone="failed">Failed</Status>
+        <Status tone="running">Running · 1 min</Status>
+        <Status tone="waiting">Waiting for CI</Status>
+        <Status tone="skipped">Skipped</Status>
+        <Status tone="neutral">Cancelled</Status>
+      </div>
+      <div className="wb-inline">
+        {(Object.keys(HISTORY_WORDS) as StatusTone[]).map((tone) => (
+          <Status key={tone} tone={tone} glyphOnly>
+            {HISTORY_WORDS[tone]}
+          </Status>
+        ))}
+        <span className="wb-small wb-muted">
+          Glyph only: the word is the tooltip and screen-reader text.
+        </span>
+      </div>
+      <div className="wb-table-card">
+        <table className="wb-table">
+          <thead>
+            <tr>
+              <th scope="col">Job</th>
+              <th scope="col">Last 20 runs</th>
+              <th scope="col" className="wb-cell-num">
+                Last run
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {HISTORY_ROWS.map(([name, pattern, last]) => (
+              <tr key={name}>
+                <td className="wb-cell-strong">{name}</td>
+                <td>
+                  <HistoryStrip
+                    label={`${name}: last 20 runs, newest last`}
+                    items={history(pattern)}
+                    length={20}
+                  />
+                </td>
+                <td className="wb-cell-num">{last}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Steps
+        label="Progress"
+        steps={[
+          { label: "Queued", detail: "12 s", state: "done" },
+          { label: "Started", detail: "3:15:24 PM", state: "done" },
+          { label: "Working", detail: "1 min 50 s", state: "current" },
+          { label: "Reply", detail: "after the work", state: "not-reached" },
+        ]}
+      />
+      <Steps
+        label="Failed progress"
+        steps={[
+          { label: "Queued", detail: "12 s", state: "done" },
+          { label: "Clone repository", detail: "3.0 s", state: "done" },
+          { label: "Install", detail: "exit 1 · 2 min 45 s", state: "failed" },
+          { label: "Test", detail: "skipped", state: "not-reached" },
+          { label: "Publish", detail: "skipped", state: "not-reached" },
+        ]}
+      />
+      <Steps
+        label="Waiting progress"
+        steps={[
+          { label: "Queued", detail: "waiting 2 min", state: "waiting" },
+          { label: "Build", detail: "—", state: "not-reached" },
+          { label: "Deploy", detail: "—", state: "not-reached" },
+        ]}
+      />
+    </Section>
   );
 }
 
