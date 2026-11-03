@@ -9,6 +9,13 @@
     border-bottom: 1px solid var(--wb-border);
     scrollbar-width: none;
   }
+  .wb-tabs--compact {
+    gap: 0;
+  }
+  .wb-tabs--compact > .wb-tab {
+    padding: 0 8px;
+    font-size: var(--wb-fs-12);
+  }
   /* More tabs past an edge (a narrow screen): that edge fades out. */
   .wb-tabs.is-fade-end {
     mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);

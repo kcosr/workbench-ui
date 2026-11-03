@@ -74,6 +74,8 @@ interface TabsBaseProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
   items: readonly TabItem<T>[];
+  /** Tighter tabs in smaller text, for a narrow pane or a phone. */
+  compact?: boolean | undefined;
   className?: string | undefined;
 }
 
@@ -105,7 +107,8 @@ export type TabsProps<T extends string> = TabsBaseProps<T> &
  * For URL-driven tabs use LinkTabs.
  */
 export function Tabs<T extends string>(props: TabsProps<T>) {
-  const { label, value, onChange, items, children, id, className } = props;
+  const { label, value, onChange, items, children, id, compact, className } =
+    props;
   const auto = useId();
   const base = id ?? `wb-tabs-${auto}`;
   const list = useRef<HTMLDivElement | null>(null);
@@ -136,7 +139,12 @@ export function Tabs<T extends string>(props: TabsProps<T>) {
         ref={list}
         role="tablist"
         aria-label={label}
-        className={cx("wb-tabs", fade, className)}
+        className={cx(
+          "wb-tabs",
+          compact && "wb-tabs--compact",
+          fade,
+          className,
+        )}
         onKeyDown={onKeyDown}
       >
         {items.map((t) => {
@@ -221,10 +229,13 @@ export interface LinkTabItem {
 export function LinkTabs({
   label,
   items,
+  compact,
   className,
 }: {
   label: string;
   items: readonly LinkTabItem[];
+  /** Tighter tabs in smaller text, for a narrow pane or a phone. */
+  compact?: boolean | undefined;
   className?: string | undefined;
 }) {
   const Link = useLinkComponent();
@@ -234,7 +245,7 @@ export function LinkTabs({
     <nav
       ref={nav}
       aria-label={label}
-      className={cx("wb-tabs", fade, className)}
+      className={cx("wb-tabs", compact && "wb-tabs--compact", fade, className)}
     >
       {items.map((t) => (
         <Link

@@ -69,3 +69,13 @@ describe("LinkTabs", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("compact tabs", () => {
+  it("mark the row compact", () => {
+    render(<LinkTabs label="Sections" items={items} compact />);
+    expect(screen.getByRole("navigation", { name: "Sections" })).toHaveClass(
+      "wb-tabs",
+      "wb-tabs--compact",
+    );
+  });
+});
