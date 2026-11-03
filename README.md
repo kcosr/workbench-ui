@@ -871,7 +871,7 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   (tones, `--empty`); `wb-steps`, `wb-step` (`--done`, `--current`,
   `--waiting`, `--failed`, `--not-reached`) with `-label`, `-name`, `-detail`.
 - **Forms:** `wb-field`, `wb-field-label`, `wb-field-optional`,
-  `wb-field-hint`, `wb-field-error`, `wb-form-error`, `wb-input` (`--sm`,
+  `wb-field-hint`, `wb-field-focus-hint`, `wb-field-error`, `wb-form-error`, `wb-input` (`--sm`,
   `--mono`, `--num`, `--auto`), `wb-textarea`, `wb-select` (`--block`),
   `wb-checkbox`, `wb-check` (+ `-text`, `-desc`), `wb-switch` (`--sm`:
   26×16 for dense rows and table cells),
@@ -1525,8 +1525,10 @@ state, so disable it while its action runs.
   not assign inclusive/exclusive semantics. It has no internal value state.
   `#/components` demonstrates editable and disabled ranges in both themes.
 
-- `Field({ label, hint?, error?, optional?, id? })` wires `id`,
+- `Field({ label, hint?, focusHint?, error?, optional?, id? })` wires `id`,
   `aria-describedby` and `aria-invalid` into the control inside.
+  `focusHint` is a longer explanation under the hint, shown while the field
+  has focus. Other props (data attributes, `onBlur`) go to the root element.
 - `Input({ inputSize?, mono?, numeric? })`, `Textarea({ mono? })`,
   `Select({ options? | children, block?, inputSize? })` (styled native),
   `Checkbox({ label?, description?, indeterminate? })` (the label names it;
