@@ -289,3 +289,25 @@ describe("table cell vertical alignment", () => {
     ).toBe("6px");
   });
 });
+
+describe("touch targets", () => {
+  const touch = read("touch.css").replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("apply only on narrow viewports and coarse pointers", () => {
+    const media = /@media\s*([^{]+)\{/g;
+    const queries = [...touch.matchAll(media)].map((m) => m[1]?.trim());
+    expect(queries).toEqual(["(max-width: 760px), (pointer: coarse)"]);
+  });
+
+  it("make buttons and fields 44px tall with 16px field text", () => {
+    const block = (selector: string) =>
+      new RegExp(`${selector.replace(/[.]/g, "\\.")}[^{]*\\{([^}]*)\\}`).exec(
+        touch,
+      )?.[1] ?? "";
+    expect(block(".wb-btn,")).toContain("min-height: 44px");
+    expect(block(".wb-btn--icon,")).toContain("min-width: 44px");
+    expect(block(".wb-input,\n    .wb-input--mono")).toContain(
+      "font-size: 16px",
+    );
+  });
+});

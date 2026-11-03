@@ -65,6 +65,48 @@
     width: var(--wb-resized-drawer-w);
   }
 
+  /* ---------- narrow (AppShell `narrow`): the sidebar opens over the page */
+  .wb-app--narrow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wb-app--narrow > :is(.wb-app-main, .wb-main) {
+    grid-column: 1;
+  }
+  .wb-narrow-bar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    min-height: 48px;
+    padding: 0 12px 0 6px;
+    border-bottom: 1px solid var(--wb-border);
+    background: var(--wb-side);
+  }
+  .wb-narrow-bar > .wb-btn--icon {
+    width: 44px;
+    height: 44px;
+  }
+  .wb-app--narrow > .wb-sidebar-pane {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: calc(var(--wb-z-overlay) - 1);
+    width: min(288px, 86vw);
+    box-shadow: var(--wb-shadow-pop);
+  }
+  .wb-app--narrow > .wb-narrow-scrim {
+    z-index: calc(var(--wb-z-overlay) - 2);
+  }
+  .wb-app--narrow .wb-sidebar-resize {
+    display: none;
+  }
+  /* Touch-sized rows and foot controls. */
+  .wb-app--narrow .wb-side-item {
+    height: 40px;
+  }
+  .wb-app--narrow .wb-side-foot .wb-btn {
+    min-height: 44px;
+  }
+
   /* ---------- skip link: off-screen until focused */
   .wb-skip-link {
     position: fixed;

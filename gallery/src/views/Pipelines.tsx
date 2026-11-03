@@ -296,6 +296,8 @@ export function PipelinesView() {
   return (
     <AppShell
       sidebar={sidebar}
+      narrow="(max-width: 900px)"
+      narrowBar={<Brand name="Workbench" href="#/pipelines" icon={null} />}
       sidebarStorageKey="workbench-gallery:nav-sidebar-width"
       sidebarMin={200}
       sidebarMax={320}

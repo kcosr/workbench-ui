@@ -10,9 +10,10 @@ toasts.
   custom property `--wb-` prefixed, everything lives in `@layer wb`.
 - **React 19** components with no runtime dependencies besides React. Router
   agnostic: works with react-router and with plain hash links.
-- **Desktop only.** Designed for 1280–2560px, usable (no overlap, no clipping)
-  at 1024px. Applications keep their own mobile composition; adopting the
-  shared primitives does not add a phone layout to AppShell.
+- **Desktop first.** Designed for 1280–2560px, usable (no overlap, no
+  clipping) at 1024px. On phones, AppShell's `narrow` layout opens the
+  sidebar over the page from a Menu bar, and controls grow to touch-sized
+  targets (see [Narrow screens](#narrow-screens)).
 - **CSP safe** for `style-src 'self'` / `script-src 'self'`: no `<style>`
   injection, no inline scripts, no `eval`, fonts are bundled files.
 - **Bundled fonts** from Fontsource 5.3.0: Inter Variable and JetBrains Mono
@@ -559,8 +560,8 @@ pinned to its bottom edge:
   should collapse; the rail shown while collapsed brings it back.
 - `Brand` as the sidebar's first child gets sidebar spacing only in a shell
   without a top bar; elsewhere it keeps its own.
-- `#/pipelines` in the gallery composes this layout; pick the quiet style to
-  see it as designed.
+- `#/pipelines` in the gallery composes this layout, with the narrow layout
+  below 900px; pick the quiet style to see it as designed.
 
 Sidebar: resizable (drag, ←/→ ±10px, Shift ±40px, Home/End, double-click
 resets) and collapsible (`<SidebarToggle/>` in the top bar, or the button on
@@ -658,6 +659,43 @@ by `Main` (`id` = AppShell's `mainId`, default `wb-main`, `tabIndex={-1}`)
 without changing the URL, so hash routers are unaffected. Change the text
 with `skipLink="…"`, drop it with `skipLink={false}`, or use `<SkipLink
 targetId>` outside AppShell.
+
+### Narrow screens
+
+A shell whose sidebar carries the navigation can hand it to a Menu button on
+small screens. Give `narrow` a media query; while it matches, the sidebar
+leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
+(the brand, or a way back to the page above):
+
+```tsx
+<AppShell
+  sidebar={sidebar}
+  narrow="(max-width: 900px)"
+  narrowBar={<Brand name="Example App" icon={null} href="/" />}
+>
+  <Main>…</Main>
+</AppShell>
+```
+
+- Menu opens the sidebar over the page: the page is inert under a scrim,
+  focus moves to the sidebar's first control and Tab stays inside (overlays
+  opened from the sidebar included). The skip link is left out meanwhile.
+- Escape (after any overlay opened from the sidebar), the scrim, a plain
+  click on a link and any navigation (`hashchange`, `popstate`) close it.
+  Focus returns to Menu, or goes to the main pane after a link to another
+  page or a navigation.
+- A change in the sidebar that navigates without a link (a project select)
+  calls `useAppShell().closeMenu("main")`; `useAppShell().narrow` and
+  `menuOpen` report the state. The collapse controls (`SidebarToggle`, the
+  rail, the width separator) belong to the wide layout and are hidden.
+- Widening past the query shows the sidebar in place again; narrowing starts
+  closed. Sidebar rows and foot buttons are touch-sized while narrow.
+
+Independently of the shell, at 760px and below and on coarse pointers
+(`touch.css`), buttons, text fields, selects and copy buttons are at least
+44px tall (icon buttons 44px wide too), tabs, segments, checkbox rows and
+switch labels 40px, and text fields use 16px text so mobile browsers don't
+zoom into them. `useMediaQuery(query)` follows a media query from React.
 
 ## Tokens
 
@@ -759,9 +797,11 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
 `is-stale`, `is-tint`, `is-pending`, `is-selected`, `is-clickable`, `is-dim`,
 `is-resizing`, `is-good`/`is-bad`). Variants are `--modifiers`.
 
-- **Frame:** `wb-skip-link`, `wb-app` (`--no-topbar`, `is-resizing`; sets `--wb-side-w`,
-  `--wb-drawer-max`), `wb-app-main`, `wb-app-drawer`, `wb-sidebar-pane`
-  (`[hidden]` when collapsed), `wb-sidebar-resize`, `wb-sidebar-rail`.
+- **Frame:** `wb-skip-link`, `wb-app` (`--no-topbar`, `--narrow`, `is-resizing`,
+  `is-menu-open`; sets `--wb-side-w`, `--wb-drawer-max`), `wb-app-main`
+  (`[inert]` while the narrow sidebar is open), `wb-app-drawer`, `wb-sidebar-pane`
+  (`[hidden]` when collapsed, or narrow and closed), `wb-sidebar-resize`,
+  `wb-sidebar-rail`, `wb-narrow-bar`, `wb-narrow-scrim`.
 - **Top bar:** `wb-topbar` (compaction attributes `data-wb-brand`,
   `data-wb-search`, `data-wb-status`, `data-wb-nav-icons`, set by TopBar),
   `wb-brand`, `wb-brand-mark` (absent with `icon={null}`), `wb-brand-name`, `wb-nav` (`data-wb-more`),
@@ -915,8 +955,9 @@ where it makes sense.
 
 ### Shell
 
-- `AppShell({ topBar?, sidebar?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
-  `SidebarToggle()`, `useAppShell()`, `SkipLink({ targetId?, children? })`.
+- `AppShell({ topBar?, sidebar?, narrow?, narrowBar?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
+  `SidebarToggle()`, `useAppShell()` (`{ hasSidebar, sidebarCollapsed, toggleSidebar, showSidebar, hideSidebar, sidebarId, mainId, narrow, menuOpen, closeMenu }`), `SkipLink({ targetId?, children? })`.
+  `narrow`: see [Narrow screens](#narrow-screens).
 - `TopBar({ children })`, `Brand({ name, icon? = "pulse", href? })`
   (`icon={null}`: the name alone, no mark),
   `NavTabs({ label? = "Main", moreLabel? = "More", children })`,
@@ -1831,7 +1872,7 @@ style, a muted green in quiet), failed `danger`, running `info`, waiting
   `resolveTheme`, `systemTheme`, `applyTheme`.
 - Misc: `cx(...)`, `toneClass(tone)`, `buttonClass(...)`,
   `computePosition`/`useAnchoredPosition`, `readStorage`/`writeStorage`,
-  `errorMessage(error)`.
+  `errorMessage(error)`, `useMediaQuery(query)`.
 
 ## Keyboard and focus
 
@@ -1864,8 +1905,9 @@ accent border plus 3px halo.
 
 ## Conventions
 
-- Desktop only. Test at 1280–2560px and check 1024px (panes narrow, toolbars
-  wrap, lower-priority table columns drop).
+- Desktop first. Test at 1280–2560px and check 1024px (panes narrow, toolbars
+  wrap, lower-priority table columns drop); shells with a `narrow` layout
+  also at 390px.
 - Selection, primary actions, links and focus use the accent. Navigation
   (`NavTab`), in-page tabs (`Tabs`, underline), segmented filters (`Seg`,
   grey track) and buttons (bordered) are visually distinct; do not style one

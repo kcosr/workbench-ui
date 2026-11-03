@@ -313,6 +313,7 @@ export {
 export type { HotkeyOptions } from "./lib/hotkeys";
 export { computePosition, useAnchoredPosition } from "./lib/position";
 export { readStorage, writeStorage } from "./lib/storage";
+export { useMediaQuery } from "./lib/media";
 export { hasTextSelection, isPlainClick } from "./lib/dom";
 
 export { fitPaneWidths, usePaneResize } from "./lib/panes";
