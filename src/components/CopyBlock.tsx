@@ -28,8 +28,9 @@ export interface CopyBlockProps {
    */
   wrap?: boolean | undefined;
   /**
-   * No box: the text and its button inline, for an identifier in a fact
-   * list or a sentence. The text wraps; nothing is hidden.
+   * No box: the text, in the surrounding colour, and its button inline, for
+   * an identifier in a fact list or a sentence. One line with an ellipsis
+   * (the button still copies all of it); with `wrap`, the whole text wraps.
    */
   plain?: boolean | undefined;
   /** Extra class on the root element. */

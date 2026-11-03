@@ -436,23 +436,27 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
-  /* plain: inline, unboxed text that wraps */
+  /* plain: unboxed text in the surrounding colour, one line with an
+     ellipsis (the button copies all of it) or, with wrap, wrapped; the
+     button overhangs the line so the text keeps its line height */
   .wb-copy--plain {
     display: inline-flex;
-    align-items: flex-start;
     gap: 2px;
     vertical-align: top;
     border: 0;
     background: none;
+    color: inherit;
   }
   .wb-copy--plain .wb-copy-text {
-    padding: 2px 0;
+    padding: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .wb-copy--plain.wb-copy--wrap .wb-copy-text {
     overflow: visible;
-    color: var(--wb-fg-2);
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
   }
   .wb-copy--plain .wb-copy-actions {
+    margin-block: -4px;
     padding: 0;
   }
   .wb-copy-status {

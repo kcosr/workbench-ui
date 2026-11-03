@@ -25,5 +25,12 @@
     .wb-switch-label {
       min-height: 40px;
     }
+    /* A copy button's target overhangs its one-line block or line. */
+    .wb-copy:not(.wb-copy--multiline) .wb-copy-actions {
+      margin-block: -7px;
+    }
+    .wb-copy--plain .wb-copy-actions {
+      margin-block: -12px;
+    }
   }
 }

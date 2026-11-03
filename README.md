@@ -1829,8 +1829,12 @@ style, a muted green in quiet), failed `danger`, running `info`, waiting
   cue, as overlay scrollbars show none until scrolled. It applies to
   multiline blocks too: line breaks in `text` are kept, long lines wrap, and
   only vertical scrolling remains. The button stays beside the first line.
-  `plain` drops the box: the text and its button sit inline, for an
-  identifier in a fact list or a sentence, and the text wraps.
+  `plain` drops the box: the text, in the surrounding colour, and its
+  button sit inline, for an identifier in a fact list or a sentence. The
+  text keeps to one line with an ellipsis (the button copies all of it), or
+  wraps with `wrap`; the button overhangs the line, so the text keeps its
+  line height. On touch screens the copy button's 44px target overhangs its
+  one-line block or line.
   Wrapping is visual only: the button and a selection copy `text` without
   added line breaks. `label` is the button's accessible name and
   tooltip ("Copy server URL"); it never changes. The button writes
