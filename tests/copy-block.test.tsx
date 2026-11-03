@@ -426,3 +426,17 @@ describe("CopyBlock: keyboard selection", () => {
     expect(fireEvent.keyDown(code, { key: "a" })).toBe(true);
   });
 });
+
+describe("plain CopyBlock", () => {
+  it("renders the text and its button without the box", () => {
+    const { container } = render(
+      <CopyBlock text="job-42" label="Copy job ID" plain />,
+    );
+    expect(container.firstElementChild).toHaveClass(
+      "wb-copy",
+      "wb-copy--plain",
+    );
+    expect(screen.getByRole("button", { name: "Copy job ID" })).toBeTruthy();
+    expect(screen.getByText("job-42")).toHaveClass("wb-copy-text");
+  });
+});

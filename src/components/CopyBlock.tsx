@@ -27,6 +27,11 @@ export interface CopyBlockProps {
    * in `text` are kept and the copied text is unchanged.
    */
   wrap?: boolean | undefined;
+  /**
+   * No box: the text and its button inline, for an identifier in a fact
+   * list or a sentence. The text wraps; nothing is hidden.
+   */
+  plain?: boolean | undefined;
   /** Extra class on the root element. */
   className?: string | undefined;
 }
@@ -58,6 +63,7 @@ export function CopyBlock({
   label,
   multiline = false,
   wrap = false,
+  plain = false,
   className,
 }: CopyBlockProps) {
   const textRef = useRef<HTMLElement | null>(null);
@@ -132,6 +138,7 @@ export function CopyBlock({
         "wb-copy",
         multiline && "wb-copy--multiline",
         wrap && "wb-copy--wrap",
+        plain && "wb-copy--plain",
         status === "copied" && "is-copied",
         status === "manual" && "is-manual",
         className,

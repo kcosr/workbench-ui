@@ -436,6 +436,25 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
+  /* plain: inline, unboxed text that wraps */
+  .wb-copy--plain {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 2px;
+    vertical-align: top;
+    border: 0;
+    background: none;
+  }
+  .wb-copy--plain .wb-copy-text {
+    padding: 2px 0;
+    overflow: visible;
+    color: var(--wb-fg-2);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .wb-copy--plain .wb-copy-actions {
+    padding: 0;
+  }
   .wb-copy-status {
     color: var(--wb-fg-2);
     font-size: var(--wb-fs-12);

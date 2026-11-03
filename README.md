@@ -902,7 +902,7 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-settings-sec` with `-head`, `-titles`, `-title`, `-desc`, `-body`;
   `wb-settings-row` (`--top`), `wb-settings-label`, `wb-settings-help`,
   `wb-settings-control` (`--stack`), `wb-settings-actions`; `wb-code`
-  (`--nowrap`), `wb-code-key`, `wb-copy` (`--multiline`, `--wrap`; `is-copied`,
+  (`--nowrap`), `wb-code-key`, `wb-copy` (`--multiline`, `--wrap`, `--plain`; `is-copied`,
   `is-manual`) with `-text`, `-actions`, `-status`, `-btn`; `wb-disclosure`,
   `wb-label-caps`.
 - **Tones:** `wb-tone-neutral | info | success | warning | danger | muted`
@@ -1818,7 +1818,7 @@ style, a muted green in quiet), failed `danger`, running `info`, waiting
   and subtitle), `Tile({ label, value, unit?, delta?: { value, direction?, good?, vs? }, spark? })`
   (inside `.wb-tiles`: 4 across, 2 when main <860px, 1 when <560px).
 - `Disclosure({ summary, defaultOpen? })` — e.g. raw JSON in a drawer.
-- `CopyBlock({ text, label, multiline?, wrap?, className? })` — monospace
+- `CopyBlock({ text, label, multiline?, wrap?, plain?, className? })` — monospace
   text with a copy button, for a command, a server URL, an API key or a config
   file. `text` is exactly what is shown and copied. One line by default: it
   scrolls horizontally instead of wrapping or truncating, so a long command
@@ -1829,6 +1829,8 @@ style, a muted green in quiet), failed `danger`, running `info`, waiting
   cue, as overlay scrollbars show none until scrolled. It applies to
   multiline blocks too: line breaks in `text` are kept, long lines wrap, and
   only vertical scrolling remains. The button stays beside the first line.
+  `plain` drops the box: the text and its button sit inline, for an
+  identifier in a fact list or a sentence, and the text wraps.
   Wrapping is visual only: the button and a selection copy `text` without
   added line breaks. `label` is the button's accessible name and
   tooltip ("Copy server URL"); it never changes. The button writes
