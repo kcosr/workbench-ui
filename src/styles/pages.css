@@ -9,6 +9,22 @@
     border-bottom: 1px solid var(--wb-border);
     scrollbar-width: none;
   }
+  /* More tabs past an edge (a narrow screen): that edge fades out. */
+  .wb-tabs.is-fade-end {
+    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  }
+  .wb-tabs.is-fade-start {
+    mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent);
+  }
+  .wb-tabs.is-fade-start.is-fade-end {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 40px,
+      #000 calc(100% - 40px),
+      transparent
+    );
+  }
   .wb-tab {
     position: relative;
     display: inline-flex;

@@ -1,5 +1,10 @@
-import { useId, useRef } from "react";
-import type { KeyboardEvent, ReactNode } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import type {
+  KeyboardEvent,
+  MouseEventHandler,
+  ReactNode,
+  RefObject,
+} from "react";
 import { cx } from "../lib/cx";
 import { Icon } from "./Icon";
 import type { IconName } from "./Icon";
@@ -26,6 +31,41 @@ export function tabPanelId(tabsId: string, value: string): string {
 // Ids can't contain whitespace.
 function idPart(value: string): string {
   return value.replace(/\s+/g, "_");
+}
+
+/**
+ * A tab row too narrow for its tabs scrolls: `is-fade-start` / `is-fade-end`
+ * while more tabs hide past that edge, which then fades out. `content`
+ * changes when the tabs do.
+ */
+function useOverflowFade(
+  ref: RefObject<HTMLElement | null>,
+  content: string,
+): string | undefined {
+  const [edges, setEdges] = useState({ start: false, end: false });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const start = el.scrollLeft > 1;
+      const end = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+      setEdges((e) =>
+        e.start === start && e.end === end ? e : { start, end },
+      );
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const observer =
+      typeof ResizeObserver === "function" ? new ResizeObserver(update) : null;
+    observer?.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      observer?.disconnect();
+    };
+  }, [ref, content]);
+  return (
+    cx(edges.start && "is-fade-start", edges.end && "is-fade-end") || undefined
+  );
 }
 
 interface TabsBaseProps<T extends string> {
@@ -69,6 +109,7 @@ export function Tabs<T extends string>(props: TabsProps<T>) {
   const auto = useId();
   const base = id ?? `wb-tabs-${auto}`;
   const list = useRef<HTMLDivElement | null>(null);
+  const fade = useOverflowFade(list, items.map((t) => t.value).join("\n"));
   const hasPanel = props.detached === true || children !== undefined;
   const idOf = (v: string) => tabId(base, v);
 
@@ -95,7 +136,7 @@ export function Tabs<T extends string>(props: TabsProps<T>) {
         ref={list}
         role="tablist"
         aria-label={label}
-        className={cx("wb-tabs", className)}
+        className={cx("wb-tabs", fade, className)}
         onKeyDown={onKeyDown}
       >
         {items.map((t) => {
@@ -172,6 +213,8 @@ export interface LinkTabItem {
   current: boolean;
   icon?: IconName | undefined;
   count?: number | string | undefined;
+  /** E.g. to replace the history entry instead of adding one. */
+  onClick?: MouseEventHandler<HTMLAnchorElement> | undefined;
 }
 
 /** URL-driven tabs: the same underline look, rendered as navigation links (aria-current="page"). */
@@ -185,14 +228,21 @@ export function LinkTabs({
   className?: string | undefined;
 }) {
   const Link = useLinkComponent();
+  const nav = useRef<HTMLElement | null>(null);
+  const fade = useOverflowFade(nav, items.map((t) => t.href).join("\n"));
   return (
-    <nav aria-label={label} className={cx("wb-tabs", className)}>
+    <nav
+      ref={nav}
+      aria-label={label}
+      className={cx("wb-tabs", fade, className)}
+    >
       {items.map((t) => (
         <Link
           key={t.href}
           href={t.href}
           className="wb-tab"
           aria-current={t.current ? "page" : undefined}
+          onClick={t.onClick}
         >
           {t.icon ? <Icon name={t.icon} /> : null}
           {t.label}

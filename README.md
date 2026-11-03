@@ -851,8 +851,8 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-drawer-top`, `wb-drawer-kicker`, `wb-drawer-close`, `wb-drawer-title`,
   `wb-drawer-meta`, `wb-drawer-actions`, `wb-drawer-section` (+ `-title`,
   `-count`, `-action`), `wb-drawer-foot`, `wb-drawer-missing`, `wb-kv`.
-- **Tabs:** `wb-tabs`, `wb-tab` (`aria-selected` or `aria-current`),
-  `wb-tab-count`, `wb-tabpanel`.
+- **Tabs:** `wb-tabs` (`is-fade-start`, `is-fade-end`), `wb-tab`
+  (`aria-selected` or `aria-current`), `wb-tab-count`, `wb-tabpanel`.
 - **Controls:** `wb-btn` (`--primary`, `--ghost`, `--danger`,
   `--danger-ghost`, `--sm`, `--icon`, `is-pending`), `wb-btn-count`,
   `wb-btn-indicator`, `wb-btn-group`,
@@ -1461,8 +1461,12 @@ state, so disable it while its action runs.
   `tabId(tabsId, value)` and `tabPanelId(tabsId, value)` return the ids if
   you wire panels yourself.
 
-- `LinkTabs({ label, items: { href, label, current, icon?, count? }[] })`
+- `LinkTabs({ label, items: { href, label, current, icon?, count?, onClick? }[] })`
   — same look, navigation links for URL-driven tabs (full entity pages).
+  An item's `onClick` runs on its link (to replace the history entry, say).
+- A row of `Tabs` or `LinkTabs` too narrow for its tabs scrolls sideways,
+  and the edge with more tabs past it fades out (`is-fade-start`,
+  `is-fade-end`).
 - `Seg({ label, value, onChange, options: { value, label, icon?, tone?, count?, title?, disabled? }[], size?, density? = "default" | "compact", full? })`
   — `role="group"` of `aria-pressed` buttons. `density="compact"` tightens
   the segments and hides icons on segments that have a label (labels,
