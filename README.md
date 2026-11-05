@@ -10,9 +10,10 @@ toasts.
   custom property `--wb-` prefixed, everything lives in `@layer wb`.
 - **React 19** components with no runtime dependencies besides React. Router
   agnostic: works with react-router and with plain hash links.
-- **Desktop only.** Designed for 1280–2560px, usable (no overlap, no clipping)
-  at 1024px. Applications keep their own mobile composition; adopting the
-  shared primitives does not add a phone layout to AppShell.
+- **Desktop first.** Designed for 1280–2560px, usable (no overlap, no
+  clipping) at 1024px. On phones, AppShell's `narrow` layout opens the
+  sidebar over the page from a Menu bar, and controls grow to touch-sized
+  targets (see [Narrow screens](#narrow-screens)).
 - **CSP safe** for `style-src 'self'` / `script-src 'self'`: no `<style>`
   injection, no inline scripts, no `eval`, fonts are bundled files.
 - **Bundled fonts** from Fontsource 5.3.0: Inter Variable and JetBrains Mono
@@ -559,8 +560,8 @@ pinned to its bottom edge:
   should collapse; the rail shown while collapsed brings it back.
 - `Brand` as the sidebar's first child gets sidebar spacing only in a shell
   without a top bar; elsewhere it keeps its own.
-- `#/pipelines` in the gallery composes this layout; pick the quiet style to
-  see it as designed.
+- `#/pipelines` in the gallery composes this layout, with the narrow layout
+  below 900px; pick the quiet style to see it as designed.
 
 Sidebar: resizable (drag, ←/→ ±10px, Shift ±40px, Home/End, double-click
 resets) and collapsible (`<SidebarToggle/>` in the top bar, or the button on
@@ -658,6 +659,43 @@ by `Main` (`id` = AppShell's `mainId`, default `wb-main`, `tabIndex={-1}`)
 without changing the URL, so hash routers are unaffected. Change the text
 with `skipLink="…"`, drop it with `skipLink={false}`, or use `<SkipLink
 targetId>` outside AppShell.
+
+### Narrow screens
+
+A shell whose sidebar carries the navigation can hand it to a Menu button on
+small screens. Give `narrow` a media query; while it matches, the sidebar
+leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
+(the brand, or a way back to the page above):
+
+```tsx
+<AppShell
+  sidebar={sidebar}
+  narrow="(max-width: 900px)"
+  narrowBar={<Brand name="Example App" icon={null} href="/" />}
+>
+  <Main>…</Main>
+</AppShell>
+```
+
+- Menu opens the sidebar over the page: the page is inert under a scrim,
+  focus moves to the sidebar's first control and Tab stays inside (overlays
+  opened from the sidebar included). The skip link is left out meanwhile.
+- Escape (after any overlay opened from the sidebar), the scrim, a plain
+  click on a link and any navigation (`hashchange`, `popstate`) close it.
+  Focus returns to Menu, or goes to the main pane after a link to another
+  page or a navigation.
+- A change in the sidebar that navigates without a link (a project select)
+  calls `useAppShell().closeMenu("main")`; `useAppShell().narrow` and
+  `menuOpen` report the state. The collapse controls (`SidebarToggle`, the
+  rail, the width separator) belong to the wide layout and are hidden.
+- Widening past the query shows the sidebar in place again; narrowing starts
+  closed. Sidebar rows and foot buttons are touch-sized while narrow.
+
+Independently of the shell, at 760px and below and on coarse pointers
+(`touch.css`), buttons, text fields, selects and copy buttons are at least
+44px tall (icon buttons 44px wide too), tabs, segments, checkbox rows and
+switch labels 40px, and text fields use 16px text so mobile browsers don't
+zoom into them. `useMediaQuery(query)` follows a media query from React.
 
 ## Tokens
 
@@ -759,9 +797,11 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
 `is-stale`, `is-tint`, `is-pending`, `is-selected`, `is-clickable`, `is-dim`,
 `is-resizing`, `is-good`/`is-bad`). Variants are `--modifiers`.
 
-- **Frame:** `wb-skip-link`, `wb-app` (`--no-topbar`, `is-resizing`; sets `--wb-side-w`,
-  `--wb-drawer-max`), `wb-app-main`, `wb-app-drawer`, `wb-sidebar-pane`
-  (`[hidden]` when collapsed), `wb-sidebar-resize`, `wb-sidebar-rail`.
+- **Frame:** `wb-skip-link`, `wb-app` (`--no-topbar`, `--narrow`, `is-resizing`,
+  `is-menu-open`; sets `--wb-side-w`, `--wb-drawer-max`), `wb-app-main`
+  (`[inert]` while the narrow sidebar is open), `wb-app-drawer`, `wb-sidebar-pane`
+  (`[hidden]` when collapsed, or narrow and closed), `wb-sidebar-resize`,
+  `wb-sidebar-rail`, `wb-narrow-bar`, `wb-narrow-scrim`.
 - **Top bar:** `wb-topbar` (compaction attributes `data-wb-brand`,
   `data-wb-search`, `data-wb-status`, `data-wb-nav-icons`, set by TopBar),
   `wb-brand`, `wb-brand-mark` (absent with `icon={null}`), `wb-brand-name`, `wb-nav` (`data-wb-more`),
@@ -811,8 +851,8 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-drawer-top`, `wb-drawer-kicker`, `wb-drawer-close`, `wb-drawer-title`,
   `wb-drawer-meta`, `wb-drawer-actions`, `wb-drawer-section` (+ `-title`,
   `-count`, `-action`), `wb-drawer-foot`, `wb-drawer-missing`, `wb-kv`.
-- **Tabs:** `wb-tabs`, `wb-tab` (`aria-selected` or `aria-current`),
-  `wb-tab-count`, `wb-tabpanel`.
+- **Tabs:** `wb-tabs` (`--compact`, `is-fade-start`, `is-fade-end`), `wb-tab`
+  (`aria-selected` or `aria-current`), `wb-tab-count`, `wb-tabpanel`.
 - **Controls:** `wb-btn` (`--primary`, `--ghost`, `--danger`,
   `--danger-ghost`, `--sm`, `--icon`, `is-pending`), `wb-btn-count`,
   `wb-btn-indicator`, `wb-btn-group`,
@@ -831,7 +871,7 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   (tones, `--empty`); `wb-steps`, `wb-step` (`--done`, `--current`,
   `--waiting`, `--failed`, `--not-reached`) with `-label`, `-name`, `-detail`.
 - **Forms:** `wb-field`, `wb-field-label`, `wb-field-optional`,
-  `wb-field-hint`, `wb-field-error`, `wb-form-error`, `wb-input` (`--sm`,
+  `wb-field-hint`, `wb-field-focus-hint`, `wb-field-error`, `wb-form-error`, `wb-input` (`--sm`,
   `--mono`, `--num`, `--auto`), `wb-textarea`, `wb-select` (`--block`),
   `wb-checkbox`, `wb-check` (+ `-text`, `-desc`), `wb-switch` (`--sm`:
   26×16 for dense rows and table cells),
@@ -862,7 +902,7 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
   `wb-settings-sec` with `-head`, `-titles`, `-title`, `-desc`, `-body`;
   `wb-settings-row` (`--top`), `wb-settings-label`, `wb-settings-help`,
   `wb-settings-control` (`--stack`), `wb-settings-actions`; `wb-code`
-  (`--nowrap`), `wb-code-key`, `wb-copy` (`--multiline`, `--wrap`; `is-copied`,
+  (`--nowrap`), `wb-code-key`, `wb-copy` (`--multiline`, `--wrap`, `--plain`; `is-copied`,
   `is-manual`) with `-text`, `-actions`, `-status`, `-btn`; `wb-disclosure`,
   `wb-label-caps`.
 - **Tones:** `wb-tone-neutral | info | success | warning | danger | muted`
@@ -915,8 +955,9 @@ where it makes sense.
 
 ### Shell
 
-- `AppShell({ topBar?, sidebar?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
-  `SidebarToggle()`, `useAppShell()`, `SkipLink({ targetId?, children? })`.
+- `AppShell({ topBar?, sidebar?, narrow?, narrowBar?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
+  `SidebarToggle()`, `useAppShell()` (`{ hasSidebar, sidebarCollapsed, toggleSidebar, showSidebar, hideSidebar, sidebarId, mainId, narrow, menuOpen, closeMenu }`), `SkipLink({ targetId?, children? })`.
+  `narrow`: see [Narrow screens](#narrow-screens).
 - `TopBar({ children })`, `Brand({ name, icon? = "pulse", href? })`
   (`icon={null}`: the name alone, no mark),
   `NavTabs({ label? = "Main", moreLabel? = "More", children })`,
@@ -1392,7 +1433,7 @@ state, so disable it while its action runs.
 
 ### Navigation and controls
 
-- `Tabs({ label, value, onChange, items: { value, label, icon?, count?, disabled? }[], children?, id? })`
+- `Tabs({ label, value, onChange, items: { value, label, icon?, count?, disabled? }[], children?, id?, compact? })`
   — ARIA tablist with arrows/Home/End; `children` render in the wired
   tabpanel. For a panel rendered elsewhere (tabs in `Main`'s fixed `header`,
   content in the scroll region) use `detached` with an `id`, and
@@ -1420,8 +1461,14 @@ state, so disable it while its action runs.
   `tabId(tabsId, value)` and `tabPanelId(tabsId, value)` return the ids if
   you wire panels yourself.
 
-- `LinkTabs({ label, items: { href, label, current, icon?, count? }[] })`
+- `LinkTabs({ label, items: { href, label, current, icon?, count?, onClick? }[], compact? })`
   — same look, navigation links for URL-driven tabs (full entity pages).
+  An item's `onClick` runs on its link (to replace the history entry, say).
+- `compact` (on `Tabs` and `LinkTabs`): tighter tabs in smaller text, for a
+  narrow pane or a phone.
+- A row of `Tabs` or `LinkTabs` too narrow for its tabs scrolls sideways,
+  and the edge with more tabs past it fades out (`is-fade-start`,
+  `is-fade-end`).
 - `Seg({ label, value, onChange, options: { value, label, icon?, tone?, count?, title?, disabled? }[], size?, density? = "default" | "compact", full? })`
   — `role="group"` of `aria-pressed` buttons. `density="compact"` tightens
   the segments and hides icons on segments that have a label (labels,
@@ -1480,8 +1527,10 @@ state, so disable it while its action runs.
   not assign inclusive/exclusive semantics. It has no internal value state.
   `#/components` demonstrates editable and disabled ranges in both themes.
 
-- `Field({ label, hint?, error?, optional?, id? })` wires `id`,
+- `Field({ label, hint?, focusHint?, error?, optional?, id? })` wires `id`,
   `aria-describedby` and `aria-invalid` into the control inside.
+  `focusHint` is a longer explanation under the hint, shown while the field
+  has focus. Other props (data attributes, `onBlur`) go to the root element.
 - `Input({ inputSize?, mono?, numeric? })`, `Textarea({ mono? })`,
   `Select({ options? | children, block?, inputSize? })` (styled native),
   `Checkbox({ label?, description?, indeterminate? })` (the label names it;
@@ -1769,7 +1818,7 @@ style, a muted green in quiet), failed `danger`, running `info`, waiting
   and subtitle), `Tile({ label, value, unit?, delta?: { value, direction?, good?, vs? }, spark? })`
   (inside `.wb-tiles`: 4 across, 2 when main <860px, 1 when <560px).
 - `Disclosure({ summary, defaultOpen? })` — e.g. raw JSON in a drawer.
-- `CopyBlock({ text, label, multiline?, wrap?, className? })` — monospace
+- `CopyBlock({ text, label, multiline?, wrap?, plain?, className? })` — monospace
   text with a copy button, for a command, a server URL, an API key or a config
   file. `text` is exactly what is shown and copied. One line by default: it
   scrolls horizontally instead of wrapping or truncating, so a long command
@@ -1780,6 +1829,12 @@ style, a muted green in quiet), failed `danger`, running `info`, waiting
   cue, as overlay scrollbars show none until scrolled. It applies to
   multiline blocks too: line breaks in `text` are kept, long lines wrap, and
   only vertical scrolling remains. The button stays beside the first line.
+  `plain` drops the box: the text, in the surrounding colour, and its
+  button sit inline, for an identifier in a fact list or a sentence. The
+  text keeps to one line with an ellipsis (the button copies all of it), or
+  wraps with `wrap`; the button overhangs the line, so the text keeps its
+  line height. On touch screens the copy button's 44px target overhangs its
+  one-line block or line.
   Wrapping is visual only: the button and a selection copy `text` without
   added line breaks. `label` is the button's accessible name and
   tooltip ("Copy server URL"); it never changes. The button writes
@@ -1831,7 +1886,7 @@ style, a muted green in quiet), failed `danger`, running `info`, waiting
   `resolveTheme`, `systemTheme`, `applyTheme`.
 - Misc: `cx(...)`, `toneClass(tone)`, `buttonClass(...)`,
   `computePosition`/`useAnchoredPosition`, `readStorage`/`writeStorage`,
-  `errorMessage(error)`.
+  `errorMessage(error)`, `useMediaQuery(query)`.
 
 ## Keyboard and focus
 
@@ -1864,8 +1919,9 @@ accent border plus 3px halo.
 
 ## Conventions
 
-- Desktop only. Test at 1280–2560px and check 1024px (panes narrow, toolbars
-  wrap, lower-priority table columns drop).
+- Desktop first. Test at 1280–2560px and check 1024px (panes narrow, toolbars
+  wrap, lower-priority table columns drop); shells with a `narrow` layout
+  also at 390px.
 - Selection, primary actions, links and focus use the accent. Navigation
   (`NavTab`), in-page tabs (`Tabs`, underline), segmented filters (`Seg`,
   grey track) and buttons (bordered) are visually distinct; do not style one
