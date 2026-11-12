@@ -892,7 +892,8 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
 - **States:** `wb-empty` (`--compact`) with `-icon`, `-title`, `-text`,
   `-actions`; `wb-skel` (`--tile`, `--card`), `wb-skel-rows`, `wb-skel-row`
   (`--compact`), `wb-skel-block`, `wb-skel-side`; `wb-meter` with `-head`,
-  `-value`, `-track`, `-bar`; `wb-banner` (`--slim`) with `-body`, `-title`,
+  `-value`, `-track`, `-bar`; `wb-circular-meter` (`is-unknown`) with `-track`, `-value`,
+  `-dot`; `wb-banner` (`--slim`) with `-body`, `-title`,
   `-text`, `-actions`, `-dismiss`; `wb-draftbar` (`--neutral`) with `-text`,
   `-actions`.
 - **Pages:** `wb-card` (`--wide`) with `-head` (`--center`), `-titles`,
@@ -1739,6 +1740,12 @@ const remove = async () => {
 - `Meter({ value, max?, label?, valueText?, hideValue?, tone?, "aria-label"? })`
   (`role="meter"`, named by its visible `label`, text or JSX, unless
   `aria-label` overrides it).
+- `CircularMeter({ value, max? = 100, valueText?, tone?, "aria-label" })`
+  — a 24px quota dial. `null`, a non-finite value, or an invalid maximum shows a
+  distinct unknown state, always announced as "Value unknown"; `valueText` applies
+  only to known values. Known values are bounded to `0..max` for the arc and
+  meter semantics. Inside a control with its own accessible label, use
+  `decorative` instead of `aria-label`.
 - `Banner({ tone?, title?, children, icon?, actions?, onDismiss?, slim?, live? })`.
 - `DraftBar({ children, actions })` — for `Main`'s `footer`: "3 uncommitted
   changes · Validate · Save · Discard". In narrow panes the message wraps
