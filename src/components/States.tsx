@@ -261,7 +261,7 @@ type CircularMeterBase = {
   /** Null is an unknown value, distinct from zero. */
   value: number | null;
   max?: number | undefined;
-  /** Accessible value text; defaults to the bounded percentage. */
+  /** Accessible text for a known value; defaults to the bounded percentage. */
   valueText?: string | undefined;
   tone?: Tone | undefined;
   className?: string | undefined;
@@ -287,11 +287,17 @@ export function CircularMeter({
     value !== null && Number.isFinite(value) && Number.isFinite(max) && max > 0;
   const bounded = known ? Math.max(0, Math.min(value, max)) : undefined;
   const percent = bounded === undefined ? undefined : (bounded / max) * 100;
-  const text =
-    valueText ?? (known ? `${Math.round(percent!)}%` : "Value unknown");
+  const text = known
+    ? (valueText ?? `${Math.round(percent!)}%`)
+    : "Value unknown";
   return (
     <svg
-      className={cx("wb-circular-meter", toneClass(tone), className)}
+      className={cx(
+        "wb-circular-meter",
+        !known && "is-unknown",
+        toneClass(tone),
+        className,
+      )}
       viewBox="0 0 24 24"
       width={24}
       height={24}
@@ -305,7 +311,6 @@ export function CircularMeter({
       aria-valuemax={!decorative && known ? max : undefined}
       aria-valuenow={decorative ? undefined : bounded}
       aria-valuetext={!decorative && known ? text : undefined}
-      data-unknown={known ? undefined : true}
     >
       <circle className="wb-circular-meter-track" cx={12} cy={12} r={9.5} />
       {percent !== undefined && percent > 0 && (

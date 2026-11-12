@@ -63,6 +63,17 @@ try {
         <button class="wb-btn wb-btn--primary" id="default-primary">Primary<span class="wb-btn-count" id="default-primary-count">12</span></button>
         <span class="wb-state-pill wb-tone-info" id="default-info-pill">Info</span>
         <span class="wb-status-glyph--running" id="default-info-mark">Running</span>
+        ${["page", "surface", "surface-2"]
+          .map(
+            (surface) => `
+          <div id="meter-${surface}" style="background: var(--wb-${surface})">
+            <svg class="wb-circular-meter is-unknown" viewBox="0 0 24 24" width="24" height="24">
+              <circle class="wb-circular-meter-track" cx="12" cy="12" r="9.5" />
+              <circle class="wb-circular-meter-dot" cx="12" cy="12" r="3.5" />
+            </svg>
+          </div>`,
+          )
+          .join("")}
         <div data-wb-style="quiet" data-theme="${theme}">
           <button class="wb-btn wb-btn--primary" id="quiet-primary">Primary</button>
           <a class="wb-skip-link" id="quiet-skip" href="#q-text">Skip</a>
@@ -97,6 +108,22 @@ try {
         },
         infoPill: cs("default-info-pill").backgroundColor,
         infoMark: cs("default-info-mark").color,
+        unknownMeters: ["page", "surface", "surface-2"].flatMap((surface) => {
+          const holder = document.getElementById(`meter-${surface}`);
+          const background = getComputedStyle(holder).backgroundColor;
+          return ["track", "dot"].map((part) => {
+            const style = getComputedStyle(
+              holder.querySelector(`.wb-circular-meter-${part}`),
+            );
+            return {
+              surface,
+              part,
+              background,
+              stroke: style.stroke,
+              opacity: Number(style.opacity),
+            };
+          });
+        }),
         quietControls: ["quiet-primary", "quiet-skip", "quiet-avatar"].map(
           (id) => ({
             id,
@@ -124,6 +151,16 @@ try {
         ) >= 4.5,
       `${theme}: primary counts retain AA without a contrast-reducing wash`,
     );
+    for (const meter of fixture.unknownMeters) {
+      const foreground = rgba(meter.stroke);
+      foreground[3] *= meter.opacity;
+      const background = rgba(meter.background);
+      const ratio = contrast(over(foreground, background), background);
+      check(
+        ratio >= 3,
+        `${theme}: unknown meter ${meter.part} on ${meter.surface} meets non-text contrast (${ratio.toFixed(2)}:1)`,
+      );
+    }
     check(
       fixture.infoPill === "rgb(36, 105, 189)" &&
         fixture.infoMark ===

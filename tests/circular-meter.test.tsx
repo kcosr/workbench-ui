@@ -32,11 +32,20 @@ describe("CircularMeter", () => {
         "aria-valuenow",
         value < 0 ? "0" : "100",
       );
+      expect(screen.getByRole("meter")).toHaveAttribute(
+        "aria-valuetext",
+        value < 0 ? "0%" : "100%",
+      );
       const arc = container.querySelector(".wb-circular-meter-value");
       if (value < 0) expect(arc).toBeNull();
       else expect(arc).toHaveAttribute("stroke-dasharray", "100 100");
     },
   );
+
+  it("defaults the value text to the percentage of its maximum", () => {
+    render(<CircularMeter value={40} max={200} aria-label="Quota used" />);
+    expect(screen.getByRole("meter")).toHaveAttribute("aria-valuetext", "20%");
+  });
 
   it.each([
     { value: null, max: 100 },
@@ -55,11 +64,24 @@ describe("CircularMeter", () => {
       const unknown = screen.getByRole("img", {
         name: "Capacity used: Value unknown",
       });
-      expect(unknown).toHaveAttribute("data-unknown", "true");
+      expect(unknown).toHaveClass("is-unknown");
       expect(unknown).not.toHaveAttribute("aria-valuenow");
       expect(container.querySelector(".wb-circular-meter-value")).toBeNull();
     },
   );
+
+  it("announces unknown even when a caller supplies stale value text", () => {
+    render(
+      <CircularMeter
+        value={null}
+        valueText="0 of 100 items"
+        aria-label="Quota used"
+      />,
+    );
+    expect(
+      screen.getByRole("img", { name: "Quota used: Value unknown" }),
+    ).not.toHaveAttribute("aria-valuetext");
+  });
 
   it("can be decorative within a separately labelled control", () => {
     render(
