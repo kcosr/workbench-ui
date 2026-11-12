@@ -1652,9 +1652,16 @@ disabled?, hint? }`: Space, Enter or a click invokes `onSelect` and keeps the
 />
 ```
 
-- `Modal({ open, onClose, title, description?, size? = "sm" | "md" | "lg", footer?, footerNote?, headerExtra?, onSubmit?, dismissible?, closeOnScrim?, initialFocusRef?, role? = "dialog" | "alertdialog" })`
+- `Modal({ id?, open, onClose, title, description?, size? = "sm" | "md" | "lg", footer?, footerNote?, headerExtra?, onSubmit?, dismissible?, closeOnScrim?, initialFocusRef?, role? = "dialog" | "alertdialog" })`
   — scrim, focus trap, sticky header/footer, scrolling body; `onSubmit`
   renders a `<form>` so submit buttons work.
+- `ContextPanel({ id?, title, open, onClose, inline, children?, footer?, className? })`
+  — supporting information beside the page. With `inline`, a titled card
+  with a close button leaves focus and the page undisturbed; the caller
+  reserves its space and returns focus to its trigger after closing it.
+  Otherwise it uses a modal with focus trapping, Escape and scrim dismissal,
+  and focus restoration. The modal sits at the bottom on screens up to
+  760px wide. The caller chooses the layout breakpoint and open state.
 - `ConfirmDialog({ open, onClose, title, children, confirmLabel?, cancelLabel?, tone? = "danger", onConfirm })`
   — the one confirmation pattern. `onConfirm` may return a promise: pending
   state, closes on success, shows the error message on failure. Danger

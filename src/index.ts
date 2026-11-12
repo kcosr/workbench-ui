@@ -196,6 +196,8 @@ export type {
   ModalProps,
 } from "./components/Modal";
 export { CommandPalette } from "./components/CommandPalette";
+export { ContextPanel } from "./components/ContextPanel";
+export type { ContextPanelProps } from "./components/ContextPanel";
 export type {
   CommandPaletteProps,
   PaletteItem,
