@@ -208,6 +208,7 @@ export type { ToastFn, ToastOptions } from "./components/Toast";
 // states
 export {
   Banner,
+  CircularMeter,
   DraftBar,
   EmptyState,
   ErrorState,
@@ -221,6 +222,7 @@ export {
 } from "./components/States";
 export type {
   BannerProps,
+  CircularMeterProps,
   EmptyStateProps,
   ErrorStateProps,
   MeterProps,

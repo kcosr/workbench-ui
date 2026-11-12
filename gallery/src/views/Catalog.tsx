@@ -10,6 +10,7 @@ import {
   Checkbox,
   Chip,
   ChipToggle,
+  CircularMeter,
   Combobox,
   ConfirmDialog,
   CopyBlock,
@@ -687,6 +688,12 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
         </div>
         <Meter label="Quota" value={412} max={500} valueText="412 / 500" />
         <Meter label="Disk" value={9} max={10} tone="danger" />
+        <div className="gal-row-gap">
+          <CircularMeter value={32} aria-label="Quota used" />
+          <CircularMeter value={75} tone="warning" aria-label="Storage used" />
+          <CircularMeter value={94} tone="danger" aria-label="Capacity used" />
+          <CircularMeter value={null} aria-label="Capacity used" />
+        </div>
         <div className="gal-progress">
           <ProgressBar active />
         </div>
