@@ -1628,13 +1628,15 @@ state, so disable it while its action runs.
 
 ### Overlays
 
-- `Popover({ open, onClose, anchorRef, placement?, label?, padded?, initialFocus? })`
+- `Popover({ open, onClose, anchorRef, positionRef?, matchWidth?, placement?, label?, padded?, initialFocus? })`
   — fixed position, clamped to the viewport, closes on outside click, Esc and
   focus leaving; returns focus to the anchor. `initialFocus` is `"first"`
   (default), `"container"`, `"none"`, a ref, or `(popover) => element`; it
   is applied once the popover is positioned. Tab past the last control
   closes it and continues after the anchor; Shift+Tab from the first returns
-  to the anchor.
+  to the anchor. Set `positionRef` to a containing element to position against
+  it while keeping focus and dismissal tied to the trigger. `matchWidth`
+  sizes the panel to that element and follows its size changes.
 - `Menu({ label, items, trigger, placement? })` — `trigger(props)` renders
   the button (spread `props`); items `{ id, label, icon?, hint?, onSelect?, href?, external?, danger?, disabled?, checked? }`,
   `{ type: "separator" }`, `{ type: "heading", label, sub? }`. Arrow keys,
