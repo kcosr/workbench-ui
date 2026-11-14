@@ -1499,7 +1499,7 @@ state, so disable it while its action runs.
   narrows the list. The dot is decorative (`aria-hidden`): say what is
   active in the label yourself: ``label={`Visibility: ${current}`}``.
 - `Icon({ name, title?, size? })` — 16px stroke icons; `iconNames` lists them
-  (pull request and issue states, merge, commit, fork, branch, tag, star, pin,
+  (pull request and issue states, merge, commit, fork, branch, tag, star, sparkles, pin,
   diff, comment, gear, user(s), shield(-check), key, lock/unlock, search,
   x, check, chevrons, plus/minus, trash, pencil, copy, external, refresh,
   pause, play, filter, sun, moon, monitor, log-out, list, calendar, clock,
