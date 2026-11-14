@@ -1499,7 +1499,7 @@ state, so disable it while its action runs.
   narrows the list. The dot is decorative (`aria-hidden`): say what is
   active in the label yourself: ``label={`Visibility: ${current}`}``.
 - `Icon({ name, title?, size? })` — 16px stroke icons; `iconNames` lists them
-  (pull request and issue states, merge, commit, fork, branch, tag, star, pin,
+  (pull request and issue states, merge, commit, fork, branch, tag, star, sparkles, pin,
   diff, comment, gear, user(s), shield(-check), key, lock/unlock, search,
   x, check, chevrons, plus/minus, trash, pencil, copy, external, refresh,
   pause, play, filter, sun, moon, monitor, log-out, list, calendar, clock,
@@ -1628,13 +1628,15 @@ state, so disable it while its action runs.
 
 ### Overlays
 
-- `Popover({ open, onClose, anchorRef, placement?, label?, padded?, initialFocus? })`
+- `Popover({ open, onClose, anchorRef, positionRef?, matchWidth?, placement?, label?, padded?, initialFocus? })`
   — fixed position, clamped to the viewport, closes on outside click, Esc and
   focus leaving; returns focus to the anchor. `initialFocus` is `"first"`
   (default), `"container"`, `"none"`, a ref, or `(popover) => element`; it
   is applied once the popover is positioned. Tab past the last control
   closes it and continues after the anchor; Shift+Tab from the first returns
-  to the anchor.
+  to the anchor. Set `positionRef` to a containing element to position against
+  it while keeping focus and dismissal tied to the trigger. `matchWidth`
+  sizes the panel to that element and follows its size changes.
 - `Menu({ label, items, trigger, placement? })` — `trigger(props)` renders
   the button (spread `props`); items `{ id, label, icon?, hint?, onSelect?, href?, external?, danger?, disabled?, checked? }`,
   `{ type: "separator" }`, `{ type: "heading", label, sub? }`. Arrow keys,

@@ -29,6 +29,10 @@ export interface PopoverProps {
   onClose: () => void;
   /** Element the popover is attached to (focus returns to it on close). */
   anchorRef: RefObject<HTMLElement | null>;
+  /** Optional layout anchor, separate from the trigger used for focus and dismissal. */
+  positionRef?: RefObject<HTMLElement | null> | undefined;
+  /** Match the width of the layout anchor (or the trigger when no layout anchor is given). */
+  matchWidth?: boolean | undefined;
   placement?: Placement | undefined;
   /** Accessible name of the dialog. */
   label?: string | undefined;
@@ -60,6 +64,8 @@ export function Popover(props: PopoverProps) {
 function PopoverSurface({
   onClose,
   anchorRef,
+  positionRef = anchorRef,
+  matchWidth = false,
   placement = "bottom-start",
   label,
   role = "dialog",
@@ -73,9 +79,10 @@ function PopoverSurface({
   const ref = useRef<HTMLDivElement | null>(null);
   const { style, measured } = useAnchoredPosition(
     true,
-    anchorRef,
+    positionRef,
     ref,
     placement,
+    { matchWidth },
   );
   const layers = useLayer(true, onClose, true, ref);
   const owner = useOverlayOwner(ref);
