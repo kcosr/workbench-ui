@@ -350,6 +350,8 @@ const PATHS = {
   "arrows-up-down": (
     <path d="M5 13V3M2.5 5.5L5 3l2.5 2.5M11 3v10M8.5 10.5L11 13l2.5-2.5" />
   ),
+  maximize: <path d="M10 2.5h3.5V6M13.5 2.5L9 7M6 13.5H2.5V10M2.5 13.5L7 9" />,
+  minimize: <path d="M9.5 3v3.5H13M9.5 6.5L14 2M6.5 13V9.5H3M6.5 9.5L2 14" />,
   database: (
     <>
       <ellipse cx="8" cy="3.75" rx="5.25" ry="1.75" />
