@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRef, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -67,11 +67,20 @@ function Health() {
   );
 }
 
-function Shell({ topBar = false }: { topBar?: boolean }) {
+function Shell({
+  topBar = false,
+  keepSections = false,
+}: {
+  topBar?: boolean;
+  keepSections?: boolean;
+}) {
   return (
     <AppShell
       narrow={QUERY}
       narrowBar={<span>Bar title</span>}
+      keepMenuOpenForLink={
+        keepSections ? (link) => link.hash === "#/rules" : undefined
+      }
       topBar={
         topBar ? (
           <TopBar>
@@ -194,6 +203,55 @@ describe("AppShell narrow layout", () => {
     await user.click(screen.getByRole("button", { name: "Switch project" }));
     expect(nav()).toBeNull();
     expect(screen.getByRole("main")).toHaveFocus();
+  });
+
+  it("keeps section links open through their navigation but closes for an ordinary link", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    const { container, rerender } = render(<Shell keepSections />);
+    await user.click(menu());
+    await user.click(screen.getByRole("link", { name: "Rules" }));
+    await waitFor(() => expect(window.location.hash).toBe("#/rules"));
+    // A router render may replace the predicate between the two browser events.
+    rerender(<Shell keepSections />);
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeVisible();
+    expect(menu()).toHaveAttribute("aria-expanded", "true");
+    expect(container.querySelector(".wb-app-main")).toHaveAttribute("inert");
+    expect(screen.getByRole("link", { name: "Rules" })).toHaveFocus();
+    // Selecting the current section also keeps the drawer open.
+    await user.click(screen.getByRole("link", { name: "Rules" }));
+    expect(nav()).toBeVisible();
+    await user.click(screen.getByRole("link", { name: "Home" }));
+    expect(nav()).toBeNull();
+    expect(screen.getByRole("main")).toHaveFocus();
+  });
+
+  it("still closes on history navigation or Escape after a section switch", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    render(<Shell keepSections />);
+    await user.click(menu());
+    await user.click(screen.getByRole("link", { name: "Rules" }));
+    await waitFor(() => expect(window.location.hash).toBe("#/rules"));
+    act(() => {
+      window.history.replaceState(null, "", "#/home");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    expect(nav()).toBeNull();
+    await user.click(menu());
+    await user.click(screen.getByRole("link", { name: "Rules" }));
+    await waitFor(() => expect(window.location.hash).toBe("#/rules"));
+    await user.keyboard("{Escape}");
+    expect(nav()).toBeNull();
+    expect(menu()).toHaveFocus();
+    await user.click(menu());
+    // The last section-switch destination is forgotten once the drawer closes.
+    act(() => window.dispatchEvent(new PopStateEvent("popstate")));
+    expect(nav()).toBeNull();
   });
 
   it("closes an overlay opened from the sidebar before the sidebar", async () => {
