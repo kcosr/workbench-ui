@@ -253,6 +253,8 @@ export {
 export type { TileDelta } from "./components/Pages";
 export { CopyBlock } from "./components/CopyBlock";
 export type { CopyBlockProps } from "./components/CopyBlock";
+export { SyntaxTokens } from "./components/SyntaxTokens";
+export type { SyntaxToken, SyntaxLines } from "./components/SyntaxTokens";
 export { MediaFrame } from "./components/MediaFrame";
 export type { MediaFrameProps } from "./components/MediaFrame";
 export { MediaZoomControls } from "./components/MediaZoomControls";

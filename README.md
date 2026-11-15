@@ -1869,6 +1869,36 @@ style, a muted green in quiet), failed `danger`, running `info`, waiting
 <CopyBlock multiline text={configFile} label="Copy config file" />
 ```
 
+`SyntaxTokens({ lines })` renders already-tokenized code inside the caller's
+`<pre><code>` container. `SyntaxLines` is a readonly array of lines, each a
+readonly array of `SyntaxToken` values with `content: string` and
+`style: CSSProperties`. Token contents are React text; tabs, spaces and empty
+lines are preserved, with one newline between lines. Include an empty final
+line to preserve a trailing newline. The component adds no container, controls
+or tokenizer dependency. Pass trusted tokenizer styles; source text belongs in
+`content` only.
+
+The optional syntax palette uses `--wb-syntax-foreground`,
+`--wb-syntax-background` and `--wb-syntax-token-*` variables for comment,
+constant, string, parameter, function, string-expression, punctuation, link,
+keyword, string-section, inserted, deleted and changed tokens. These follow
+the kit's default/quiet styles and light/dark themes through CSS, so cached
+tokens do not need to be regenerated when appearance changes. The palette is
+included in `styles/index.css`; consumers importing styles individually can
+import `styles/syntax.css` after the kit's tokens and selected style.
+
+```tsx
+<pre>
+  <code>
+    <SyntaxTokens lines={highlightedLines} />
+  </code>
+</pre>
+```
+
+Each token span has the class `wb-syntax-token`. Text-search walkers should
+treat these spans as transparent inline formatting so a match can cross token
+boundaries.
+
 ### Helpers
 
 - Time: `<Time value format? = "relative" | "date" | "time" | "datetime" fallback? />`,
