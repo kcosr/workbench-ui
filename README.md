@@ -1883,9 +1883,11 @@ The optional syntax palette uses `--wb-syntax-foreground`,
 constant, string, parameter, function, string-expression, punctuation, link,
 keyword, string-section, inserted, deleted and changed tokens. These follow
 the kit's default/quiet styles and light/dark themes through CSS, so cached
-tokens do not need to be regenerated when appearance changes. The palette is
-included in `styles/index.css`; consumers importing styles individually can
-import `styles/syntax.css` after the kit's tokens and selected style.
+tokens do not need to be regenerated when appearance changes. Foreground and
+parameter tokens inherit the surrounding text color, including muted contexts.
+The palette is included in `styles/index.css`; consumers importing styles
+individually can import `styles/syntax.css` after the kit's tokens and selected
+style.
 
 ```tsx
 <pre>

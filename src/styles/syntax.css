@@ -4,12 +4,12 @@
   [data-theme],
   [data-wb-style] {
     /* Rebind aliases wherever theme or style tokens change. */
-    --wb-syntax-foreground: var(--wb-fg);
+    --wb-syntax-foreground: currentColor;
     --wb-syntax-background: transparent;
     --wb-syntax-token-comment: var(--wb-fg-2);
     --wb-syntax-token-constant: var(--wb-warning-text);
     --wb-syntax-token-string: var(--wb-success-text);
-    --wb-syntax-token-parameter: var(--wb-fg);
+    --wb-syntax-token-parameter: currentColor;
     --wb-syntax-token-function: var(--wb-info-text);
     --wb-syntax-token-string-expression: var(--wb-success-text);
     --wb-syntax-token-punctuation: var(--wb-fg-2);
