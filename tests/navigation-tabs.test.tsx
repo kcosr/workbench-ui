@@ -99,6 +99,32 @@ describe("navigation item menus", () => {
 });
 
 describe("navigation scrolling", () => {
+  it("skips both scroll arrows in the tab order when all items fit", async () => {
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
+    vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(400);
+    const user = userEvent.setup();
+    render(
+      <>
+        <button>Before</button>
+        <NavigationTabs label="Documents">
+          <NavigationTab href="#first" title="First" />
+        </NavigationTabs>
+        <button>After</button>
+      </>,
+    );
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Before" })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("link", { name: "First" })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "After" })).toHaveFocus();
+    for (const direction of ["left", "right"]) {
+      expect(
+        screen.getByRole("button", { name: `Scroll documents ${direction}` }),
+      ).toHaveAttribute("tabindex", "-1");
+    }
+  });
+
   it("reveals after loading and navigation, preserves manual scroll during polls, and updates arrows", () => {
     const child = <NavigationTab href="#last" title="Last" current />;
     const { rerender } = render(

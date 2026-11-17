@@ -92,6 +92,7 @@ export function NavigationTabs({
         size="sm"
         variant="ghost"
         aria-disabled={!edges.start}
+        tabIndex={edges.start || edges.end ? 0 : -1}
         onClick={() => {
           if (edges.start) scroll(-1);
         }}
@@ -106,6 +107,7 @@ export function NavigationTabs({
         size="sm"
         variant="ghost"
         aria-disabled={!edges.end}
+        tabIndex={edges.start || edges.end ? 0 : -1}
         onClick={() => {
           if (edges.end) scroll(1);
         }}
