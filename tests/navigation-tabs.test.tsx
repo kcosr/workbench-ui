@@ -113,7 +113,8 @@ describe("navigation scrolling", () => {
       )!;
       const item = screen.getByRole("link", { name: "Last" }).parentElement!;
       let width = 330;
-      let scroll = 600;
+      let scroll = transition === "hidden" ? 0 : 600;
+      const offset = transition === "hidden" ? 200 : 800;
       const write = vi.fn((value: number) => {
         if (width > 0) scroll = value;
       });
@@ -132,8 +133,8 @@ describe("navigation scrolling", () => {
       vi.spyOn(item, "getBoundingClientRect").mockImplementation(
         () =>
           ({
-            left: width > 0 ? 800 - scroll : 0,
-            right: width > 0 ? 1000 - scroll : 0,
+            left: width > 0 ? offset - scroll : 0,
+            right: width > 0 ? offset + 200 - scroll : 0,
           }) as DOMRect,
       );
       fireEvent.click(screen.getByRole("link"), { detail: 1 });
@@ -150,7 +151,7 @@ describe("navigation scrolling", () => {
         poll();
         width = 330;
         poll();
-        expect(scroll).toBe(600);
+        expect(scroll).toBe(0);
       } else {
         if (transition === "arrow") {
           track.scrollBy = vi.fn();
