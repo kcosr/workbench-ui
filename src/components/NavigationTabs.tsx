@@ -71,17 +71,20 @@ export function NavigationTabs({
         el.querySelector('[aria-current="page"]')?.getAttribute("href") ?? null;
       const href = held.link.getAttribute("href");
       if (
+        el.clientWidth === 0 ||
         !el.contains(held.link) ||
+        el.scrollLeft !== held.scroll ||
         (held.selected && held.key !== revealKey) ||
         (current !== href && current !== held.from)
       ) {
         anchor.current = null;
       } else {
         const item = held.link.closest<HTMLElement>(".wb-navigation-tab")!;
-        el.scrollLeft +=
+        const delta =
           item.getBoundingClientRect().left -
           el.getBoundingClientRect().left -
           held.left;
+        if (delta !== 0) el.scrollLeft += delta;
         held.scroll = el.scrollLeft;
         // Scroll boundaries can prevent preserving the exact position.
         held.left =
@@ -117,6 +120,7 @@ export function NavigationTabs({
     return () => observer?.disconnect();
   }, [settled]);
   const scroll = (direction: number) => {
+    anchor.current = null;
     const el = track.current;
     if (!el) return;
     el.scrollBy({
