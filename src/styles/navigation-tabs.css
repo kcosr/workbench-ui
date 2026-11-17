@@ -31,7 +31,7 @@
     flex: 0 0 min(190px, 100%);
     min-width: 0;
     position: relative;
-    border-right: 1px solid var(--wb-border);
+    border-right: 1px solid color-mix(in srgb, var(--wb-border) 50%, transparent);
     color: var(--wb-muted);
   }
   .wb-navigation-tab.is-current {
@@ -52,7 +52,7 @@
     min-width: 0;
     align-items: center;
     gap: 6px;
-    min-height: 40px;
+    min-height: 32px;
     padding: 0 8px 0 10px;
     color: inherit;
     text-decoration: none;
