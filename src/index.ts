@@ -171,6 +171,11 @@ export type {
 
 // overlays
 export { Menu, Popover } from "./components/Popover";
+export { NavigationTab, NavigationTabs } from "./components/NavigationTabs";
+export type {
+  NavigationTabProps,
+  NavigationTabsProps,
+} from "./components/NavigationTabs";
 export type {
   PopoverInitialFocus,
   MenuCheckbox,

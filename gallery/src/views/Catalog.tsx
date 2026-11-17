@@ -32,6 +32,8 @@ import {
   MediaFrame,
   MediaZoomControls,
   Menu,
+  NavigationTab,
+  NavigationTabs,
   Meter,
   Modal,
   PagePager,
@@ -415,6 +417,26 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
             },
           ]}
         />
+        <NavigationTabs label="Documents">
+          {[
+            "Release checklist",
+            "Project notes",
+            "Architecture review",
+            "Service dashboard",
+            "Deployment guide",
+          ].map((title, index) => (
+            <NavigationTab
+              key={title}
+              href={`#/components?document=${index}`}
+              title={title}
+              current={index === 0}
+              actions={[
+                { id: "rename", label: "Rename" },
+                { id: "export", label: "Export" },
+              ]}
+            />
+          ))}
+        </NavigationTabs>
       </Section>
       <Section title="Forms">
         <FilterInput
