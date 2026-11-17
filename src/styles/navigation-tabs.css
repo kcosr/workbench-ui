@@ -28,7 +28,7 @@
   .wb-navigation-tab {
     display: flex;
     align-items: center;
-    flex: 0 0 190px;
+    flex: 0 0 min(190px, 100%);
     min-width: 0;
     position: relative;
     border-right: 1px solid var(--wb-border);
@@ -81,7 +81,7 @@
   }
   @media (hover: none), (pointer: coarse) {
     .wb-navigation-tab {
-      flex-basis: 200px;
+      flex-basis: min(200px, 100%);
     }
     .wb-navigation-tab-link {
       min-height: 44px;
