@@ -321,7 +321,7 @@ export function AppShell({
   const laidOut = geo.frame > 0;
   const drawerDesired = hasDrawer
     ? drawerResizable
-      ? drawerPreferred
+      ? Math.min(drawerPreferred, drawerBound)
       : geo.drawer
     : 0;
   const autoCollapsed =

@@ -170,3 +170,59 @@ describe("drawer focus return with an auto-collapsed sidebar", () => {
     spy.mockRestore();
   });
 });
+
+describe("bounded drawer preferences", () => {
+  it("keeps the sidebar visible when a saved wide drawer is clamped by its current bound", async () => {
+    const { Drawer } = await import("../src");
+    const spy = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.classList.contains("wb-app") ? 1350 : 0;
+      });
+    window.localStorage.setItem("t:bounded-drawer", "720");
+    function Host({ bound }: { bound: number }) {
+      return (
+        <AppShell
+          sidebar={<Sidebar label="Filters">filters</Sidebar>}
+          sidebarMin={200}
+          sidebarMax={320}
+          sidebarDefault={216}
+          drawer={<Drawer title="Item" onClose={() => {}} />}
+          drawerResizable
+          drawerMin={320}
+          drawerMax={bound}
+          drawerDefault={360}
+          drawerStorageKey="t:bounded-drawer"
+        >
+          <Main>main</Main>
+        </AppShell>
+      );
+    }
+    try {
+      const view = render(<Host bound={720} />);
+      expect(
+        screen.queryByRole("complementary", { name: "Filters" }),
+      ).toBeNull();
+
+      view.rerender(<Host bound={372} />);
+      expect(
+        screen.getByRole("complementary", { name: "Filters" }),
+      ).toBeVisible();
+      expect(
+        screen.getByRole("separator", { name: "Details panel width" }),
+      ).toHaveAttribute("aria-valuenow", "372");
+      expect(document.querySelector(".wb-app")).toHaveStyle({
+        "--wb-resized-drawer-w": "372px",
+      });
+      expect(window.localStorage.getItem("t:bounded-drawer")).toBe("720");
+
+      view.rerender(<Host bound={720} />);
+      expect(
+        screen.getByRole("separator", { name: "Details panel width" }),
+      ).toHaveAttribute("aria-valuenow", "720");
+      expect(window.localStorage.getItem("t:bounded-drawer")).toBe("720");
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
