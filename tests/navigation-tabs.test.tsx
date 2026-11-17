@@ -99,6 +99,75 @@ describe("navigation item menus", () => {
 });
 
 describe("navigation scrolling", () => {
+  it.each(["hidden", "arrow", "unreported scroll"])(
+    "releases a held position for %s without waiting for a scroll event",
+    (transition) => {
+      const row = (
+        <NavigationTabs label="Documents">
+          <NavigationTab href="#last" title="Last" current />
+        </NavigationTabs>
+      );
+      const { rerender } = render(row);
+      const track = document.querySelector<HTMLElement>(
+        ".wb-navigation-tabs-track",
+      )!;
+      const item = screen.getByRole("link", { name: "Last" }).parentElement!;
+      let width = 330;
+      let scroll = 600;
+      const write = vi.fn((value: number) => {
+        if (width > 0) scroll = value;
+      });
+      Object.defineProperties(track, {
+        clientWidth: { configurable: true, get: () => width },
+        scrollWidth: { configurable: true, value: 1600 },
+        scrollLeft: {
+          configurable: true,
+          get: () => (width > 0 ? scroll : 0),
+          set: write,
+        },
+      });
+      vi.spyOn(track, "getBoundingClientRect").mockImplementation(
+        () => ({ left: 0, right: width }) as DOMRect,
+      );
+      vi.spyOn(item, "getBoundingClientRect").mockImplementation(
+        () =>
+          ({
+            left: width > 0 ? 800 - scroll : 0,
+            right: width > 0 ? 1000 - scroll : 0,
+          }) as DOMRect,
+      );
+      fireEvent.click(screen.getByRole("link"), { detail: 1 });
+      const poll = () =>
+        rerender(
+          <NavigationTabs label="Documents">
+            <NavigationTab href="#last" title="Last" current />
+          </NavigationTabs>,
+        );
+      poll();
+      expect(write).not.toHaveBeenCalled(); // A no-op write can cancel an in-flight smooth scroll.
+      if (transition === "hidden") {
+        width = 0;
+        poll();
+        width = 330;
+        poll();
+        expect(scroll).toBe(600);
+      } else {
+        if (transition === "arrow") {
+          track.scrollBy = vi.fn();
+          fireEvent.click(
+            screen.getByRole("button", { name: "Scroll documents right" }),
+          );
+          poll(); // Before the browser advances the smooth scroll.
+          expect(track.scrollBy).toHaveBeenCalledOnce();
+        }
+        scroll = 700;
+        poll(); // After it advances, but before the queued scroll event arrives.
+        expect(scroll).toBe(700);
+      }
+      expect(write).not.toHaveBeenCalled();
+    },
+  );
+
   it("holds a pointer-selected tab through a delayed selection and inventory reorder, until manual scrolling", () => {
     const row = (key: string, selected: boolean) => (
       <NavigationTabs label="Documents" revealKey={key}>
