@@ -99,6 +99,59 @@ describe("navigation item menus", () => {
 });
 
 describe("navigation scrolling", () => {
+  it("holds a pointer-selected tab through a delayed selection and inventory reorder, until manual scrolling", () => {
+    const row = (key: string, selected: boolean) => (
+      <NavigationTabs label="Documents" revealKey={key}>
+        <NavigationTab href="#first" title="First" current={!selected} />
+        <NavigationTab href="#last" title="Last" current={selected} />
+      </NavigationTabs>
+    );
+    const { rerender } = render(row("first", false));
+    const track = document.querySelector<HTMLElement>(
+      ".wb-navigation-tabs-track",
+    )!;
+    const first = screen.getByRole("link", { name: "First" }).parentElement!;
+    const last = screen.getByRole("link", { name: "Last" }).parentElement!;
+    Object.defineProperties(track, {
+      clientWidth: { configurable: true, value: 330 },
+      scrollWidth: { configurable: true, value: 1600 },
+    });
+    let offset = 800;
+    vi.spyOn(track, "getBoundingClientRect").mockImplementation(
+      () => ({ left: 0, right: 330 }) as DOMRect,
+    );
+    vi.spyOn(first, "getBoundingClientRect").mockImplementation(
+      () =>
+        ({ left: -track.scrollLeft, right: 200 - track.scrollLeft }) as DOMRect,
+    );
+    vi.spyOn(last, "getBoundingClientRect").mockImplementation(
+      () =>
+        ({
+          left: offset - track.scrollLeft,
+          right: offset + 200 - track.scrollLeft,
+        }) as DOMRect,
+    );
+    rerender(row("first", false));
+    track.scrollLeft = 600;
+    fireEvent.scroll(track);
+    fireEvent.click(screen.getByRole("link", { name: "Last" }), { detail: 1 });
+    // Routing can publish its key before the children publish their selection.
+    rerender(row("last", false));
+    expect(track.scrollLeft).toBe(600);
+    rerender(row("last", true));
+    expect(track.scrollLeft).toBe(600);
+    offset = 1000;
+    rerender(row("last", true));
+    expect(track.scrollLeft).toBe(800);
+    track.scrollLeft = 100;
+    fireEvent.scroll(track);
+    offset = 1200;
+    rerender(row("last", true));
+    expect(track.scrollLeft).toBe(100);
+    rerender(row("external", true));
+    expect(track.scrollLeft).toBe(1070);
+  });
+
   it("skips both scroll arrows in the tab order when all items fit", async () => {
     vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
     vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(400);

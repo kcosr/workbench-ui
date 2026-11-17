@@ -26,6 +26,16 @@ export function NavigationTabs({
 }: NavigationTabsProps) {
   const track = useRef<HTMLDivElement>(null);
   const revealed = useRef({ key: revealKey, done: false });
+  // A pointer selection already has a place in the viewport. Keep that place
+  // while the selected page and its refreshed inventory arrive independently.
+  const anchor = useRef<{
+    link: HTMLAnchorElement;
+    from: string | null;
+    left: number;
+    scroll: number;
+    key: string;
+    selected: boolean;
+  } | null>(null);
   const [edges, setEdges] = useState({ start: false, end: false });
   const update = () => {
     const el = track.current;
@@ -54,6 +64,37 @@ export function NavigationTabs({
   useLayoutEffect(() => {
     if (revealed.current.key !== revealKey)
       revealed.current = { key: revealKey, done: false };
+    const el = track.current;
+    const held = anchor.current;
+    if (el && held) {
+      const current =
+        el.querySelector('[aria-current="page"]')?.getAttribute("href") ?? null;
+      const href = held.link.getAttribute("href");
+      if (
+        !el.contains(held.link) ||
+        (held.selected && held.key !== revealKey) ||
+        (current !== href && current !== held.from)
+      ) {
+        anchor.current = null;
+      } else {
+        const item = held.link.closest<HTMLElement>(".wb-navigation-tab")!;
+        el.scrollLeft +=
+          item.getBoundingClientRect().left -
+          el.getBoundingClientRect().left -
+          held.left;
+        held.scroll = el.scrollLeft;
+        // Scroll boundaries can prevent preserving the exact position.
+        held.left =
+          item.getBoundingClientRect().left - el.getBoundingClientRect().left;
+        if (current === href) {
+          held.selected = true;
+          held.key = revealKey;
+          revealed.current.done = true;
+        }
+        update();
+        return;
+      }
+    }
     if (settled && !revealed.current.done) revealed.current.done = reveal();
     update();
   });
@@ -64,6 +105,7 @@ export function NavigationTabs({
     const resize = () => {
       const next = el.clientWidth;
       if (next !== width && next > 0 && settled) {
+        anchor.current = null;
         revealed.current.done = reveal();
       }
       width = next;
@@ -98,7 +140,60 @@ export function NavigationTabs({
         }}
         className="wb-navigation-tabs-arrow"
       />
-      <div ref={track} className="wb-navigation-tabs-track" onScroll={update}>
+      <div
+        ref={track}
+        className="wb-navigation-tabs-track"
+        onPointerDown={() => {
+          anchor.current = null;
+        }}
+        onWheel={() => {
+          anchor.current = null;
+        }}
+        onScroll={() => {
+          if (
+            anchor.current &&
+            track.current?.scrollLeft !== anchor.current.scroll
+          )
+            anchor.current = null;
+          update();
+        }}
+        onClick={(event) => {
+          if (
+            event.defaultPrevented ||
+            event.button !== 0 ||
+            event.detail === 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+          )
+            return;
+          const el = event.currentTarget;
+          const link = (event.target as Element).closest<HTMLAnchorElement>(
+            ".wb-navigation-tab-link",
+          );
+          if (
+            !link ||
+            !el.contains(link) ||
+            link.target === "_blank" ||
+            link.hasAttribute("download")
+          )
+            return;
+          const item = link.closest<HTMLElement>(".wb-navigation-tab")!;
+          anchor.current = {
+            link,
+            from:
+              el.querySelector('[aria-current="page"]')?.getAttribute("href") ??
+              null,
+            left:
+              item.getBoundingClientRect().left -
+              el.getBoundingClientRect().left,
+            scroll: el.scrollLeft,
+            key: revealKey,
+            selected: false,
+          };
+        }}
+      >
         {children}
       </div>
       <IconButton
