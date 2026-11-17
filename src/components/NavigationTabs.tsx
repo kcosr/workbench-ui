@@ -183,7 +183,7 @@ export function NavigationTab({
           trigger={(props) => (
             <IconButton
               {...props}
-              icon="more"
+              icon="more-vertical"
               label={label}
               size="sm"
               variant="ghost"
