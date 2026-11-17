@@ -74,6 +74,28 @@ describe("navigation item menus", () => {
     expect(fireEvent.contextMenu(screen.getByRole("link"))).toBe(true);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
+
+  it("suppresses the browser context menu over its portaled action menu", async () => {
+    render(
+      <NavigationTab
+        href="#first"
+        title="First"
+        actions={[{ id: "rename", label: "Rename" }]}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for First" }),
+    );
+    const event = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+    });
+    fireEvent(screen.getByRole("menuitem", { name: "Rename" }), event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(
+      screen.getByRole("menu", { name: "Actions for First" }),
+    ).toBeVisible();
+  });
 });
 
 describe("navigation scrolling", () => {
@@ -112,10 +134,10 @@ describe("navigation scrolling", () => {
     fireEvent.scroll(track);
     expect(
       screen.getByRole("button", { name: "Scroll documents left" }),
-    ).toBeDisabled();
+    ).toHaveAttribute("aria-disabled", "true");
     expect(
       screen.getByRole("button", { name: "Scroll documents right" }),
-    ).toBeEnabled();
+    ).toHaveAttribute("aria-disabled", "false");
     rerender(
       <NavigationTabs label="Documents" revealKey="first" settled>
         {child}
@@ -132,6 +154,37 @@ describe("navigation scrolling", () => {
     fireEvent.scroll(track);
     expect(
       screen.getByRole("button", { name: "Scroll documents right" }),
-    ).toBeDisabled();
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("keeps arrow focus at the scroll endpoint and ignores further activations", async () => {
+    render(
+      <NavigationTabs label="Documents">
+        <NavigationTab href="#first" title="First" />
+      </NavigationTabs>,
+    );
+    const track = document.querySelector<HTMLElement>(
+      ".wb-navigation-tabs-track",
+    )!;
+    Object.defineProperties(track, {
+      clientWidth: { configurable: true, value: 200 },
+      scrollWidth: { configurable: true, value: 600 },
+    });
+    track.scrollBy = vi.fn(() => {
+      track.scrollLeft = 400;
+      fireEvent.scroll(track);
+    });
+    fireEvent.scroll(track);
+    const arrow = screen.getByRole("button", {
+      name: "Scroll documents right",
+    });
+    await userEvent.click(arrow);
+    expect(arrow).toHaveFocus();
+    expect(arrow).toHaveAttribute("aria-disabled", "true");
+    expect(arrow).not.toBeDisabled();
+    expect(track.scrollBy).toHaveBeenCalledOnce();
+    await userEvent.click(arrow);
+    expect(track.scrollBy).toHaveBeenCalledOnce();
+    expect(arrow).toHaveFocus();
   });
 });

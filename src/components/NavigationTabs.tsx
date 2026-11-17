@@ -91,8 +91,10 @@ export function NavigationTabs({
         label={`Scroll ${label.toLowerCase()} left`}
         size="sm"
         variant="ghost"
-        disabled={!edges.start}
-        onClick={() => scroll(-1)}
+        aria-disabled={!edges.start}
+        onClick={() => {
+          if (edges.start) scroll(-1);
+        }}
         className="wb-navigation-tabs-arrow"
       />
       <div ref={track} className="wb-navigation-tabs-track" onScroll={update}>
@@ -103,8 +105,10 @@ export function NavigationTabs({
         label={`Scroll ${label.toLowerCase()} right`}
         size="sm"
         variant="ghost"
-        disabled={!edges.end}
-        onClick={() => scroll(1)}
+        aria-disabled={!edges.end}
+        onClick={() => {
+          if (edges.end) scroll(1);
+        }}
         className="wb-navigation-tabs-arrow"
       />
     </nav>
@@ -148,10 +152,9 @@ export function NavigationTab({
       className={cx("wb-navigation-tab", current && "is-current")}
       onContextMenu={(event) => {
         // Menu content is portaled but its React events still bubble here.
-        if (!hasActions || !event.currentTarget.contains(event.target as Node))
-          return;
+        if (!hasActions) return;
         event.preventDefault();
-        showMenu();
+        if (event.currentTarget.contains(event.target as Node)) showMenu();
       }}
       onKeyDown={(event) => {
         if (
