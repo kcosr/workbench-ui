@@ -1475,6 +1475,16 @@ state, so disable it while its action runs.
 - A row of `Tabs` or `LinkTabs` too narrow for its tabs scrolls sideways,
   and the edge with more tabs past it fades out (`is-fade-start`,
   `is-fade-end`).
+- `NavigationTabs({ label, children, revealKey?, settled? = true })` with
+  `NavigationTab({ href, title, current?, leading?, trailing?, actions?, onClick? })`
+  provides a compact, scrolling row of page links with edge arrow controls and
+  optional action menus. Each menu opens from its ellipsis button, right-click,
+  the context-menu key or Shift+F10, without navigating. The current link is
+  revealed after loading, when `revealKey` changes, and when the row resizes;
+  ordinary data refreshes preserve manual scrolling. Set `settled` to false
+  while the inventory is incomplete, and include the selected page and filters
+  in `revealKey`.
+  Touch layouts use native horizontal scrolling and omit the edge arrows.
 - `Seg({ label, value, onChange, options: { value, label, icon?, tone?, count?, title?, disabled? }[], size?, density? = "default" | "compact", full? })`
   — `role="group"` of `aria-pressed` buttons. `density="compact"` tightens
   the segments and hides icons on segments that have a label (labels,
