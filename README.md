@@ -689,6 +689,11 @@ leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
   Matching links and their destination's navigation events keep the drawer
   open. Other links, Back/Forward to another address, Escape and the scrim
   still close it.
+- For a page that opens the sidebar again on arrival, pass
+  `keepMenuOpenAt={(url) => url.hash === "#/start"}`: any navigation to a
+  matching address (a link's, or the location after `hashchange` or
+  `popstate`, including one made in code) leaves the open sidebar open
+  instead of closing it.
 - A change in the sidebar that navigates without a link (a project select)
   calls `useAppShell().closeMenu("main")`; `useAppShell().narrow` and
   `menuOpen` report the state. The collapse controls (`SidebarToggle`, the
@@ -972,7 +977,7 @@ where it makes sense.
 
 ### Shell
 
-- `AppShell({ topBar?, sidebar?, narrow?, narrowMenu? = "drawer" | "sheet", narrowBar?, keepMenuOpenForLink?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
+- `AppShell({ topBar?, sidebar?, narrow?, narrowMenu? = "drawer" | "sheet", narrowBar?, keepMenuOpenForLink?, keepMenuOpenAt?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
   `SidebarToggle()`, `useAppShell()` (`{ hasSidebar, sidebarCollapsed, toggleSidebar, showSidebar, hideSidebar, sidebarId, mainId, narrow, menuOpen, openMenu, closeMenu }`), `SkipLink({ targetId?, children? })`.
   `narrow`: see [Narrow screens](#narrow-screens).
 - `TopBar({ children })`, `Brand({ name, icon? = "pulse", href? })`

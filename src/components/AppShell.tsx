@@ -55,6 +55,12 @@ export interface AppShellProps {
    */
   keepMenuOpenForLink?: ((link: HTMLAnchorElement) => boolean) | undefined;
   /**
+   * Keep the narrow sidebar open through any navigation to a matching
+   * address (a link's, or the location after `hashchange` or `popstate`),
+   * such as a page that opens it again on arrival.
+   */
+  keepMenuOpenAt?: ((url: URL) => boolean) | undefined;
+  /**
    * localStorage key for the sidebar width (e.g. "my-app:sidebar-width");
    * the collapsed state is stored under `<key>:collapsed`.
    */
@@ -253,6 +259,7 @@ export function AppShell({
   skipLink = "Skip to content",
   className,
   keepMenuOpenForLink,
+  keepMenuOpenAt,
 }: AppShellProps) {
   const frame = useRef<HTMLDivElement | null>(null);
   const drawerSlot = useRef<HTMLDivElement | null>(null);
@@ -509,7 +516,8 @@ export function AppShell({
   });
   // Section-switch links can keep the menu open through their own navigation.
   // Remember the destination across both popstate and hashchange, which can
-  // describe the same click. A different navigation still closes the menu.
+  // describe the same click. A different navigation still closes the menu,
+  // unless its destination is one kept open (`keepMenuOpenAt`).
   useEffect(() => {
     if (!menuOpen) {
       keptMenuLocation.current = null;
@@ -517,7 +525,9 @@ export function AppShell({
     }
     const el = pane.current;
     const onNavigate = () => {
-      if (window.location.href !== keptMenuLocation.current) closeMenu("main");
+      const href = window.location.href;
+      if (href !== keptMenuLocation.current && !keepMenuOpenAt?.(new URL(href)))
+        closeMenu("main");
     };
     const onClick = (e: MouseEvent) => {
       const link = (e.target as Element).closest<HTMLAnchorElement>("a[href]");
@@ -531,7 +541,7 @@ export function AppShell({
         e.altKey
       )
         return;
-      if (keepMenuOpenForLink?.(link)) {
+      if (keepMenuOpenForLink?.(link) || keepMenuOpenAt?.(new URL(link.href))) {
         keptMenuLocation.current = link.href;
         return;
       }
@@ -546,7 +556,7 @@ export function AppShell({
       window.removeEventListener("popstate", onNavigate);
       el?.removeEventListener("click", onClick);
     };
-  }, [menuOpen, closeMenu, keepMenuOpenForLink]);
+  }, [menuOpen, closeMenu, keepMenuOpenForLink, keepMenuOpenAt]);
   // After the commit that lifts `inert`, so the target can take focus.
   useLayoutEffect(() => {
     if (menuOpen) return;

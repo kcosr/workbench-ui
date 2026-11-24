@@ -79,16 +79,19 @@ function Health() {
 function Shell({
   topBar = false,
   keepSections = false,
+  keepRules = false,
   sheet = false,
 }: {
   topBar?: boolean;
   keepSections?: boolean;
+  keepRules?: boolean;
   sheet?: boolean;
 }) {
   return (
     <AppShell
       narrow={QUERY}
       narrowMenu={sheet ? "sheet" : undefined}
+      keepMenuOpenAt={keepRules ? (url) => url.hash === "#/rules" : undefined}
       narrowBar={
         <>
           <span>Bar title</span>
@@ -387,6 +390,33 @@ describe("AppShell narrow menu sheet", () => {
     expect(nav()).toBeVisible();
     await user.click(close());
     expect(menu()).toHaveFocus();
+  });
+
+  it("keepMenuOpenAt keeps it open through links and navigations to matching addresses", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    render(<Shell sheet keepRules />);
+    await user.click(menu());
+    await user.click(screen.getByRole("link", { name: "Rules" }));
+    await waitFor(() => expect(window.location.hash).toBe("#/rules"));
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeVisible();
+    // One made in code, as after deleting what the page showed.
+    act(() => {
+      window.history.replaceState(null, "", "#/home");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeNull();
+    await user.click(menu());
+    act(() => {
+      window.history.replaceState(null, "", "#/rules");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeVisible();
+    expect(close()).toHaveFocus();
   });
 
   it("openMenu does nothing outside the narrow layout, and the drawer has no Close menu", async () => {
