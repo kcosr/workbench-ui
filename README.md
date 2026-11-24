@@ -677,9 +677,10 @@ leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
 </AppShell>
 ```
 
-- Menu opens the sidebar over the page: the page is inert under a scrim,
-  focus moves to the sidebar's first control and Tab stays inside (overlays
-  opened from the sidebar included). The skip link is left out meanwhile.
+- Menu opens the sidebar over the page: the page (main pane, top bar and
+  drawer) is inert under a scrim, focus moves to the sidebar's first control
+  and Tab stays inside (overlays opened from the sidebar included). The skip
+  link is left out meanwhile.
 - Escape (after any overlay opened from the sidebar), the scrim, a plain
   click on a link and any navigation (`hashchange`, `popstate`) close it.
   Focus returns to Menu, or goes to the main pane after a link to another
@@ -819,8 +820,9 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
 `is-resizing`, `is-good`/`is-bad`). Variants are `--modifiers`.
 
 - **Frame:** `wb-skip-link`, `wb-app` (`--no-topbar`, `--narrow`, `--menu-sheet`,
-  `is-resizing`, `is-menu-open`; sets `--wb-side-w`, `--wb-drawer-max`), `wb-app-main`
-  (`[inert]` while the narrow sidebar is open), `wb-app-drawer`, `wb-sidebar-pane`
+  `is-resizing`, `is-menu-open`; sets `--wb-side-w`, `--wb-drawer-max`), `wb-app-topbar`
+  (`display: contents`), `wb-app-main`, `wb-app-drawer` (the three `[inert]` while
+  the narrow sidebar is open), `wb-sidebar-pane`
   (`[hidden]` when collapsed, or narrow and closed), `wb-sidebar-resize`,
   `wb-sidebar-rail`, `wb-narrow-bar`, `wb-narrow-scrim`, `wb-menu-sheet-bar`.
 - **Top bar:** `wb-topbar` (compaction attributes `data-wb-brand`,

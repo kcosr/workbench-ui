@@ -11,7 +11,13 @@
     background: var(--wb-page);
     color: var(--wb-fg);
   }
-  .wb-app > .wb-topbar {
+  /* AppShell's box around the top bar (inert with the page while the narrow
+     sidebar is open) lays nothing out itself. */
+  .wb-app-topbar {
+    display: contents;
+  }
+  .wb-app > .wb-topbar,
+  .wb-app > .wb-app-topbar > * {
     grid-column: 1 / -1;
     grid-row: 1;
   }

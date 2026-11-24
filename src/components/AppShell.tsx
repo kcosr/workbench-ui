@@ -644,7 +644,12 @@ export function AppShell({
         {skipLink === false || menuOpen ? null : (
           <SkipLink targetId={mainId}>{skipLink}</SkipLink>
         )}
-        {hasTopBar ? topBar : null}
+        {/* Its own box: the top bar is inert with the page while the narrow sidebar is open. */}
+        {hasTopBar ? (
+          <div className="wb-app-topbar" inert={menuOpen}>
+            {topBar}
+          </div>
+        ) : null}
         {menuOpen && !sheet ? (
           <div
             className="wb-scrim wb-narrow-scrim"
@@ -721,6 +726,7 @@ export function AppShell({
         {hasDrawer ? (
           <div
             className={cx("wb-app-drawer", drawerResizable && "is-resizable")}
+            inert={menuOpen}
             ref={drawerSlot}
             id={drawerId}
             data-wb-drawer-slot=""

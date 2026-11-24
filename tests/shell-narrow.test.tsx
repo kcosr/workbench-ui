@@ -81,17 +81,20 @@ function Shell({
   keepSections = false,
   keepRules = false,
   sheet = false,
+  drawer = false,
 }: {
   topBar?: boolean;
   keepSections?: boolean;
   keepRules?: boolean;
   sheet?: boolean;
+  drawer?: boolean;
 }) {
   return (
     <AppShell
       narrow={QUERY}
       narrowMenu={sheet ? "sheet" : undefined}
       keepMenuOpenAt={keepRules ? (url) => url.hash === "#/rules" : undefined}
+      drawer={drawer ? <aside aria-label="Details">details</aside> : undefined}
       narrowBar={
         <>
           <span>Bar title</span>
@@ -417,6 +420,28 @@ describe("AppShell narrow menu sheet", () => {
     });
     expect(nav()).toBeVisible();
     expect(close()).toHaveFocus();
+  });
+
+  it("makes the top bar and the drawer inert with the page while open, drawer or sheet", async () => {
+    for (const sheet of [false, true]) {
+      stubMedia(true);
+      const user = userEvent.setup();
+      const { container, unmount } = render(
+        <Shell sheet={sheet} topBar drawer />,
+      );
+      const regions = [".wb-app-topbar", ".wb-app-main", ".wb-app-drawer"].map(
+        (selector) => container.querySelector(selector)!,
+      );
+      expect(
+        container.querySelector(".wb-app-topbar > .wb-topbar"),
+      ).not.toBeNull();
+      for (const region of regions) expect(region).not.toHaveAttribute("inert");
+      await user.click(menu());
+      for (const region of regions) expect(region).toHaveAttribute("inert");
+      await user.keyboard("{Escape}");
+      for (const region of regions) expect(region).not.toHaveAttribute("inert");
+      unmount();
+    }
   });
 
   it("openMenu does nothing outside the narrow layout, and the drawer has no Close menu", async () => {
