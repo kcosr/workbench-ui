@@ -695,8 +695,9 @@ leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
   rail, the width separator) belong to the wide layout and are hidden.
 - `useAppShell().openMenu()` opens the sidebar as Menu does, for a page's
   own way to it (a way back in `narrowBar`, or opening it when a page is
-  reached). Closing it returns focus to the control that had it when it
-  opened, else to Menu. It does nothing outside the narrow layout.
+  reached). Closing it returns focus to the control outside the main pane
+  that had it when it opened (a button in `narrowBar`), else to Menu. It
+  does nothing outside the narrow layout.
 - `narrowMenu="sheet"` opens the sidebar as a full-screen sheet instead of
   a drawer: it fills the viewport, keeps its content inside the safe-area
   insets and scrolls it, under a bar whose Close menu button takes Menu's place

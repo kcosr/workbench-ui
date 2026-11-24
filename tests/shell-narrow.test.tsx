@@ -359,7 +359,7 @@ describe("AppShell narrow menu sheet", () => {
     expect(nav()).toBeNull();
   });
 
-  it("openMenu opens it from the page; closing returns focus to that control", async () => {
+  it("openMenu opens it; closing returns focus to the bar control that opened it, else to Menu", async () => {
     stubMedia(true);
     const user = userEvent.setup();
     const { container } = render(<Shell sheet />);
@@ -374,11 +374,19 @@ describe("AppShell narrow menu sheet", () => {
     expect(nav()).toBeNull();
     expect(inBar).toHaveFocus();
 
+    // A control in the main pane (or the pane itself) would only take the
+    // focus again: closing gives it to Menu.
     await user.click(inPage!);
     expect(nav()).toBeVisible();
     await user.keyboard("{Escape}");
-    expect(inPage).toHaveFocus();
+    expect(menu()).toHaveFocus();
     expect(container.querySelector(".wb-app")).not.toHaveClass("is-menu-open");
+    screen.getByRole("main").focus();
+    act(() => inBar!.click());
+    // A tap that doesn't focus the button (WebKit) leaves the pane focused.
+    expect(nav()).toBeVisible();
+    await user.click(close());
+    expect(menu()).toHaveFocus();
   });
 
   it("openMenu does nothing outside the narrow layout, and the drawer has no Close menu", async () => {

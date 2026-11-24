@@ -475,15 +475,18 @@ export function AppShell({
 
   const openMenu = useCallback(() => {
     if (!narrow || menuWanted) return;
+    // Only a control outside the main pane (a button in the narrow bar)
+    // gets focus back; the pane, or a field in it, would just take it again.
     const active = document.activeElement;
     menuOpener.current =
       active instanceof HTMLElement &&
       active !== document.body &&
-      active !== menuButton.current
+      active !== menuButton.current &&
+      !document.getElementById(mainId)?.contains(active)
         ? active
         : null;
     setMenuWanted(true);
-  }, [narrow, menuWanted]);
+  }, [narrow, menuWanted, mainId]);
   const closeMenu = useCallback((focus: "menu" | "main" = "menu") => {
     setMenuWanted((open) => {
       if (open) menuReturn.current = focus;
