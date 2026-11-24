@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AppShell,
@@ -56,11 +57,14 @@ function OpenFromBar() {
   );
 }
 
-/** The address, as a router would give it: each navigation renders again. */
+/**
+ * The address, as a router would give it: each navigation renders again, at
+ * once, as a browser's own event does before the next listener runs.
+ */
 function useHash() {
   const [hash, setHash] = useState(window.location.hash);
   useEffect(() => {
-    const update = () => setHash(window.location.hash);
+    const update = () => flushSync(() => setHash(window.location.hash));
     window.addEventListener("hashchange", update);
     return () => window.removeEventListener("hashchange", update);
   }, []);

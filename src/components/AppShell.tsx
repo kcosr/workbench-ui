@@ -300,8 +300,7 @@ export function AppShell({
   const menuButton = useRef<HTMLButtonElement | null>(null);
   // The control focused when the narrow sidebar opened (null: Menu).
   const menuOpener = useRef<HTMLElement | null>(null);
-  // The check for a focus lost to a navigation that kept the sidebar open:
-  // outside the listeners' effect, which a consumer's render can restart.
+  // The check for a focus lost to a navigation that kept the sidebar open.
   const refocusFrame = useRef(0);
 
   // Measure the frame and the open drawer's preferred width (its CSS token,
@@ -517,6 +516,15 @@ export function AppShell({
     layers: menuLayers,
     restoreFocus: false,
   });
+  // The latest predicates, for listeners that stay registered while the menu
+  // is open: a consumer rendering again on a navigation (a router, inline
+  // functions) must not swap them out in the middle of its events.
+  const keepForLink = useRef(keepMenuOpenForLink);
+  const keepAt = useRef(keepMenuOpenAt);
+  useLayoutEffect(() => {
+    keepForLink.current = keepMenuOpenForLink;
+    keepAt.current = keepMenuOpenAt;
+  });
   // Section-switch links can keep the menu open through their own navigation.
   // Remember the destination across both popstate and hashchange, which can
   // describe the same click. A different navigation still closes the menu,
@@ -529,7 +537,7 @@ export function AppShell({
     const el = pane.current;
     const onNavigate = () => {
       const href = window.location.href;
-      if (href !== keptMenuLocation.current && !keepMenuOpenAt?.(new URL(href)))
+      if (href !== keptMenuLocation.current && !keepAt.current?.(new URL(href)))
         return closeMenu("main");
       // Kept open: if the page's update removed the focused control (a link
       // that led away from what the sidebar showed), focus its first again.
@@ -551,7 +559,7 @@ export function AppShell({
         e.altKey
       )
         return;
-      if (keepMenuOpenForLink?.(link) || keepMenuOpenAt?.(new URL(link.href))) {
+      if (keepForLink.current?.(link) || keepAt.current?.(new URL(link.href))) {
         keptMenuLocation.current = link.href;
         return;
       }
@@ -566,7 +574,7 @@ export function AppShell({
       window.removeEventListener("popstate", onNavigate);
       el?.removeEventListener("click", onClick);
     };
-  }, [menuOpen, closeMenu, keepMenuOpenForLink, keepMenuOpenAt, focusSidebar]);
+  }, [menuOpen, closeMenu, focusSidebar]);
   // After the commit that lifts `inert`, so the target can take focus.
   useLayoutEffect(() => {
     if (menuOpen) return;
