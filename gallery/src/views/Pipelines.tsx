@@ -3,7 +3,8 @@
  * selector, nav groups, a foot with the user, theme and health) and no top
  * bar. A list with history strips and a detail page with steps, a
  * left-ruled failure notice and a fact list. Pick the quiet style to see it
- * as designed.
+ * as designed. Below 900px the sidebar opens from Menu; `?menu=sheet` (before
+ * the #) opens it as a full-screen sheet instead of a drawer.
  */
 import { useState } from "react";
 import type { ReactNode } from "react";
@@ -60,6 +61,12 @@ interface Pipeline {
   last: ReactNode;
   paused?: boolean;
 }
+
+/** ?menu=sheet (before the #): the narrow menu fills the screen. */
+const NARROW_MENU =
+  new URLSearchParams(window.location.search).get("menu") === "sheet"
+    ? "sheet"
+    : "drawer";
 
 const MIN = 60_000;
 const ago = (minutes: number) => new Date(Date.now() - minutes * MIN);
@@ -297,6 +304,7 @@ export function PipelinesView() {
     <AppShell
       sidebar={sidebar}
       narrow="(max-width: 900px)"
+      narrowMenu={NARROW_MENU}
       narrowBar={<Brand name="Workbench" href="#/pipelines" icon={null} />}
       sidebarStorageKey="workbench-gallery:nav-sidebar-width"
       sidebarMin={200}

@@ -47,6 +47,15 @@ function SwitchProject() {
   );
 }
 
+function OpenFromBar() {
+  const shell = useAppShell();
+  return (
+    <button type="button" onClick={() => shell?.openMenu()}>
+      All pages
+    </button>
+  );
+}
+
 function Health() {
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLButtonElement | null>(null);
@@ -70,14 +79,22 @@ function Health() {
 function Shell({
   topBar = false,
   keepSections = false,
+  sheet = false,
 }: {
   topBar?: boolean;
   keepSections?: boolean;
+  sheet?: boolean;
 }) {
   return (
     <AppShell
       narrow={QUERY}
-      narrowBar={<span>Bar title</span>}
+      narrowMenu={sheet ? "sheet" : undefined}
+      narrowBar={
+        <>
+          <span>Bar title</span>
+          <OpenFromBar />
+        </>
+      }
       keepMenuOpenForLink={
         keepSections ? (link) => link.hash === "#/rules" : undefined
       }
@@ -102,7 +119,10 @@ function Shell({
         </Sidebar>
       }
     >
-      <Main>page</Main>
+      <Main>
+        page
+        <OpenFromBar />
+      </Main>
     </AppShell>
   );
 }
@@ -282,6 +302,95 @@ describe("AppShell narrow layout", () => {
     setNarrow(true);
     expect(nav()).toBeNull();
     expect(menu()).toHaveAttribute("aria-expanded", "false");
+  });
+});
+
+describe("AppShell narrow menu sheet", () => {
+  const close = () => screen.getByRole("button", { name: "Close menu" });
+
+  it("opens the sidebar as a sheet with Close menu first, over the inert page", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    const { container } = render(<Shell sheet />);
+    const app = container.querySelector(".wb-app")!;
+    expect(app).toHaveClass("wb-app--narrow", "wb-app--menu-sheet");
+    expect(screen.queryByRole("button", { name: "Close menu" })).toBeNull();
+
+    await user.click(menu());
+    expect(nav()).toBeVisible();
+    expect(container.querySelector(".wb-narrow-scrim")).toBeNull();
+    expect(container.querySelector(".wb-app-main")).toHaveAttribute("inert");
+    // Close menu leads the sheet: the first Tab stop, focused on opening.
+    const pane = container.querySelector(".wb-sidebar-pane")!;
+    expect(pane.firstElementChild).toHaveClass("wb-menu-sheet-bar");
+    expect(close()).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(screen.getByRole("button", { name: "Health" })).toHaveFocus();
+    await user.tab();
+    expect(close()).toHaveFocus();
+
+    await user.click(close());
+    expect(nav()).toBeNull();
+    expect(container.querySelector(".wb-app-main")).not.toHaveAttribute(
+      "inert",
+    );
+    expect(menu()).toHaveFocus();
+  });
+
+  it("closes on Escape, a link and a navigation like the drawer", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    render(<Shell sheet />);
+    await user.click(menu());
+    await user.keyboard("{Escape}");
+    expect(nav()).toBeNull();
+    expect(menu()).toHaveFocus();
+
+    await user.click(menu());
+    await user.click(screen.getByRole("link", { name: "Rules" }));
+    expect(nav()).toBeNull();
+    expect(screen.getByRole("main")).toHaveFocus();
+
+    await user.click(menu());
+    act(() => {
+      window.location.hash = "#/elsewhere";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeNull();
+  });
+
+  it("openMenu opens it from the page; closing returns focus to that control", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    const { container } = render(<Shell sheet />);
+    const [inBar, inPage] = screen.getAllByRole("button", {
+      name: "All pages",
+    });
+    await user.click(inBar!);
+    expect(nav()).toBeVisible();
+    expect(menu()).toHaveAttribute("aria-expanded", "true");
+    expect(close()).toHaveFocus();
+    await user.click(close());
+    expect(nav()).toBeNull();
+    expect(inBar).toHaveFocus();
+
+    await user.click(inPage!);
+    expect(nav()).toBeVisible();
+    await user.keyboard("{Escape}");
+    expect(inPage).toHaveFocus();
+    expect(container.querySelector(".wb-app")).not.toHaveClass("is-menu-open");
+  });
+
+  it("openMenu does nothing outside the narrow layout, and the drawer has no Close menu", async () => {
+    const setNarrow = stubMedia(false);
+    const user = userEvent.setup();
+    render(<Shell />);
+    await user.click(screen.getByRole("button", { name: "All pages" }));
+    setNarrow(true);
+    expect(nav()).toBeNull();
+    await user.click(menu());
+    expect(nav()).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Close menu" })).toBeNull();
   });
 });
 

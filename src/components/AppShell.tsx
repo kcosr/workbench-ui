@@ -40,6 +40,12 @@ export interface AppShellProps {
    * or goes to the main pane after a link to another page or a navigation.
    */
   narrow?: string | undefined;
+  /**
+   * How the narrow layout opens the sidebar: "drawer" (the default), over
+   * part of the page beside a scrim, or "sheet", filling the viewport with a
+   * Close menu button at its top.
+   */
+  narrowMenu?: "drawer" | "sheet" | undefined;
   /** The narrow bar's content after the Menu button (a Brand, a way back). */
   narrowBar?: ReactNode;
   /**
@@ -141,6 +147,12 @@ export interface AppShellState {
   /** In the narrow layout, the sidebar is open over the page. */
   menuOpen: boolean;
   /**
+   * Open the narrow layout's sidebar, as Menu does (no effect otherwise).
+   * Closing it returns focus to the control focused when it opened, else
+   * to Menu.
+   */
+  openMenu: () => void;
+  /**
    * Close the narrow layout's open sidebar (no effect otherwise). Focus goes
    * back to Menu, or with "main" to the main pane: for a change made in the
    * sidebar that navigates without a link, such as switching a project.
@@ -224,6 +236,7 @@ export function AppShell({
   topBar,
   sidebar,
   narrow: narrowQuery,
+  narrowMenu = "drawer",
   narrowBar,
   sidebarStorageKey,
   sidebarMin = 220,
@@ -271,12 +284,15 @@ export function AppShell({
     sidebar !== undefined && sidebar !== null && sidebar !== false;
   const hasDrawer = drawer !== undefined && drawer !== null && drawer !== false;
   const narrow = useMediaQuery(narrowQuery) && hasSidebar;
+  const sheet = narrow && narrowMenu === "sheet";
   const [menuWanted, setMenuWanted] = useState(false);
   const menuOpen = narrow && menuWanted;
   const keptMenuLocation = useRef<string | null>(null);
   // Where focus goes when the open narrow sidebar closes.
   const menuReturn = useRef<"menu" | "main" | null>(null);
   const menuButton = useRef<HTMLButtonElement | null>(null);
+  // The control focused when the narrow sidebar opened (null: Menu).
+  const menuOpener = useRef<HTMLElement | null>(null);
 
   // Measure the frame and the open drawer's preferred width (its CSS token,
   // not its rendered width, which this component may be limiting).
@@ -457,6 +473,17 @@ export function AppShell({
     else hideSidebar();
   }, [collapsed, showSidebar, hideSidebar]);
 
+  const openMenu = useCallback(() => {
+    if (!narrow || menuWanted) return;
+    const active = document.activeElement;
+    menuOpener.current =
+      active instanceof HTMLElement &&
+      active !== document.body &&
+      active !== menuButton.current
+        ? active
+        : null;
+    setMenuWanted(true);
+  }, [narrow, menuWanted]);
   const closeMenu = useCallback((focus: "menu" | "main" = "menu") => {
     setMenuWanted((open) => {
       if (open) menuReturn.current = focus;
@@ -521,8 +548,11 @@ export function AppShell({
   useLayoutEffect(() => {
     if (menuOpen) return;
     const to = menuReturn.current;
+    const opener = menuOpener.current;
     menuReturn.current = null;
-    if (to === "menu") menuButton.current?.focus();
+    menuOpener.current = null;
+    if (to === "menu")
+      (opener?.isConnected ? opener : menuButton.current)?.focus();
     else if (to === "main")
       document.getElementById(mainId)?.focus({ preventScroll: true });
   }, [menuOpen, mainId]);
@@ -559,6 +589,7 @@ export function AppShell({
       mainId,
       narrow,
       menuOpen,
+      openMenu,
       closeMenu,
     }),
     [
@@ -571,6 +602,7 @@ export function AppShell({
       mainId,
       narrow,
       menuOpen,
+      openMenu,
       closeMenu,
     ],
   );
@@ -588,6 +620,7 @@ export function AppShell({
           "wb-app",
           !hasTopBar && "wb-app--no-topbar",
           narrow && "wb-app--narrow",
+          sheet && "wb-app--menu-sheet",
           menuOpen && "is-menu-open",
           (sidebarResize.dragging || drawerResize.dragging) && "is-resizing",
           className,
@@ -599,7 +632,7 @@ export function AppShell({
           <SkipLink targetId={mainId}>{skipLink}</SkipLink>
         )}
         {hasTopBar ? topBar : null}
-        {menuOpen ? (
+        {menuOpen && !sheet ? (
           <div
             className="wb-scrim wb-narrow-scrim"
             aria-hidden="true"
@@ -631,6 +664,15 @@ export function AppShell({
                 focusInPane.current = false;
             }}
           >
+            {sheet ? (
+              <div className="wb-menu-sheet-bar">
+                <IconButton
+                  icon="x"
+                  label="Close menu"
+                  onClick={() => closeMenu("menu")}
+                />
+              </div>
+            ) : null}
             {narrowQuery ? (
               <OverlayScope layers={menuLayers} owner={menuOwner}>
                 {sidebar}
@@ -652,7 +694,10 @@ export function AppShell({
                 aria-controls={paneId}
                 onClick={() => {
                   if (menuOpen) closeMenu("menu");
-                  else setMenuWanted(true);
+                  else {
+                    menuOpener.current = null;
+                    setMenuWanted(true);
+                  }
                 }}
               />
               {narrowBar}
