@@ -452,6 +452,27 @@ describe("AppShell narrow menu sheet", () => {
     expect(nav()).toBeVisible();
   });
 
+  it("drops a pending refocus when the layout widens before it runs", async () => {
+    const setNarrow = stubMedia(true);
+    const user = userEvent.setup();
+    render(<Shell sheet keepRules />);
+    await user.click(menu());
+    (document.activeElement as HTMLElement | null)?.blur();
+    // A kept navigation schedules a refocus for the next frame; the layout widens first.
+    act(() => {
+      window.history.replaceState(null, "", "#/rules");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    setNarrow(false);
+    await act(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
+    expect(document.activeElement).toBe(document.body);
+  });
+
   it("makes the top bar and the drawer inert with the page while open, drawer or sheet", async () => {
     for (const sheet of [false, true]) {
       stubMedia(true);

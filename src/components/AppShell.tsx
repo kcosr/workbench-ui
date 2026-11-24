@@ -573,6 +573,8 @@ export function AppShell({
       window.removeEventListener("hashchange", onNavigate);
       window.removeEventListener("popstate", onNavigate);
       el?.removeEventListener("click", onClick);
+      // A refocus still pending when the menu closes (or the layout widens) must not move focus afterwards.
+      cancelAnimationFrame(refocusFrame.current);
     };
   }, [menuOpen, closeMenu, focusSidebar]);
   // After the commit that lifts `inert`, so the target can take focus.
