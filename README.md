@@ -694,7 +694,8 @@ leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
   `keepMenuOpenAt={(url) => url.hash === "#/start"}`: any navigation to a
   matching address (a link's, or the location after `hashchange` or
   `popstate`, including one made in code) leaves the open sidebar open
-  instead of closing it.
+  instead of closing it. If the page's update removes the focused control,
+  focus goes to the sidebar's first control.
 - A change in the sidebar that navigates without a link (a project select)
   calls `useAppShell().closeMenu("main")`; `useAppShell().narrow` and
   `menuOpen` report the state. The collapse controls (`SidebarToggle`, the

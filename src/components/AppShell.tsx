@@ -524,10 +524,18 @@ export function AppShell({
       return;
     }
     const el = pane.current;
+    let frame = 0;
     const onNavigate = () => {
       const href = window.location.href;
       if (href !== keptMenuLocation.current && !keepMenuOpenAt?.(new URL(href)))
-        closeMenu("main");
+        return closeMenu("main");
+      // Kept open: if the page's update removed the focused control (a link
+      // that led away from what the sidebar showed), focus its first again.
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const active = document.activeElement;
+        if (!active || active === document.body) focusSidebar("first");
+      });
     };
     const onClick = (e: MouseEvent) => {
       const link = (e.target as Element).closest<HTMLAnchorElement>("a[href]");
@@ -555,8 +563,9 @@ export function AppShell({
       window.removeEventListener("hashchange", onNavigate);
       window.removeEventListener("popstate", onNavigate);
       el?.removeEventListener("click", onClick);
+      cancelAnimationFrame(frame);
     };
-  }, [menuOpen, closeMenu, keepMenuOpenForLink, keepMenuOpenAt]);
+  }, [menuOpen, closeMenu, keepMenuOpenForLink, keepMenuOpenAt, focusSidebar]);
   // After the commit that lifts `inert`, so the target can take focus.
   useLayoutEffect(() => {
     if (menuOpen) return;

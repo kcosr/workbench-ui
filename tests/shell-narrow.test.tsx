@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AppShell,
@@ -54,6 +54,17 @@ function OpenFromBar() {
       All pages
     </button>
   );
+}
+
+/** A link the sidebar shows only at #/home, gone once it has led away. */
+function HomeOnlyLink() {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const update = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", update);
+    return () => window.removeEventListener("hashchange", update);
+  }, []);
+  return hash === "#/home" ? <a href="#/rules">Rules from home</a> : null;
 }
 
 function Health() {
@@ -118,6 +129,7 @@ function Shell({
             <SidebarItem href="#/home" label="Home" />
             <SidebarItem href="#/rules" label="Rules" />
           </SidebarNav>
+          <HomeOnlyLink />
           <SidebarFoot>
             <SwitchProject />
             <Health />
@@ -420,6 +432,18 @@ describe("AppShell narrow menu sheet", () => {
     });
     expect(nav()).toBeVisible();
     expect(close()).toHaveFocus();
+    // Kept open by a link the navigation removes: focus goes to its first control.
+    act(() => {
+      window.history.replaceState(null, "", "#/home");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeNull();
+    await user.click(menu());
+    await user.click(screen.getByRole("link", { name: "Rules from home" }));
+    await waitFor(() => expect(window.location.hash).toBe("#/rules"));
+    expect(screen.queryByRole("link", { name: "Rules from home" })).toBeNull();
+    await waitFor(() => expect(close()).toHaveFocus());
+    expect(nav()).toBeVisible();
   });
 
   it("makes the top bar and the drawer inert with the page while open, drawer or sheet", async () => {
