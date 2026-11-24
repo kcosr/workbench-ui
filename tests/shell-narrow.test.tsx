@@ -56,15 +56,15 @@ function OpenFromBar() {
   );
 }
 
-/** A link the sidebar shows only at #/home, gone once it has led away. */
-function HomeOnlyLink() {
+/** The address, as a router would give it: each navigation renders again. */
+function useHash() {
   const [hash, setHash] = useState(window.location.hash);
   useEffect(() => {
     const update = () => setHash(window.location.hash);
     window.addEventListener("hashchange", update);
     return () => window.removeEventListener("hashchange", update);
   }, []);
-  return hash === "#/home" ? <a href="#/rules">Rules from home</a> : null;
+  return hash;
 }
 
 function Health() {
@@ -100,6 +100,7 @@ function Shell({
   sheet?: boolean;
   drawer?: boolean;
 }) {
+  const hash = useHash();
   return (
     <AppShell
       narrow={QUERY}
@@ -129,7 +130,8 @@ function Shell({
             <SidebarItem href="#/home" label="Home" />
             <SidebarItem href="#/rules" label="Rules" />
           </SidebarNav>
-          <HomeOnlyLink />
+          {/* A link shown only at #/home, gone once it has led away. */}
+          {hash === "#/home" ? <a href="#/rules">Rules from home</a> : null}
           <SidebarFoot>
             <SwitchProject />
             <Health />

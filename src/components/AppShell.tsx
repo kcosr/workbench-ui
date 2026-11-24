@@ -300,6 +300,9 @@ export function AppShell({
   const menuButton = useRef<HTMLButtonElement | null>(null);
   // The control focused when the narrow sidebar opened (null: Menu).
   const menuOpener = useRef<HTMLElement | null>(null);
+  // The check for a focus lost to a navigation that kept the sidebar open:
+  // outside the listeners' effect, which a consumer's render can restart.
+  const refocusFrame = useRef(0);
 
   // Measure the frame and the open drawer's preferred width (its CSS token,
   // not its rendered width, which this component may be limiting).
@@ -524,15 +527,14 @@ export function AppShell({
       return;
     }
     const el = pane.current;
-    let frame = 0;
     const onNavigate = () => {
       const href = window.location.href;
       if (href !== keptMenuLocation.current && !keepMenuOpenAt?.(new URL(href)))
         return closeMenu("main");
       // Kept open: if the page's update removed the focused control (a link
       // that led away from what the sidebar showed), focus its first again.
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
+      cancelAnimationFrame(refocusFrame.current);
+      refocusFrame.current = requestAnimationFrame(() => {
         const active = document.activeElement;
         if (!active || active === document.body) focusSidebar("first");
       });
@@ -563,7 +565,6 @@ export function AppShell({
       window.removeEventListener("hashchange", onNavigate);
       window.removeEventListener("popstate", onNavigate);
       el?.removeEventListener("click", onClick);
-      cancelAnimationFrame(frame);
     };
   }, [menuOpen, closeMenu, keepMenuOpenForLink, keepMenuOpenAt, focusSidebar]);
   // After the commit that lifts `inert`, so the target can take focus.
