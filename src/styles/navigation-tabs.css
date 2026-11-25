@@ -95,6 +95,10 @@
       width: 44px;
       min-height: 44px;
     }
+    .wb-navigation-tab-more.wb-btn .wb-icon {
+      width: 20px;
+      height: 20px;
+    }
     .wb-navigation-tabs-arrow.wb-btn {
       display: none;
     }

@@ -713,6 +713,10 @@ leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
   stops with reduced motion.
 - Widening past the query shows the sidebar in place again; narrowing starts
   closed. Sidebar rows and foot buttons are touch-sized while narrow.
+- At 760px and below and on coarse pointers, the bar (and the sheet's bar) is
+  54px tall instead of 48px, and icon buttons in it show 20px icons, including
+  those in `narrowBar`. The sidebar foot's buttons use 15px text and 16px
+  icons there (20px in icon buttons).
 
 Independently of the shell, at 760px and below and on coarse pointers
 (`touch.css`), buttons, text fields, selects and copy buttons are at least
@@ -1503,7 +1507,8 @@ state, so disable it while its action runs.
   ordinary data refreshes preserve manual scrolling. Set `settled` to false
   while the inventory is incomplete, and include the selected page and filters
   in `revealKey`.
-  Touch layouts use native horizontal scrolling and omit the edge arrows.
+  Touch layouts use native horizontal scrolling and omit the edge arrows; the
+  ellipsis buttons are 44px wide there, with 20px icons.
 - `Seg({ label, value, onChange, options: { value, label, icon?, tone?, count?, title?, disabled? }[], size?, density? = "default" | "compact", full? })`
   — `role="group"` of `aria-pressed` buttons. `density="compact"` tightens
   the segments and hides icons on segments that have a label (labels,
