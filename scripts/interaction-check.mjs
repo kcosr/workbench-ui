@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Exercise the gallery's shared palette steps, optional AppShell drawer,
 // toast pause/dismiss, useConfirm, copy blocks (scrolling, wrapped and
-// fallback) and sidebar reveal in Chromium. Start the gallery first; an
+// fallback), sidebar reveal and the narrow menu (drawer and full-screen
+// sheet) in Chromium. Start the gallery first; an
 // optional output directory retains shots.
 // Usage: node scripts/interaction-check.mjs [baseUrl] [outDir]
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -421,6 +422,85 @@ try {
     await expect(narrowed).toBeFocused();
     await shot(`${theme}-sidebar-indicator`);
     record("the narrowing filter shows the indicator dot; the label names it");
+
+    // Narrow menu: the default drawer, then the full-screen sheet
+    // (?menu=sheet) at phone widths, scrolling under its Close menu bar.
+    await page.setViewportSize({ width: 390, height: 480 });
+    await page.goto(new URL(`?theme=${theme}#/pipelines`, base).href);
+    const menuButton = page.getByRole("button", { name: "Menu" });
+    const closeMenu = page.getByRole("button", { name: "Close menu" });
+    const pane = page.locator(".wb-sidebar-pane");
+    await menuButton.click();
+    await expect(pane).toBeVisible();
+    expect((await pane.boundingBox()).width).toBe(288);
+    await expect(page.locator(".wb-narrow-scrim")).toBeVisible();
+    await expect(closeMenu).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(pane).toBeHidden();
+    await expect(menuButton).toBeFocused();
+    record("by default the narrow menu is a 288px drawer over a scrim");
+
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 480 });
+      await page.goto(
+        new URL(`?theme=${theme}&menu=sheet#/pipelines`, base).href,
+      );
+      // A new page each time (the second address differs only in its hash).
+      await page.reload();
+      const menuBox = await menuButton.boundingBox();
+      await menuButton.click();
+      await expect(closeMenu).toBeFocused();
+      await pane.evaluate((el) =>
+        Promise.all(el.getAnimations().map((a) => a.finished)),
+      );
+      expect(await pane.boundingBox()).toEqual({
+        x: 0,
+        y: 0,
+        width,
+        height: 480,
+      });
+      expect(await closeMenu.boundingBox()).toEqual(menuBox);
+      await expect(page.locator(".wb-narrow-scrim")).toHaveCount(0);
+      await expect(page.locator(".wb-app-main")).toHaveAttribute("inert", "");
+      const sidebar = pane.locator(".wb-sidebar");
+      const fit = await sidebar.evaluate((el) => ({
+        scrolls: el.scrollHeight > el.clientHeight,
+        overflowX: el.scrollWidth - el.clientWidth,
+      }));
+      expect(fit).toEqual({ scrolls: true, overflowX: 0 });
+      await shot(`${theme}-menu-sheet-${width}`);
+      await sidebar.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+      await expect(
+        page.getByRole("button", { name: "Sign out" }),
+      ).toBeInViewport();
+      await expect(closeMenu).toBeInViewport();
+      await closeMenu.click();
+      await expect(pane).toBeHidden();
+      await expect(menuButton).toBeFocused();
+      record(
+        `${width}px: the sheet fills the screen, scrolls, Close menu in Menu's place`,
+      );
+
+      await menuButton.click();
+      await pane.getByRole("link", { name: "Needs attention" }).click();
+      await expect(page).toHaveURL(/#\/pipelines\/p-support$/);
+      await expect(pane).toBeHidden();
+      record(`${width}px: a link in the sheet closes it`);
+    }
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await menuButton.click();
+    expect(
+      await pane.evaluate((el) => getComputedStyle(el).animationDuration),
+    ).toBe("0s");
+    await page.keyboard.press("Escape");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await menuButton.click();
+    expect(
+      await pane.evaluate((el) => getComputedStyle(el).animationDuration),
+    ).not.toBe("0s");
+    await page.keyboard.press("Escape");
+    record("the sheet's fade-in stops with reduced motion");
     expect(errors).toEqual([]);
     await context.close();
   }

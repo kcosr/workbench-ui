@@ -677,9 +677,10 @@ leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
 </AppShell>
 ```
 
-- Menu opens the sidebar over the page: the page is inert under a scrim,
-  focus moves to the sidebar's first control and Tab stays inside (overlays
-  opened from the sidebar included). The skip link is left out meanwhile.
+- Menu opens the sidebar over the page: the page (main pane, top bar and
+  drawer) is inert under a scrim, focus moves to the sidebar's first control
+  and Tab stays inside (overlays opened from the sidebar included). The skip
+  link is left out meanwhile.
 - Escape (after any overlay opened from the sidebar), the scrim, a plain
   click on a link and any navigation (`hashchange`, `popstate`) close it.
   Focus returns to Menu, or goes to the main pane after a link to another
@@ -689,10 +690,27 @@ leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
   Matching links and their destination's navigation events keep the drawer
   open. Other links, Back/Forward to another address, Escape and the scrim
   still close it.
+- For a page that opens the sidebar again on arrival, pass
+  `keepMenuOpenAt={(url) => url.hash === "#/start"}`: any navigation to a
+  matching address (a link's, or the location after `hashchange` or
+  `popstate`, including one made in code) leaves the open sidebar open
+  instead of closing it. If the page's update removes the focused control,
+  focus goes to the sidebar's first control.
 - A change in the sidebar that navigates without a link (a project select)
   calls `useAppShell().closeMenu("main")`; `useAppShell().narrow` and
   `menuOpen` report the state. The collapse controls (`SidebarToggle`, the
   rail, the width separator) belong to the wide layout and are hidden.
+- `useAppShell().openMenu()` opens the sidebar as Menu does, for a page's
+  own way to it (a way back in `narrowBar`, or opening it when a page is
+  reached). Closing it returns focus to the control outside the main pane
+  that had it when it opened (a button in `narrowBar`), else to Menu. It
+  does nothing outside the narrow layout.
+- `narrowMenu="sheet"` opens the sidebar as a full-screen sheet instead of
+  a drawer: it fills the viewport, keeps its content inside the safe-area
+  insets and scrolls it, under a bar whose Close menu button takes Menu's place
+  and is its first Tab stop. There is no scrim; everything else (the inert
+  page, Escape, links, navigation, focus) is as for the drawer. Its fade-in
+  stops with reduced motion.
 - Widening past the query shows the sidebar in place again; narrowing starts
   closed. Sidebar rows and foot buttons are touch-sized while narrow.
 
@@ -802,11 +820,12 @@ State is expressed with ARIA attributes where one exists (`aria-current`,
 `is-stale`, `is-tint`, `is-pending`, `is-selected`, `is-clickable`, `is-dim`,
 `is-resizing`, `is-good`/`is-bad`). Variants are `--modifiers`.
 
-- **Frame:** `wb-skip-link`, `wb-app` (`--no-topbar`, `--narrow`, `is-resizing`,
-  `is-menu-open`; sets `--wb-side-w`, `--wb-drawer-max`), `wb-app-main`
-  (`[inert]` while the narrow sidebar is open), `wb-app-drawer`, `wb-sidebar-pane`
+- **Frame:** `wb-skip-link`, `wb-app` (`--no-topbar`, `--narrow`, `--menu-sheet`,
+  `is-resizing`, `is-menu-open`; sets `--wb-side-w`, `--wb-drawer-max`), `wb-app-topbar`
+  (`display: contents`), `wb-app-main`, `wb-app-drawer` (the three `[inert]` while
+  the narrow sidebar is open), `wb-sidebar-pane`
   (`[hidden]` when collapsed, or narrow and closed), `wb-sidebar-resize`,
-  `wb-sidebar-rail`, `wb-narrow-bar`, `wb-narrow-scrim`.
+  `wb-sidebar-rail`, `wb-narrow-bar`, `wb-narrow-scrim`, `wb-menu-sheet-bar`.
 - **Top bar:** `wb-topbar` (compaction attributes `data-wb-brand`,
   `data-wb-search`, `data-wb-status`, `data-wb-nav-icons`, set by TopBar),
   `wb-brand`, `wb-brand-mark` (absent with `icon={null}`), `wb-brand-name`, `wb-nav` (`data-wb-more`),
@@ -961,8 +980,8 @@ where it makes sense.
 
 ### Shell
 
-- `AppShell({ topBar?, sidebar?, narrow?, narrowBar?, keepMenuOpenForLink?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
-  `SidebarToggle()`, `useAppShell()` (`{ hasSidebar, sidebarCollapsed, toggleSidebar, showSidebar, hideSidebar, sidebarId, mainId, narrow, menuOpen, closeMenu }`), `SkipLink({ targetId?, children? })`.
+- `AppShell({ topBar?, sidebar?, narrow?, narrowMenu? = "drawer" | "sheet", narrowBar?, keepMenuOpenForLink?, keepMenuOpenAt?, sidebarStorageKey?, sidebarMin? = 220, sidebarMax? = 480, sidebarDefault? = 268, drawer?, drawerResizable? = false, drawerStorageKey?, drawerMin? = 380, drawerMax? = 900, drawerDefault? = 540, mainId? = "wb-main", skipLink? = "Skip to content" | false, children })`,
+  `SidebarToggle()`, `useAppShell()` (`{ hasSidebar, sidebarCollapsed, toggleSidebar, showSidebar, hideSidebar, sidebarId, mainId, narrow, menuOpen, openMenu, closeMenu }`), `SkipLink({ targetId?, children? })`.
   `narrow`: see [Narrow screens](#narrow-screens).
 - `TopBar({ children })`, `Brand({ name, icon? = "pulse", href? })`
   (`icon={null}`: the name alone, no mark),
@@ -2050,7 +2069,9 @@ dark Chromium: pointer/keyboard drawer resizing, cancel/reset/persistence,
 viewport fitting at 1024px, the palette drill-down/back/navigation flow, and
 copy blocks against the real clipboard (copy and revert, one scrolling line,
 wrapped lines without horizontal overflow, Ctrl/⌘ A, and the selection
-fallback after a rejected write). Its optional
+fallback after a rejected write), and the narrow menu: the default drawer,
+and the sheet at 390 and 320px (fills the screen and scrolls, Close menu in
+Menu's place, closes on a link, no fade-in with reduced motion). Its optional
 output directory retains screenshots and a JSON result summary.
 `scripts/style-check.mjs` adds a quiet subtree and `Brand` fixtures to a
 default-style gallery page and checks their computed fonts, tokens and
@@ -2065,6 +2086,8 @@ the `#`), and the sample app reads `#/?item=ev-4819` (drawer), `?modal=new`,
 `#/rules?rule=r-regex-aws` (wide drawer) and `&draft=1` (draft bar).
 `?crowded=1` (before the `#`) gives the sample app a crowded top bar (space
 switch, five tabs, long status); resize the window to watch it compact.
+`?menu=sheet` (before the `#`) opens the `#/pipelines` sample's narrow menu
+as a full-screen sheet.
 
 Open `#/?item=ev-4819&resize=1` for the resizable detail drawer. Drag its left
 separator, use arrows/Shift/Home/End, double-click to reset, or press Escape

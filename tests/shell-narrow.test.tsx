@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AppShell,
@@ -47,6 +48,29 @@ function SwitchProject() {
   );
 }
 
+function OpenFromBar() {
+  const shell = useAppShell();
+  return (
+    <button type="button" onClick={() => shell?.openMenu()}>
+      All pages
+    </button>
+  );
+}
+
+/**
+ * The address, as a router would give it: each navigation renders again, at
+ * once, as a browser's own event does before the next listener runs.
+ */
+function useHash() {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const update = () => flushSync(() => setHash(window.location.hash));
+    window.addEventListener("hashchange", update);
+    return () => window.removeEventListener("hashchange", update);
+  }, []);
+  return hash;
+}
+
 function Health() {
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLButtonElement | null>(null);
@@ -70,14 +94,29 @@ function Health() {
 function Shell({
   topBar = false,
   keepSections = false,
+  keepRules = false,
+  sheet = false,
+  drawer = false,
 }: {
   topBar?: boolean;
   keepSections?: boolean;
+  keepRules?: boolean;
+  sheet?: boolean;
+  drawer?: boolean;
 }) {
+  const hash = useHash();
   return (
     <AppShell
       narrow={QUERY}
-      narrowBar={<span>Bar title</span>}
+      narrowMenu={sheet ? "sheet" : undefined}
+      keepMenuOpenAt={keepRules ? (url) => url.hash === "#/rules" : undefined}
+      drawer={drawer ? <aside aria-label="Details">details</aside> : undefined}
+      narrowBar={
+        <>
+          <span>Bar title</span>
+          <OpenFromBar />
+        </>
+      }
       keepMenuOpenForLink={
         keepSections ? (link) => link.hash === "#/rules" : undefined
       }
@@ -95,6 +134,8 @@ function Shell({
             <SidebarItem href="#/home" label="Home" />
             <SidebarItem href="#/rules" label="Rules" />
           </SidebarNav>
+          {/* A link shown only at #/home, gone once it has led away. */}
+          {hash === "#/home" ? <a href="#/rules">Rules from home</a> : null}
           <SidebarFoot>
             <SwitchProject />
             <Health />
@@ -102,7 +143,10 @@ function Shell({
         </Sidebar>
       }
     >
-      <Main>page</Main>
+      <Main>
+        page
+        <OpenFromBar />
+      </Main>
     </AppShell>
   );
 }
@@ -282,6 +326,185 @@ describe("AppShell narrow layout", () => {
     setNarrow(true);
     expect(nav()).toBeNull();
     expect(menu()).toHaveAttribute("aria-expanded", "false");
+  });
+});
+
+describe("AppShell narrow menu sheet", () => {
+  const close = () => screen.getByRole("button", { name: "Close menu" });
+
+  it("opens the sidebar as a sheet with Close menu first, over the inert page", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    const { container } = render(<Shell sheet />);
+    const app = container.querySelector(".wb-app")!;
+    expect(app).toHaveClass("wb-app--narrow", "wb-app--menu-sheet");
+    expect(screen.queryByRole("button", { name: "Close menu" })).toBeNull();
+
+    await user.click(menu());
+    expect(nav()).toBeVisible();
+    expect(container.querySelector(".wb-narrow-scrim")).toBeNull();
+    expect(container.querySelector(".wb-app-main")).toHaveAttribute("inert");
+    // Close menu leads the sheet: the first Tab stop, focused on opening.
+    const pane = container.querySelector(".wb-sidebar-pane")!;
+    expect(pane.firstElementChild).toHaveClass("wb-menu-sheet-bar");
+    expect(close()).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(screen.getByRole("button", { name: "Health" })).toHaveFocus();
+    await user.tab();
+    expect(close()).toHaveFocus();
+
+    await user.click(close());
+    expect(nav()).toBeNull();
+    expect(container.querySelector(".wb-app-main")).not.toHaveAttribute(
+      "inert",
+    );
+    expect(menu()).toHaveFocus();
+  });
+
+  it("closes on Escape, a link and a navigation like the drawer", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    render(<Shell sheet />);
+    await user.click(menu());
+    await user.keyboard("{Escape}");
+    expect(nav()).toBeNull();
+    expect(menu()).toHaveFocus();
+
+    await user.click(menu());
+    await user.click(screen.getByRole("link", { name: "Rules" }));
+    expect(nav()).toBeNull();
+    expect(screen.getByRole("main")).toHaveFocus();
+
+    await user.click(menu());
+    act(() => {
+      window.location.hash = "#/elsewhere";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeNull();
+  });
+
+  it("openMenu opens it; closing returns focus to the bar control that opened it, else to Menu", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    const { container } = render(<Shell sheet />);
+    const [inBar, inPage] = screen.getAllByRole("button", {
+      name: "All pages",
+    });
+    await user.click(inBar!);
+    expect(nav()).toBeVisible();
+    expect(menu()).toHaveAttribute("aria-expanded", "true");
+    expect(close()).toHaveFocus();
+    await user.click(close());
+    expect(nav()).toBeNull();
+    expect(inBar).toHaveFocus();
+
+    // A control in the main pane (or the pane itself) would only take the
+    // focus again: closing gives it to Menu.
+    await user.click(inPage!);
+    expect(nav()).toBeVisible();
+    await user.keyboard("{Escape}");
+    expect(menu()).toHaveFocus();
+    expect(container.querySelector(".wb-app")).not.toHaveClass("is-menu-open");
+    screen.getByRole("main").focus();
+    act(() => inBar!.click());
+    // A tap that doesn't focus the button (WebKit) leaves the pane focused.
+    expect(nav()).toBeVisible();
+    await user.click(close());
+    expect(menu()).toHaveFocus();
+  });
+
+  it("keepMenuOpenAt keeps it open through links and navigations to matching addresses", async () => {
+    stubMedia(true);
+    const user = userEvent.setup();
+    render(<Shell sheet keepRules />);
+    await user.click(menu());
+    await user.click(screen.getByRole("link", { name: "Rules" }));
+    await waitFor(() => expect(window.location.hash).toBe("#/rules"));
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeVisible();
+    // One made in code, as after deleting what the page showed.
+    act(() => {
+      window.history.replaceState(null, "", "#/home");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeNull();
+    await user.click(menu());
+    act(() => {
+      window.history.replaceState(null, "", "#/rules");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeVisible();
+    expect(close()).toHaveFocus();
+    // Kept open by a link the navigation removes: focus goes to its first control.
+    act(() => {
+      window.history.replaceState(null, "", "#/home");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(nav()).toBeNull();
+    await user.click(menu());
+    await user.click(screen.getByRole("link", { name: "Rules from home" }));
+    await waitFor(() => expect(window.location.hash).toBe("#/rules"));
+    expect(screen.queryByRole("link", { name: "Rules from home" })).toBeNull();
+    await waitFor(() => expect(close()).toHaveFocus());
+    expect(nav()).toBeVisible();
+  });
+
+  it("drops a pending refocus when the layout widens before it runs", async () => {
+    const setNarrow = stubMedia(true);
+    const user = userEvent.setup();
+    render(<Shell sheet keepRules />);
+    await user.click(menu());
+    (document.activeElement as HTMLElement | null)?.blur();
+    // A kept navigation schedules a refocus for the next frame; the layout widens first.
+    act(() => {
+      window.history.replaceState(null, "", "#/rules");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    setNarrow(false);
+    await act(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it("makes the top bar and the drawer inert with the page while open, drawer or sheet", async () => {
+    for (const sheet of [false, true]) {
+      stubMedia(true);
+      const user = userEvent.setup();
+      const { container, unmount } = render(
+        <Shell sheet={sheet} topBar drawer />,
+      );
+      const regions = [".wb-app-topbar", ".wb-app-main", ".wb-app-drawer"].map(
+        (selector) => container.querySelector(selector)!,
+      );
+      expect(
+        container.querySelector(".wb-app-topbar > .wb-topbar"),
+      ).not.toBeNull();
+      for (const region of regions) expect(region).not.toHaveAttribute("inert");
+      await user.click(menu());
+      for (const region of regions) expect(region).toHaveAttribute("inert");
+      await user.keyboard("{Escape}");
+      for (const region of regions) expect(region).not.toHaveAttribute("inert");
+      unmount();
+    }
+  });
+
+  it("openMenu does nothing outside the narrow layout, and the drawer has no Close menu", async () => {
+    const setNarrow = stubMedia(false);
+    const user = userEvent.setup();
+    render(<Shell />);
+    await user.click(screen.getByRole("button", { name: "All pages" }));
+    setNarrow(true);
+    expect(nav()).toBeNull();
+    await user.click(menu());
+    expect(nav()).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Close menu" })).toBeNull();
   });
 });
 

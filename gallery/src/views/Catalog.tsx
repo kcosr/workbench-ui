@@ -845,6 +845,14 @@ function Themed({ theme }: { theme: "light" | "dark" }) {
         <Button href="#/pipelines" iconRight="arrow-right">
           Open the sample
         </Button>
+        <p className="gal-note">
+          Below 900px its sidebar opens from Menu over the page; the sheet
+          variant (<code>narrowMenu="sheet"</code>) fills the screen with a
+          Close menu button.
+        </p>
+        <Button href="?menu=sheet#/pipelines" iconRight="arrow-right">
+          Open with the menu sheet
+        </Button>
       </Section>
     </div>
   );

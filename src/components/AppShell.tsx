@@ -40,6 +40,12 @@ export interface AppShellProps {
    * or goes to the main pane after a link to another page or a navigation.
    */
   narrow?: string | undefined;
+  /**
+   * How the narrow layout opens the sidebar: "drawer" (the default), over
+   * part of the page beside a scrim, or "sheet", filling the viewport with a
+   * Close menu button at its top.
+   */
+  narrowMenu?: "drawer" | "sheet" | undefined;
   /** The narrow bar's content after the Menu button (a Brand, a way back). */
   narrowBar?: ReactNode;
   /**
@@ -48,6 +54,12 @@ export interface AppShellProps {
    * links and browser navigation still close it.
    */
   keepMenuOpenForLink?: ((link: HTMLAnchorElement) => boolean) | undefined;
+  /**
+   * Keep the narrow sidebar open through any navigation to a matching
+   * address (a link's, or the location after `hashchange` or `popstate`),
+   * such as a page that opens it again on arrival.
+   */
+  keepMenuOpenAt?: ((url: URL) => boolean) | undefined;
   /**
    * localStorage key for the sidebar width (e.g. "my-app:sidebar-width");
    * the collapsed state is stored under `<key>:collapsed`.
@@ -141,6 +153,12 @@ export interface AppShellState {
   /** In the narrow layout, the sidebar is open over the page. */
   menuOpen: boolean;
   /**
+   * Open the narrow layout's sidebar, as Menu does (no effect otherwise).
+   * Closing it returns focus to the control focused when it opened, else
+   * to Menu.
+   */
+  openMenu: () => void;
+  /**
    * Close the narrow layout's open sidebar (no effect otherwise). Focus goes
    * back to Menu, or with "main" to the main pane: for a change made in the
    * sidebar that navigates without a link, such as switching a project.
@@ -224,6 +242,7 @@ export function AppShell({
   topBar,
   sidebar,
   narrow: narrowQuery,
+  narrowMenu = "drawer",
   narrowBar,
   sidebarStorageKey,
   sidebarMin = 220,
@@ -240,6 +259,7 @@ export function AppShell({
   skipLink = "Skip to content",
   className,
   keepMenuOpenForLink,
+  keepMenuOpenAt,
 }: AppShellProps) {
   const frame = useRef<HTMLDivElement | null>(null);
   const drawerSlot = useRef<HTMLDivElement | null>(null);
@@ -271,12 +291,17 @@ export function AppShell({
     sidebar !== undefined && sidebar !== null && sidebar !== false;
   const hasDrawer = drawer !== undefined && drawer !== null && drawer !== false;
   const narrow = useMediaQuery(narrowQuery) && hasSidebar;
+  const sheet = narrow && narrowMenu === "sheet";
   const [menuWanted, setMenuWanted] = useState(false);
   const menuOpen = narrow && menuWanted;
   const keptMenuLocation = useRef<string | null>(null);
   // Where focus goes when the open narrow sidebar closes.
   const menuReturn = useRef<"menu" | "main" | null>(null);
   const menuButton = useRef<HTMLButtonElement | null>(null);
+  // The control focused when the narrow sidebar opened (null: Menu).
+  const menuOpener = useRef<HTMLElement | null>(null);
+  // The check for a focus lost to a navigation that kept the sidebar open.
+  const refocusFrame = useRef(0);
 
   // Measure the frame and the open drawer's preferred width (its CSS token,
   // not its rendered width, which this component may be limiting).
@@ -457,6 +482,20 @@ export function AppShell({
     else hideSidebar();
   }, [collapsed, showSidebar, hideSidebar]);
 
+  const openMenu = useCallback(() => {
+    if (!narrow || menuWanted) return;
+    // Only a control outside the main pane (a button in the narrow bar)
+    // gets focus back; the pane, or a field in it, would just take it again.
+    const active = document.activeElement;
+    menuOpener.current =
+      active instanceof HTMLElement &&
+      active !== document.body &&
+      active !== menuButton.current &&
+      !document.getElementById(mainId)?.contains(active)
+        ? active
+        : null;
+    setMenuWanted(true);
+  }, [narrow, menuWanted, mainId]);
   const closeMenu = useCallback((focus: "menu" | "main" = "menu") => {
     setMenuWanted((open) => {
       if (open) menuReturn.current = focus;
@@ -477,9 +516,19 @@ export function AppShell({
     layers: menuLayers,
     restoreFocus: false,
   });
+  // The latest predicates, for listeners that stay registered while the menu
+  // is open: a consumer rendering again on a navigation (a router, inline
+  // functions) must not swap them out in the middle of its events.
+  const keepForLink = useRef(keepMenuOpenForLink);
+  const keepAt = useRef(keepMenuOpenAt);
+  useLayoutEffect(() => {
+    keepForLink.current = keepMenuOpenForLink;
+    keepAt.current = keepMenuOpenAt;
+  });
   // Section-switch links can keep the menu open through their own navigation.
   // Remember the destination across both popstate and hashchange, which can
-  // describe the same click. A different navigation still closes the menu.
+  // describe the same click. A different navigation still closes the menu,
+  // unless its destination is one kept open (`keepMenuOpenAt`).
   useEffect(() => {
     if (!menuOpen) {
       keptMenuLocation.current = null;
@@ -487,7 +536,16 @@ export function AppShell({
     }
     const el = pane.current;
     const onNavigate = () => {
-      if (window.location.href !== keptMenuLocation.current) closeMenu("main");
+      const href = window.location.href;
+      if (href !== keptMenuLocation.current && !keepAt.current?.(new URL(href)))
+        return closeMenu("main");
+      // Kept open: if the page's update removed the focused control (a link
+      // that led away from what the sidebar showed), focus its first again.
+      cancelAnimationFrame(refocusFrame.current);
+      refocusFrame.current = requestAnimationFrame(() => {
+        const active = document.activeElement;
+        if (!active || active === document.body) focusSidebar("first");
+      });
     };
     const onClick = (e: MouseEvent) => {
       const link = (e.target as Element).closest<HTMLAnchorElement>("a[href]");
@@ -501,7 +559,7 @@ export function AppShell({
         e.altKey
       )
         return;
-      if (keepMenuOpenForLink?.(link)) {
+      if (keepForLink.current?.(link) || keepAt.current?.(new URL(link.href))) {
         keptMenuLocation.current = link.href;
         return;
       }
@@ -515,14 +573,19 @@ export function AppShell({
       window.removeEventListener("hashchange", onNavigate);
       window.removeEventListener("popstate", onNavigate);
       el?.removeEventListener("click", onClick);
+      // A refocus still pending when the menu closes (or the layout widens) must not move focus afterwards.
+      cancelAnimationFrame(refocusFrame.current);
     };
-  }, [menuOpen, closeMenu, keepMenuOpenForLink]);
+  }, [menuOpen, closeMenu, focusSidebar]);
   // After the commit that lifts `inert`, so the target can take focus.
   useLayoutEffect(() => {
     if (menuOpen) return;
     const to = menuReturn.current;
+    const opener = menuOpener.current;
     menuReturn.current = null;
-    if (to === "menu") menuButton.current?.focus();
+    menuOpener.current = null;
+    if (to === "menu")
+      (opener?.isConnected ? opener : menuButton.current)?.focus();
     else if (to === "main")
       document.getElementById(mainId)?.focus({ preventScroll: true });
   }, [menuOpen, mainId]);
@@ -559,6 +622,7 @@ export function AppShell({
       mainId,
       narrow,
       menuOpen,
+      openMenu,
       closeMenu,
     }),
     [
@@ -571,6 +635,7 @@ export function AppShell({
       mainId,
       narrow,
       menuOpen,
+      openMenu,
       closeMenu,
     ],
   );
@@ -588,6 +653,7 @@ export function AppShell({
           "wb-app",
           !hasTopBar && "wb-app--no-topbar",
           narrow && "wb-app--narrow",
+          sheet && "wb-app--menu-sheet",
           menuOpen && "is-menu-open",
           (sidebarResize.dragging || drawerResize.dragging) && "is-resizing",
           className,
@@ -598,8 +664,13 @@ export function AppShell({
         {skipLink === false || menuOpen ? null : (
           <SkipLink targetId={mainId}>{skipLink}</SkipLink>
         )}
-        {hasTopBar ? topBar : null}
-        {menuOpen ? (
+        {/* Its own box: the top bar is inert with the page while the narrow sidebar is open. */}
+        {hasTopBar ? (
+          <div className="wb-app-topbar" inert={menuOpen}>
+            {topBar}
+          </div>
+        ) : null}
+        {menuOpen && !sheet ? (
           <div
             className="wb-scrim wb-narrow-scrim"
             aria-hidden="true"
@@ -631,6 +702,15 @@ export function AppShell({
                 focusInPane.current = false;
             }}
           >
+            {sheet ? (
+              <div className="wb-menu-sheet-bar">
+                <IconButton
+                  icon="x"
+                  label="Close menu"
+                  onClick={() => closeMenu("menu")}
+                />
+              </div>
+            ) : null}
             {narrowQuery ? (
               <OverlayScope layers={menuLayers} owner={menuOwner}>
                 {sidebar}
@@ -652,7 +732,10 @@ export function AppShell({
                 aria-controls={paneId}
                 onClick={() => {
                   if (menuOpen) closeMenu("menu");
-                  else setMenuWanted(true);
+                  else {
+                    menuOpener.current = null;
+                    setMenuWanted(true);
+                  }
                 }}
               />
               {narrowBar}
@@ -663,6 +746,7 @@ export function AppShell({
         {hasDrawer ? (
           <div
             className={cx("wb-app-drawer", drawerResizable && "is-resizable")}
+            inert={menuOpen}
             ref={drawerSlot}
             id={drawerId}
             data-wb-drawer-slot=""
