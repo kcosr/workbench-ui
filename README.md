@@ -1506,7 +1506,8 @@ state, so disable it while its action runs.
   ordinary data refreshes preserve manual scrolling. Set `settled` to false
   while the inventory is incomplete, and include the selected page and filters
   in `revealKey`.
-  Touch layouts use native horizontal scrolling and omit the edge arrows.
+  Touch layouts use native horizontal scrolling and omit the edge arrows; the
+  ellipsis buttons are 44px wide there, with 20px icons.
 - `Seg({ label, value, onChange, options: { value, label, icon?, tone?, count?, title?, disabled? }[], size?, density? = "default" | "compact", full? })`
   — `role="group"` of `aria-pressed` buttons. `density="compact"` tightens
   the segments and hides icons on segments that have a label (labels,
