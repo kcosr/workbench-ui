@@ -158,6 +158,18 @@
       width: 20px;
       height: 20px;
     }
+    /* The narrow sidebar's foot reads at the bar's size too. */
+    .wb-app--narrow .wb-side-foot .wb-btn {
+      font-size: var(--wb-fs-15);
+    }
+    .wb-app--narrow .wb-side-foot .wb-btn .wb-icon {
+      width: 16px;
+      height: 16px;
+    }
+    .wb-app--narrow .wb-side-foot .wb-btn--icon .wb-icon {
+      width: 20px;
+      height: 20px;
+    }
   }
 
   /* ---------- skip link: off-screen until focused */

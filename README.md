@@ -715,7 +715,8 @@ leaves the layout and a bar atop the main pane holds Menu and `narrowBar`
   closed. Sidebar rows and foot buttons are touch-sized while narrow.
 - At 760px and below and on coarse pointers, the bar (and the sheet's bar) is
   54px tall instead of 48px, and icon buttons in it show 20px icons, including
-  those in `narrowBar`.
+  those in `narrowBar`. The sidebar foot's buttons use 15px text and 16px
+  icons there (20px in icon buttons).
 
 Independently of the shell, at 760px and below and on coarse pointers
 (`touch.css`), buttons, text fields, selects and copy buttons are at least
