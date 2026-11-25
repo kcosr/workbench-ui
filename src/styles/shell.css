@@ -145,6 +145,20 @@
   .wb-app--narrow .wb-side-foot .wb-btn {
     min-height: 44px;
   }
+  /* On phones and touch screens (as touch.css), the bar and the sheet's bar
+     are taller, and icon buttons in them show larger icons. */
+  @media (max-width: 760px), (pointer: coarse) {
+    .wb-narrow-bar {
+      min-height: 54px;
+    }
+    .wb-menu-sheet-bar {
+      min-height: calc(54px + env(safe-area-inset-top, 0px));
+    }
+    :is(.wb-narrow-bar, .wb-menu-sheet-bar) .wb-btn--icon .wb-icon {
+      width: 20px;
+      height: 20px;
+    }
+  }
 
   /* ---------- skip link: off-screen until focused */
   .wb-skip-link {

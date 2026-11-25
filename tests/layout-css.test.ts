@@ -310,4 +310,22 @@ describe("touch targets", () => {
       "font-size: 16px",
     );
   });
+
+  it("make the narrow bars 54px tall with 20px icons, at the same query", () => {
+    const shell = read("shell.css").replace(/\/\*[\s\S]*?\*\//g, "");
+    const media =
+      /@media \(max-width: 760px\), \(pointer: coarse\) \{([\s\S]*?)\n {2}\}/.exec(
+        shell,
+      )?.[1] ?? "";
+    expect(rule(media, ".wb-narrow-bar")).toEqual({ "min-height": "54px" });
+    expect(rule(media, ".wb-menu-sheet-bar")).toEqual({
+      "min-height": "calc(54px + env(safe-area-inset-top, 0px))",
+    });
+    expect(
+      rule(
+        media,
+        ":is(.wb-narrow-bar, .wb-menu-sheet-bar) .wb-btn--icon .wb-icon",
+      ),
+    ).toEqual({ width: "20px", height: "20px" });
+  });
 });
