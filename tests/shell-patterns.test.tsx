@@ -442,8 +442,14 @@ describe("showSidebar / hideSidebar", () => {
 });
 
 describe("icons", () => {
-  it("includes branch, comment, diff and notebook, drawn as 1.5 stroke paths", () => {
-    for (const name of ["branch", "comment", "diff", "notebook"] as const) {
+  it("includes branch, comment, diff, notebook and ticket, drawn as 1.5 stroke paths", () => {
+    for (const name of [
+      "branch",
+      "comment",
+      "diff",
+      "notebook",
+      "ticket",
+    ] as const) {
       expect(iconNames).toContain(name);
       const { container, unmount } = render(<Icon name={name} />);
       const svg = container.querySelector("svg.wb-icon");
